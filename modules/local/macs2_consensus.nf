@@ -28,6 +28,8 @@ process MACS2_CONSENSUS {
     script: // This script is bundled with the pipeline, in nf-core/chipseq/bin/
     def prefix       = task.ext.prefix    ?: "${meta.id}"
     def peak_type    = params.narrow_peak ? 'narrowPeak' : 'broadPeak'
+    // Use min_replicates = 1 when inputs are already consensus peaks from replicates
+    def min_reps     = meta.replicates_exist ? 1 : params.min_reps_consensus
     def mergecols    = params.narrow_peak ? (2..10).join(',') : (2..9).join(',')
     def collapsecols = params.narrow_peak ? (['collapse']*9).join(',') : (['collapse']*8).join(',')
     def expandparam  = params.narrow_peak ? '--is_narrow_peak' : ''
@@ -39,7 +41,7 @@ process MACS2_CONSENSUS {
         ${prefix}.txt \\
         ${peaks.collect{it.toString()}.sort().join(',').replaceAll("_peaks.${peak_type}","").replaceAll("_chr[^,]*","")} \\
         ${prefix}.boolean.txt \\
-        --min_replicates $params.min_reps_consensus \\
+        --min_replicates $min_reps \\
         $expandparam
 
     awk -v FS='\t' -v OFS='\t' 'FNR > 1 { print \$1, \$2, \$3, \$4, "0", "+" }' ${prefix}.boolean.txt > ${prefix}.bed

@@ -754,6 +754,8 @@ workflow CHIPSEQ {
     //
     //  MODULE: Generate final consensus peaks by ANTIBODY across all conditions
     //  This merges condition-level consensus (e.g., WT_BCATENIN + NAIVE_BCATENIN -> BCATENIN)
+    //  NOTE: We set min_reps_consensus = 1 for this step because each input is already
+    //        a consensus from biological replicates (filtered at condition level)
     //
 
     MACS2_CONSENSUS ( 
