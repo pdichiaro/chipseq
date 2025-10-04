@@ -140,15 +140,18 @@ process DESEQ2_TRANSFORM {
         exit 1
     fi
     
-    echo "=== FILES CREATED ==="
-    ls -lh *_mqc.txt 2>/dev/null || {
-        echo "❌ ERROR: No *_mqc.txt files found!"
+    # Verify output file was created
+    if [[ ! -f "\${output_file}" ]]; then
+        echo "❌ ERROR: Failed to create output file: \${output_file}"
         echo "All files in directory:"
         ls -lah
         exit 1
-    }
-    echo "✅ Found \$(ls *_mqc.txt 2>/dev/null | wc -l) MultiQC files"
-    echo "====================="
+    fi
+    
+    echo "=== OUTPUT FILE CREATED ==="
+    ls -lh "\${output_file}"
+    echo "✅ Successfully created MultiQC file"
+    echo "============================"
 
     cat <<END_VERSIONS > versions.yml
 "${task.process}":
