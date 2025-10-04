@@ -23,6 +23,13 @@ run_modules:
   - deeptools
   - phantompeakqualtools
 
+# Remove specific sections from the report
+# Note: Section names must match EXACTLY with the 'name' in module_order
+remove_sections:
+  - "LIB: SAMTools"  # Hide individual library SAMTools metrics per user request
+  - "MERGED LIB: SAMTools (unfiltered)"  # Hide unfiltered SAMTools metrics per user request
+  - "MERGED LIB: Picard (unfiltered)"  # Hide unfiltered Picard metrics per user request
+
 module_order:
   - fastqc:
       name: "LIB: FastQC (raw)"
@@ -115,6 +122,24 @@ custom_plot_config:
     smooth_points: 1000
   featurecounts:
     cpswitch_c_active: False
+  
+  # DESeq2 QC plots ordering (by numeric prefix in plot ID)
+  # Plot IDs follow pattern: mqc_NN_deseq2_*_featurecounts_*
+  # MultiQC sorts plots alphabetically by ID, so numeric prefixes control order
+  # 
+  # All Genes (mqc_01 - mqc_04):
+  #   01. mqc_01_deseq2_read_distribution_featurecounts_all_genes-plot
+  #   02. mqc_02_deseq2_sample_distance_featurecounts_all_genes-plot
+  #   03. mqc_03_deseq2_pca_featurecounts_all_genes-plot
+  #   04. mqc_04_deseq2_pca_top500_featurecounts_all_genes-plot
+  # 
+  # Invariant Genes (mqc_05 - mqc_08):
+  #   05. mqc_05_deseq2_read_distribution_featurecounts_invariant_genes-plot
+  #   06. mqc_06_deseq2_sample_distance_featurecounts_invariant_genes-plot
+  #   07. mqc_07_deseq2_pca_featurecounts_invariant_genes-plot
+  #   08. mqc_08_deseq2_pca_top500_featurecounts_invariant_genes-plot
+  # 
+  # No explicit ordering configuration needed - numeric prefixes handle this automatically
 
 # General Statistics Table Configuration
 # Optimized for ChIP-seq workflow with logical column ordering
@@ -163,19 +188,24 @@ table_columns_visible:
   Cutadapt:
     percent_trimmed: True
     pairs_trimmed: False
-  # SAMTools - show filtered library stats (most relevant for ChIP-seq)
+  # SAMTools - show only filtered library stats (most relevant for ChIP-seq)
+  # All columns here apply to ALL SAMTools modules (LIB, unfiltered, filtered)
   Samtools:
-    reads_mapped: True
-    reads_mapped_percent: True
-    error_rate: True
+    # Show only filtered library metrics (these are the most important)
+    reads_mapped: True  # Visible only for filtered library
+    reads_mapped_percent: True  # Visible only for filtered library
+    error_rate: True  # Visible only for filtered library
+    # Hide all other SAMTools metrics per user request
     reads_duplicated: False  # Use Picard duplication instead
-    reads_MQ0_percent: False
-    raw_total_sequences: False
-    flagstat_total: False
-    non_primary_alignments: False
-    reads_properly_paired_percent: False
+    reads_MQ0_percent: False  # Hidden per user request
+    raw_total_sequences: False  # Hidden per user request
+    flagstat_total: False  # Hidden per user request (LIB and unfiltered)
+    non_primary_alignments: False  # Hidden per user request
+    reads_properly_paired_percent: False  # Hidden per user request
     reads_unmapped: False
     reads_unmapped_percent: False
+    mapped_passed: False  # Hidden per user request (flagstat reads mapped)
+    mapped_passed_pct: False  # Hidden per user request (flagstat % reads mapped)
   # Picard - show duplication metrics
   Picard:
     PERCENT_DUPLICATION: True
