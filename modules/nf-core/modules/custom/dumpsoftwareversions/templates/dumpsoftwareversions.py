@@ -72,18 +72,38 @@ except Exception as e:
 versions_by_process.update(versions_this_module)
 
 # aggregate versions by the module name (derived from fully-qualified process name)
+# IMPROVED: Better error handling for version conflicts
 versions_by_module = {}
+version_conflicts = []
+
 for process, process_versions in versions_by_process.items():
     module = process.split(":")[-1]
-    try:
+    
+    if module in versions_by_module:
+        # Check if versions match
         if versions_by_module[module] != process_versions:
-            raise AssertionError(
-                "We assume that software versions are the same between all modules. "
-                "If you see this error-message it means you discovered an edge-case "
-                "and should open an issue in nf-core/tools. "
+            # Log the conflict but don't fail - use first occurrence
+            conflict_msg = (
+                f"Version conflict for module '{module}': "
+                f"existing={versions_by_module[module]}, "
+                f"new={process_versions} (from {process})"
             )
-    except KeyError:
-        versions_by_module[module] = process_versions
+            version_conflicts.append(conflict_msg)
+            print(f"Warning: {conflict_msg}")
+            # Keep the first occurrence
+            continue
+    
+    versions_by_module[module] = process_versions
+
+# Write conflicts to log if any were detected
+if version_conflicts:
+    with open("version_conflicts.log", "w") as f:
+        f.write("Software Version Conflicts Detected\\n")
+        f.write("=" * 80 + "\\n\\n")
+        for conflict in version_conflicts:
+            f.write(conflict + "\\n")
+        f.write("\\nNote: Using first occurrence for each conflicting module.\\n")
+    print(f"Warning: {len(version_conflicts)} version conflict(s) detected. See version_conflicts.log")
 
 versions_by_module["Workflow"] = {
     "Nextflow": "$workflow.nextflow.version",
