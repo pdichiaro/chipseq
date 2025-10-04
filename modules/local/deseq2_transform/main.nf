@@ -114,7 +114,7 @@ process DESEQ2_TRANSFORM {
         cat temp_header.txt ${deseq2_file} > temp_output.txt
         mv temp_output.txt "\${numbered_output}"
         echo "Created \${numbered_output} with sample distance header (ID: \${PLOT_ID}, parent: \${QUANTIFIER})"
-    elif [[ "${file_name}" == *".read.distribution.normalized."* ]]; then
+    elif [[ "${file_name}" == *".read.distribution.normalized.txt" ]]; then
         # Read distribution - ORDER: 1 or 5
         PLOT_NUM=\$((1 + OFFSET))
         PLOT_ID="\$(printf '%02d' \$PLOT_NUM)_deseq2_read_distribution_\${QUANTIFIER_SHORT}_\${LEVEL}"
