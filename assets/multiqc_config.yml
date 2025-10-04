@@ -116,6 +116,145 @@ custom_plot_config:
   featurecounts:
     cpswitch_c_active: False
 
+# General Statistics Table Configuration
+# Optimized for ChIP-seq workflow with logical column ordering
+# Key metrics are visible, less critical ones are hidden but available via "Configure Columns"
+
+table_columns_placement:
+  # Column order (lower numbers = leftmost columns)
+  # Core sequencing metrics
+  FastQC:
+    total_sequences: 100
+    percent_gc: 110
+  Cutadapt:
+    percent_trimmed: 200
+  # Alignment metrics (filtered library - most relevant)
+  Samtools:
+    reads_mapped: 300
+    reads_mapped_percent: 310
+    error_rate: 320
+  # Duplication metrics
+  Picard:
+    PERCENT_DUPLICATION: 400
+  # Peak calling metrics
+  peak_count:
+    peak_count: 500
+  FRiP:
+    frip_score: 510
+  # Feature assignment
+  featureCounts:
+    percent_assigned: 600
+    Assigned: 610
+  # ChIP-seq quality metrics
+  phantompeakqualtools:
+    NSC: 700
+    RSC: 710
+
+table_columns_visible:
+  # FastQC - show only essential metrics
+  FastQC:
+    total_sequences: True
+    percent_duplicates: False  # Use Picard instead
+    percent_gc: True
+    avg_sequence_length: False
+    percent_fails: False
+    total_sequences_unit: False
+  # Cutadapt - show trimming efficiency
+  Cutadapt:
+    percent_trimmed: True
+    pairs_trimmed: False
+  # SAMTools - show filtered library stats (most relevant for ChIP-seq)
+  Samtools:
+    reads_mapped: True
+    reads_mapped_percent: True
+    error_rate: True
+    reads_duplicated: False  # Use Picard duplication instead
+    reads_MQ0_percent: False
+    raw_total_sequences: False
+    flagstat_total: False
+    non_primary_alignments: False
+    reads_properly_paired_percent: False
+    reads_unmapped: False
+    reads_unmapped_percent: False
+  # Picard - show duplication metrics
+  Picard:
+    PERCENT_DUPLICATION: True
+    ESTIMATED_LIBRARY_SIZE: False
+    READ_PAIRS_EXAMINED: False
+    UNPAIRED_READS_EXAMINED: False
+    READ_PAIR_DUPLICATES: False
+    READ_PAIR_OPTICAL_DUPLICATES: False
+    UNMAPPED_READS: False
+  # Preseq - hide by default (specialized metric)
+  Preseq:
+    lc_extrap_unique_reads: False
+    lc_extrap_max_reads: False
+  # Peak metrics - show all (critical for ChIP-seq)
+  peak_count:
+    peak_count: True
+  FRiP:
+    frip_score: True
+  # featureCounts - show assignment metrics
+  featureCounts:
+    percent_assigned: True
+    Assigned: True
+    Unassigned_NoFeatures: False
+    Unassigned_Ambiguity: False
+    Unassigned_MultiMapping: False
+  # Phantom Peak Qual Tools - show quality scores (critical for ChIP-seq)
+  phantompeakqualtools:
+    NSC: True
+    RSC: True
+    phantompeakqualtools_fragment_length: False
+
+# Color thresholds for key ChIP-seq quality metrics
+# Helps quickly identify problematic samples in General Statistics table
+table_cond_formatting_rules:
+  reads_mapped_percent:
+    pass:
+      - gt: 70  # Good: >70% mapped
+    warn:
+      - gt: 50  # Warning: 50-70% mapped
+      - lt: 70
+    fail:
+      - lt: 50  # Fail: <50% mapped
+  
+  PERCENT_DUPLICATION:
+    pass:
+      - lt: 30  # Good: <30% duplicates
+    warn:
+      - gt: 30  # Warning: 30-50% duplicates
+      - lt: 50
+    fail:
+      - gt: 50  # Fail: >50% duplicates
+  
+  frip_score:
+    pass:
+      - gt: 5.0  # Good: >5% FRiP (typical for ChIP-seq)
+    warn:
+      - gt: 1.0  # Warning: 1-5% FRiP
+      - lt: 5.0
+    fail:
+      - lt: 1.0  # Fail: <1% FRiP
+  
+  NSC:
+    pass:
+      - gt: 1.05  # Good: NSC >1.05 (ENCODE guideline)
+    warn:
+      - gt: 1.0  # Warning: NSC 1.0-1.05
+      - lt: 1.05
+    fail:
+      - lt: 1.0  # Fail: NSC <1.0
+  
+  RSC:
+    pass:
+      - gt: 1.0  # Good: RSC >1.0 (ENCODE guideline for TF ChIP-seq)
+    warn:
+      - gt: 0.8  # Warning: RSC 0.8-1.0
+      - lt: 1.0
+    fail:
+      - lt: 0.8  # Fail: RSC <0.8
+
 extra_fn_clean_exts:
   - "fastq.gz"
   - "_trimmed"
