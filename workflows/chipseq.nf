@@ -645,9 +645,8 @@ workflow CHIPSEQ {
     ch_macs2_peaks
         .map { 
             meta, peak ->
-                // Extract group identifier by removing _REP{N}_T{M} suffix
-                def id_parts = meta.id.split('_')
-                def group_id = id_parts.size() >= 3 ? id_parts[0..-3].join('_') : meta.id
+                // Extract group identifier by removing _REP{N}_T{M} suffix using regex
+                def group_id = meta.id.replaceAll(/_REP\d+_T\d+$/, '')
                 // Extract antibody from the last part of group_id
                 def antibody = group_id.split('_')[-1]
                 [ group_id, antibody, peak ] 
