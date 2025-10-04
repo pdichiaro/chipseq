@@ -640,14 +640,15 @@ workflow CHIPSEQ {
 
     // STEP 1: Create consensus peaks BY CONDITION (intermediate files)
     // Extract condition from sample ID and group peaks by condition+antibody
-    // Example: WT_BCATENIN_IP_REP1_T1 -> group_id = WT_BCATENIN, antibody = BCATENIN
+    // Example: TLBR2_shMCM5_CT_REP1_T1 -> group_id = TLBR2_shMCM5_CT
+    // Example: TLBR2_shMCM5_DOX_RNAseA_REP2_T1 -> group_id = TLBR2_shMCM5_DOX_RNAseA
     
     ch_macs2_peaks
         .map { 
             meta, peak ->
-                // Extract group identifier by removing _REP{N}_T{M} suffix (last 2 parts)
-                def id_parts = meta.id.split('_')
-                def group_id = id_parts.size() >= 2 ? id_parts[0..-3].join('_') : meta.id
+                // Extract group identifier by removing _REP{N}_T{M} suffix using regex
+                // This handles variable-length condition names correctly
+                def group_id = meta.id.replaceAll(/_REP\d+_T\d+$/, '')
                 // Use antibody from metadata instead of extracting from ID
                 [ group_id, meta.antibody, peak ] 
         }
