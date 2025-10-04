@@ -9,5 +9,3 @@
 #pconfig:
 #    title: 'DESeq2: Normalized Read Distribution'
 #    ylab: 'VST Normalized Counts'
-#extra:
-#    plot_order: 1
