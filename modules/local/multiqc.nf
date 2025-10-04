@@ -45,7 +45,7 @@ process MULTIQC {
     path ('macs2/annotation/*')
     path ('macs2/featurecounts/*')
 
-    path ('multiqc_data/*_mqc.txt')  // DESeq2 QC files from multiqc_data/
+    path deseq2_files  // DESeq2 QC files - preserve original filenames
 
     output:
     path "*multiqc_report.html", emit: report
@@ -59,14 +59,22 @@ process MULTIQC {
     def custom_config  = mqc_custom_config ? "--config $mqc_custom_config" : ''
     
     """
-    # DESeq2 files are in multiqc_data/ directory with numeric prefixes
-    # MultiQC will automatically find them there
-    # Debug: List DESeq2 files if they exist
-    if [ -d multiqc_data ] && [ "\$(ls -A multiqc_data 2>/dev/null)" ]; then
-        echo "=== DESeq2 MultiQC files found ==="
-        ls -lh multiqc_data/*_mqc.txt 2>/dev/null || echo "No *_mqc.txt files in multiqc_data/"
+    # Create multiqc_data directory and move DESeq2 files there
+    # This preserves the original numeric-prefixed filenames for proper sorting
+    mkdir -p multiqc_data
+    
+    # Move all DESeq2 *_mqc.txt files to multiqc_data/ directory
+    # These files have numeric prefixes (01_, 02_, etc.) for proper ordering
+    if ls *_mqc.txt 1> /dev/null 2>&1; then
+        echo "=== Moving DESeq2 files to multiqc_data/ ==="
+        for mqc_file in *_mqc.txt; do
+            echo "  Moving: \${mqc_file}"
+            mv "\${mqc_file}" multiqc_data/
+        done
+        echo "=== DESeq2 MultiQC files in multiqc_data/ ==="
+        ls -lh multiqc_data/*_mqc.txt
     else
-        echo "⚠️  Warning: No multiqc_data/ directory or it's empty"
+        echo "⚠️  Warning: No *_mqc.txt files found for DESeq2"
     fi
 
     multiqc \\
