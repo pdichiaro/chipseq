@@ -30,6 +30,10 @@ process DESEQ2_SECTION_HEADER {
 #plot_type: 'html'
 #pconfig:
 #    namespace: 'DESeq2 QC'
+
+<div class="alert alert-info">
+<p>This section of the report shows DESeq2 QC results generated after inter-sample normalization.</p>
+</div>
 HEADER_EOF
 
     cat <<-END_VERSIONS > versions.yml
