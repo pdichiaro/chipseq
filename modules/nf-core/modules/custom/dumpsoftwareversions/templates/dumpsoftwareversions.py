@@ -51,8 +51,25 @@ versions_this_module["${task.process}"] = {
     "yaml": yaml.__version__,
 }
 
-with open("$versions") as f:
-    versions_by_process = yaml.load(f, Loader=yaml.BaseLoader) | versions_this_module
+# Read and parse with error handling for malformed YAML
+try:
+    with open("$versions", encoding='utf-8', errors='ignore') as f:
+        content = f.read()
+        # Remove any problematic non-ASCII characters
+        content = content.encode('ascii', 'ignore').decode('ascii')
+        versions_by_process = yaml.safe_load(content) or {}
+        if not isinstance(versions_by_process, dict):
+            print(f"Warning: versions file is not a dict, got {type(versions_by_process)}")
+            versions_by_process = {}
+except yaml.YAMLError as e:
+    print(f"Warning: Failed to parse YAML from $versions: {e}")
+    print("Continuing with empty versions...")
+    versions_by_process = {}
+except Exception as e:
+    print(f"Warning: Unexpected error reading $versions: {e}")
+    versions_by_process = {}
+
+versions_by_process.update(versions_this_module)
 
 # aggregate versions by the module name (derived from fully-qualified process name)
 versions_by_module = {}
