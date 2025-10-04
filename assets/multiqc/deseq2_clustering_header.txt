@@ -18,5 +18,4 @@
 #        - [0.75, '#C6DBEF']
 #        - [0.875, '#DEEBF7']
 #        - [1.0, '#F7FBFF']
-#extra:
-#    plot_order: 2
+
