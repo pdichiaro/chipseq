@@ -66,6 +66,7 @@ include { PLOT_MACS2_QC                                            } from '../mo
 include { PLOT_MACS2_QC as PLOT_MACS2_QC_CONSENSUS_CONDITION       } from '../modules/local/plot_macs2_qc'
 include { PLOT_HOMER_ANNOTATEPEAKS                                 } from '../modules/local/plot_homer_annotatepeaks'
 include { PLOT_HOMER_ANNOTATEPEAKS as PLOT_HOMER_ANNOTATEPEAKS_CONSENSUS_CONDITION } from '../modules/local/plot_homer_annotatepeaks'
+include { PLOT_PEAK_INTERSECT_SAMPLES          } from '../modules/local/plot_peak_intersect_samples'
 include { MACS2_CONSENSUS                     } from '../modules/local/macs2_consensus'
 include { MACS2_CONSENSUS_BY_CONDITION        } from '../modules/local/macs2_consensus_by_condition'
 include { ANNOTATE_BOOLEAN_PEAKS              } from '../modules/local/annotate_boolean_peaks'
@@ -624,6 +625,26 @@ workflow CHIPSEQ {
             ch_plothomerannotatepeaks_multiqc = PLOT_HOMER_ANNOTATEPEAKS.out.tsv
             ch_versions = ch_versions.mix(PLOT_HOMER_ANNOTATEPEAKS.out.versions)
         }
+    }
+
+    //
+    // MODULE: Plot peak intersections for all individual samples (before consensus)
+    // This creates an UpSet plot showing overlaps between all individual sample peaks
+    // grouped by antibody
+    //
+    if (!params.skip_peak_qc) {
+        ch_macs2_peaks
+            .map { 
+                meta, peak ->
+                    [ meta.antibody, peak ]
+            }
+            .groupTuple()
+            .set { ch_antibody_individual_peaks }
+
+        PLOT_PEAK_INTERSECT_SAMPLES (
+            ch_antibody_individual_peaks
+        )
+        ch_versions = ch_versions.mix(PLOT_PEAK_INTERSECT_SAMPLES.out.versions.first())
     }
 
     //
