@@ -9,15 +9,16 @@ export_plots: true
 
 custom_content:
   order:
-    # DESeq2 plots ordered by number prefix (01-08)
+    # DESeq2 plots - ordering primarily controlled by numbered prefixes in section_name metadata
+    # These patterns preserved for compatibility but may be redundant with parent section approach
     - '01_featurecounts.deseq2.all_genes.read.distribution_*'
     - '02_featurecounts.deseq2.all_genes.sample.dists_*'
-    - '03_featurecounts.deseq2.all_genes.pca*'
-    - '04_featurecounts.deseq2.all_genes.pca.top500*'
+    - '03_featurecounts.deseq2.all_genes.pca.vals_*'
+    - '04_featurecounts.deseq2.all_genes.pca.top500.vals_*'
     - '05_featurecounts.deseq2.invariant_genes.read.distribution_*'
     - '06_featurecounts.deseq2.invariant_genes.sample.dists_*'
-    - '07_featurecounts.deseq2.invariant_genes.pca*'
-    - '08_featurecounts.deseq2.invariant_genes.pca.top500*'
+    - '07_featurecounts.deseq2.invariant_genes.pca.vals_*'
+    - '08_featurecounts.deseq2.invariant_genes.pca.top500.vals_*'
 
 run_modules:
   - custom_content
@@ -93,38 +94,21 @@ report_section_order:
     before: peak_count
   peak_annotation:
     before: frip_score
-  strand_shift_correlation:
+  deseq2-featurecounts-qc:
     before: peak_annotation
+  strand_shift_correlation:
+    before: deseq2-featurecounts-qc
   nsc_coefficient:
     before: strand_shift_correlation
   rsc_coefficient:
     before: nsc_coefficient
   mlib_featurecounts:
     before: rsc_coefficient
-  # DESeq2 QC parent sections (ChIP-seq uses featureCounts)
-  # Positioned after featureCounts for logical flow
-  deseq2-featurecounts-qc:
-    after: mlib_featurecounts
-  # DESeq2 individual plots ordered within parent section
-  01_deseq2_read_distribution:
-    after: deseq2-featurecounts-qc
-  02_deseq2_sample_distance:
-    after: 01_deseq2_read_distribution
-  03_deseq2_pca:
-    after: 02_deseq2_sample_distance
-  04_deseq2_pca_top500:
-    after: 03_deseq2_pca
-  05_deseq2_read_distribution:
-    after: 04_deseq2_pca_top500
-  06_deseq2_sample_distance:
-    after: 05_deseq2_read_distribution
-  07_deseq2_pca:
-    after: 06_deseq2_sample_distance
-  08_deseq2_pca_top500:
-    after: 07_deseq2_pca
-  # ChIP-seq software versions summary - positioned at the end of report
-  nf-core-chipseq-summary:
+  # ChIP-seq software versions and workflow summary - positioned at the end of report
+  software_versions:
     order: 10000
+  nf-core-chipseq-summary:
+    order: 10001
 
 custom_plot_config:
   picard_insert_size:
