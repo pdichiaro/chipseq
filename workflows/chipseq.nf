@@ -874,6 +874,7 @@ workflow CHIPSEQ {
     
     // Combine all three channels in order: read_dist + clustering + pca
     // Then sort alphabetically to ensure deterministic ordering
+    // IMPORTANT: Keep as list (no flatten) to preserve order when passed to MultiQC
     ch_deseq2_all_multiqc = ch_deseq2_read_dist_multiqc
         .mix(ch_deseq2_clustering_multiqc)
         .mix(ch_deseq2_pca_multiqc)
@@ -885,7 +886,6 @@ workflow CHIPSEQ {
             }
             sortedList
         }
-        .flatten()
 
     ch_versions = ch_versions.mix(ch_normalization_versions)
 
@@ -1065,7 +1065,7 @@ workflow CHIPSEQ {
             ch_plothomerannotatepeaks_multiqc.collect().ifEmpty([]),
             ch_subreadfeaturecounts_multiqc.collect{it[1]}.ifEmpty([]),
 
-            ch_deseq2_all_multiqc.collect().ifEmpty([]),
+            ch_deseq2_all_multiqc.ifEmpty([]),  // Already a sorted list - do NOT collect() or flatten()
             Channel.empty().collect().ifEmpty([])
         )
         multiqc_report = MULTIQC.out.report.toList()
