@@ -56,13 +56,15 @@ process MULTIQC {
     path "versions.yml"        , emit: versions
 
     script:
-    def args          = task.ext.args ?: ''
-    def custom_config = params.multiqc_config ? "--config $mqc_custom_config" : ''
+    def args           = task.ext.args ?: ''
+    def default_config = "--config $multiqc_config"
+    def custom_config  = mqc_custom_config ? "--config $mqc_custom_config" : ''
     
     """
     multiqc \\
         -f \\
         $args \\
+        $default_config \\
         $custom_config \\
         .
 
