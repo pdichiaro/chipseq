@@ -106,22 +106,22 @@ report_section_order:
   # Positioned after featureCounts and before software versions
   deseq2-featurecounts-qc:
     order: -1000
-  # Individual DESeq2 plots in alphabetical order
-  01_deseq2_read_distribution:
+  # Individual DESeq2 plots in alphabetical order (All Genes: 01-04, Invariant: 05-08)
+  01_deseq2_read_distribution_featurecounts_all_genes:
     order: -1100
-  02_deseq2_sample_distance:
+  02_deseq2_sample_distance_featurecounts_all_genes:
     order: -1200
-  03_deseq2_pca:
+  03_deseq2_pca_featurecounts_all_genes:
     order: -1300
-  04_deseq2_pca_top500:
+  04_deseq2_pca_top500_featurecounts_all_genes:
     order: -1400
-  05_deseq2_read_distribution:
+  05_deseq2_read_distribution_featurecounts_invariant_genes:
     order: -1500
-  06_deseq2_sample_distance:
+  06_deseq2_sample_distance_featurecounts_invariant_genes:
     order: -1600
-  07_deseq2_pca:
+  07_deseq2_pca_featurecounts_invariant_genes:
     order: -1700
-  08_deseq2_pca_top500:
+  08_deseq2_pca_top500_featurecounts_invariant_genes:
     order: -1800
   # ChIP-seq workflow summary - positioned at the end of report
   nf-core-chipseq-summary:
