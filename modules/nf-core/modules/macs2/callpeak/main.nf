@@ -45,7 +45,7 @@ process MACS2_CALLPEAK {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        macs2: \$(macs2 --version | sed -e "s/macs2 //g")
+        macs2: \$(macs2 --version 2>&1 | head -n1 | sed 's/^macs2 //')
     END_VERSIONS
     """
 }

@@ -33,7 +33,7 @@ process DEEPTOOLS_COMPUTEMATRIX {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        deeptools: \$(computeMatrix --version | sed -e "s/computeMatrix //g")
+        deeptools: \$(computeMatrix --version 2>&1 | head -n1 | sed 's/^computeMatrix //')
     END_VERSIONS
     """
 }

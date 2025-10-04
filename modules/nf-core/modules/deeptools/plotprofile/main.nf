@@ -30,7 +30,7 @@ process DEEPTOOLS_PLOTPROFILE {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        deeptools: \$(plotProfile --version | sed -e "s/plotProfile //g")
+        deeptools: \$(plotProfile --version 2>&1 | head -n1 | sed 's/^plotProfile //')
     END_VERSIONS
     """
 }

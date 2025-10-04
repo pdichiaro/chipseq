@@ -35,7 +35,7 @@ process DEEPTOOLS_PLOTFINGERPRINT {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        deeptools: \$(plotFingerprint --version | sed -e "s/plotFingerprint //g")
+        deeptools: \$(plotFingerprint --version 2>&1 | head -n1 | sed 's/^plotFingerprint //')
     END_VERSIONS
     """
 }
