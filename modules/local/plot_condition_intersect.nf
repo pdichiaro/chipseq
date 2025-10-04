@@ -29,9 +29,10 @@ process PLOT_CONDITION_INTERSECT {
     def mergecols = params.narrow_peak ? (2..10).join(',') : (2..9).join(',')
     def collapsecols = params.narrow_peak ? (['collapse']*9).join(',') : (['collapse']*8).join(',')
     def expandparam = params.narrow_peak ? '--is_narrow_peak' : ''
-    // Sort both arrays the same way to maintain correspondence
-    def sorted_conditions = condition_ids.sort()
-    def sorted_peaks = peaks.collect{it.toString()}.sort()
+    // Create pairs of (condition, peak_file) and sort by condition
+    def condition_peak_pairs = [condition_ids, peaks].transpose().sort { a, b -> a[0] <=> b[0] }
+    def sorted_conditions = condition_peak_pairs.collect { it[0] }
+    def sorted_peaks = condition_peak_pairs.collect { it[1].toString() }
     
     """
     # Debug: Print what we received
