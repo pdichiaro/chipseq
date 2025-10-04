@@ -25,6 +25,13 @@ process DESEQ2_TRANSFORM {
     // Create output name with _mqc.txt suffix (replace .txt with _mqc.txt)
     def output_name = file_name.replaceAll(/\.txt$/, '_mqc.txt')
     """
+    echo "=== DESEQ2_TRANSFORM DEBUG ==="
+    echo "Input file: ${file_name}"
+    echo "Output name: ${output_name}"
+    echo "File exists: \$(test -f ${deseq2_file} && echo YES || echo NO)"
+    echo "File size: \$(wc -l ${deseq2_file} 2>/dev/null || echo 'Cannot read')"
+    echo "=============================="
+    
     # Detect quantifier and level from filename for unique IDs and section anchors
     # Filename patterns: featureCounts.deseq2.all_genes.*, featureCounts.deseq2.invariant_genes.*, etc.
     QUANTIFIER=""
@@ -123,6 +130,10 @@ process DESEQ2_TRANSFORM {
         cp ${deseq2_file} "${output_name}"
         echo "Copied ${output_name} without header (unknown type)"
     fi
+    
+    echo "=== FILES CREATED ==="
+    ls -lh *_mqc.txt 2>/dev/null || echo "No *_mqc.txt files found!"
+    echo "====================="
 
     cat <<END_VERSIONS > versions.yml
 "${task.process}":
