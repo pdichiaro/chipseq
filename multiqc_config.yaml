@@ -1,0 +1,20 @@
+# MultiQC Configuration
+# Custom section ordering for DESeq2 FeatureCounts QC report
+
+report_section_order:
+  01_deseq2_read_distribution_featurecounts_all_genes:
+    order: 1000
+  02_deseq2_sample_distances_featurecounts_all_genes:
+    order: 900
+  03_deseq2_pca_featurecounts_all_genes:
+    order: 800
+  04_deseq2_pca_top500_featurecounts_all_genes:
+    order: 700
+  05_deseq2_read_distribution_featurecounts_invariant_genes:
+    order: 600
+  06_deseq2_sample_distances_featurecounts_invariant_genes:
+    order: 500
+  07_deseq2_pca_featurecounts_invariant_genes:
+    order: 400
+  08_deseq2_pca_top500_featurecounts_invariant_genes:
+    order: 300
