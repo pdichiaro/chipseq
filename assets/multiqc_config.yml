@@ -31,7 +31,6 @@ run_modules:
   - phantompeakqualtools
 
 exclude_modules:
-  - "general_stats"
   - "software_versions"
 
 module_order:
