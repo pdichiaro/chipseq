@@ -19,21 +19,35 @@ The final MACS2_CONSENSUS step was trying to create an UpSet plot with only 2-3 
 ### 0. R Script Input Validation (ADDED)
 **Modified:** `bin/plot_peak_intersect.r`
 
-Added validation to check if there are at least 2 sets before creating UpSet plot:
+Added validation to check if there are enough sets AND intersections before creating UpSet plot:
 
 ```r
-# Check if we have at least 2 sets for UpSet plot
-if (length(sets) < 2) {
-    warning("Not enough sets for UpSet plot (need at least 2, found ", length(sets), "). Creating empty PDF.")
+# Check if we have enough data for UpSet plot
+# Need at least 2 sets AND at least 2 different intersections
+num_sets <- length(sets)
+num_intersects <- length(comb.vec)
+
+if (num_sets < 2 || num_intersects < 2) {
+    warning("Not enough data for UpSet plot (need at least 2 sets and 2 intersections, found ", 
+            num_sets, " sets and ", num_intersects, " intersections). Creating placeholder PDF.")
     pdf(opt$output_file,onefile=F,height=10,width=20)
     plot.new()
-    text(0.5, 0.5, paste0("Not enough data for UpSet plot\n(need at least 2 sets, found ", length(sets), ")"), cex=1.5)
+    text(0.5, 0.5, paste0("Not enough data for UpSet plot\n", 
+                          "Found ", num_sets, " sets and ", num_intersects, " intersection(s)\n",
+                          "Need at least 2 sets and 2 different intersections"), 
+         cex=1.5)
     dev.off()
     quit(save="no", status=0)
 }
 ```
 
-This prevents the `colSums()` error by gracefully handling edge cases with insufficient data.
+**Why both checks are needed:**
+- **Sets check:** Ensures there are at least 2 different samples/conditions
+- **Intersections check:** Ensures there are at least 2 different overlap patterns
+
+The `colSums()` error occurs when all peaks belong to the same combination (e.g., all peaks are shared by ALL samples). In this case there are multiple sets but only ONE intersection row, making the data matrix one-dimensional.
+
+This prevents the `colSums()` error by gracefully handling all edge cases with insufficient data.
 
 ### 1. Individual Samples Plot (NEW)
 **Module:** `modules/local/plot_peak_intersect_samples.nf`

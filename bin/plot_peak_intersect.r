@@ -46,12 +46,19 @@ comb.vec <- comb.dat[,2]
 comb.vec <- setNames(comb.vec,comb.dat[,1])
 sets <- sort(unique(unlist(strsplit(names(comb.vec),split='&'))), decreasing = TRUE)
 
-# Check if we have at least 2 sets for UpSet plot
-if (length(sets) < 2) {
-    warning("Not enough sets for UpSet plot (need at least 2, found ", length(sets), "). Creating empty PDF.")
+# Check if we have enough data for UpSet plot
+# Need at least 2 sets AND at least 2 different intersections
+num_sets <- length(sets)
+num_intersects <- length(comb.vec)
+
+if (num_sets < 2 || num_intersects < 2) {
+    warning("Not enough data for UpSet plot (need at least 2 sets and 2 intersections, found ", num_sets, " sets and ", num_intersects, " intersections). Creating placeholder PDF.")
     pdf(opt$output_file,onefile=F,height=10,width=20)
     plot.new()
-    text(0.5, 0.5, paste0("Not enough data for UpSet plot\n(need at least 2 sets, found ", length(sets), ")"), cex=1.5)
+    text(0.5, 0.5, paste0("Not enough data for UpSet plot\n", 
+                          "Found ", num_sets, " sets and ", num_intersects, " intersection(s)\n",
+                          "Need at least 2 sets and 2 different intersections"), 
+         cex=1.5)
     dev.off()
     quit(save="no", status=0)
 }
