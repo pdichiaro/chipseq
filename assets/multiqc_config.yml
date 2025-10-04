@@ -88,31 +88,46 @@ module_order:
         - "./macs2/featurecounts/*.summary"
 
 report_section_order:
-  # Use explicit numeric ordering for precise control
-  # Lower numbers appear first in the report
-  mlib_deeptools:
-    order: 100
   peak_count:
-    order: 200
+    before: mlib_deeptools
   frip_score:
-    order: 300
+    before: peak_count
   peak_annotation:
-    order: 400
+    before: frip_score
   strand_shift_correlation:
-    order: 500
+    before: peak_annotation
   nsc_coefficient:
-    order: 600
+    before: strand_shift_correlation
   rsc_coefficient:
-    order: 700
+    before: nsc_coefficient
   mlib_featurecounts:
-    order: 800
+    before: rsc_coefficient
+  # DESeq2 plots with negative ordering (nf-core style)
+  # Positioned after featureCounts and before software versions
   deseq2-featurecounts-qc:
-    order: 900
+    order: -1000
+  # Individual DESeq2 plots in alphabetical order
+  01_deseq2_read_distribution:
+    order: -1100
+  02_deseq2_sample_distance:
+    order: -1200
+  03_deseq2_pca:
+    order: -1300
+  04_deseq2_pca_top500:
+    order: -1400
+  05_deseq2_read_distribution:
+    order: -1500
+  06_deseq2_sample_distance:
+    order: -1600
+  07_deseq2_pca:
+    order: -1700
+  08_deseq2_pca_top500:
+    order: -1800
   # ChIP-seq software versions and workflow summary - positioned at the end of report
   software_versions:
-    order: 10000
+    order: -2000
   nf-core-chipseq-summary:
-    order: 10001
+    order: -2100
 
 custom_plot_config:
   picard_insert_size:
