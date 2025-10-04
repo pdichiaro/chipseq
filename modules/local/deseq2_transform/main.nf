@@ -123,7 +123,7 @@ process DESEQ2_TRANSFORM {
         SECTION_TITLE="\$(printf '%02d' \$PLOT_NUM). Read Distribution (\${SECTION_NAME})"
         PLOT_TITLE="Read Distribution (\${SECTION_NAME})"
         output_file="\${PLOT_ID}_mqc.txt"
-        sed "s|#section_anchor:.*|#parent_id: '\${QUANTIFIER}'\\n#parent_name: '\${PARENT_NAME}'|; s|#section_name:.*|#section_name: '\\${SECTION_TITLE}'|; s|#id:.*|#id: '\${PLOT_ID}'|; s|title:.*|title: '\${PLOT_TITLE}'|" ${read_dist_header} > temp_header.txt
+        sed "s|#section_anchor:.*|#parent_id: '\${QUANTIFIER}'\\n#parent_name: '\${PARENT_NAME}'|; s|#section_name:.*|#section_name: '\${SECTION_TITLE}'|; s|#id:.*|#id: '\${PLOT_ID}'|; s|title:.*|title: '\${PLOT_TITLE}'|" ${read_dist_header} > temp_header.txt
         cat temp_header.txt ${deseq2_file} > temp_output.txt
         mv temp_output.txt "\${output_file}"
         echo "Created \${output_file} with read distribution header (ID: \${PLOT_ID}, section: \${SECTION_TITLE}, parent: \${QUANTIFIER})"
