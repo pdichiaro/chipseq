@@ -92,28 +92,12 @@ report_section_order:
   mlib_featurecounts:
     before: rsc_coefficient
   # DESeq2 parent section positioned after main workflow sections
-  # Uses negative order value (nf-core style) to position before final summary
-  # Plot ordering within section handled automatically via numeric prefixes in section names
+  # Plot ordering within section handled by numeric prefixes in:
+  #   - plot IDs (01_, 02_, 03_, 04_, 05_, 06_, 07_, 08_)
+  #   - plot_order values (dynamically set to match plot number)
+  # This ensures consistent ordering both in section list and within parent section
   deseq2-featurecounts-qc:
     before: mlib_featurecounts
-  # Explicit ordering for DESeq2 subsections (numeric prefixes alone don't guarantee order)
-  # Lower order values appear FIRST in MultiQC reports
-  01. Read Distribution (All Genes):
-    order: 100
-  02. Sample Distances (All Genes):
-    order: 200
-  03. PCA (All Genes):
-    order: 300
-  04. PCA Top 500 (All Genes):
-    order: 400
-  05. Read Distribution (Invariant Genes):
-    order: 500
-  06. Sample Distances (Invariant Genes):
-    order: 600
-  07. PCA (Invariant Genes):
-    order: 700
-  08. PCA Top 500 (Invariant Genes):
-    order: 800
   # ChIP-seq workflow summary - positioned at the end of report
   nf-core-chipseq-summary:
     order: -999
