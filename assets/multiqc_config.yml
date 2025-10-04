@@ -7,8 +7,10 @@ data_format: "yaml"
 
 export_plots: true
 
-# DESeq2 plot ordering handled by numbered prefixes in section_name (01., 02., 03., 04.)
-# to force alphabetical sorting (same approach as pdichiaro/rnaseq)
+# DESeq2 plot ordering handled by numbered prefixes in:
+# - section_name (01., 02., 03., 04.) for visible titles
+# - plot IDs and filenames (01_, 02_, 03_, 04_) for MultiQC sorting
+# (same approach as pdichiaro/rnaseq)
 
 run_modules:
   - custom_content
