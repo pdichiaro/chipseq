@@ -137,19 +137,19 @@ process DESEQ2_TRANSFORM {
     ls -lh *_mqc.txt 2>/dev/null || echo "No *_mqc.txt files found!"
     echo "====================="
 
-    cat <<END_VERSIONS > versions.yml
-"${task.process}":
-    bash: \$(bash --version | head -n1 | awk '{print \$4}')
-END_VERSIONS
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        bash: \$(bash --version | head -n1 | awk '{print \$4}')
+    END_VERSIONS
     """
 
     stub:
     """
     touch stub_file.txt
 
-    cat <<END_VERSIONS > versions.yml
-"${task.process}":
-    bash: \$(bash --version | head -n1 | awk '{print \$4}')
-END_VERSIONS
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        bash: \$(bash --version | head -n1 | awk '{print \$4}')
+    END_VERSIONS
     """
 }
