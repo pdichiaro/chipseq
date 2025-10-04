@@ -733,7 +733,10 @@ workflow CHIPSEQ {
             // MODULE: MACS2 QC plots for consensus peaks by condition
             //
             PLOT_MACS2_QC_CONSENSUS_CONDITION (
-                MACS2_CONSENSUS_BY_CONDITION.out.peaks.collect{it[1]}
+                MACS2_CONSENSUS_BY_CONDITION.out.peaks
+                    .map { meta, peaks -> [meta.antibody, meta, peaks] }
+                    .groupTuple(by: 0)
+                    .map { antibody, metas, peaks -> [metas[0], peaks] }
             )
             ch_versions = ch_versions.mix(PLOT_MACS2_QC_CONSENSUS_CONDITION.out.versions)
 
@@ -741,7 +744,10 @@ workflow CHIPSEQ {
             // MODULE: Peak annotation QC plots for consensus peaks by condition
             //
             PLOT_HOMER_ANNOTATEPEAKS_CONSENSUS_CONDITION (
-                HOMER_ANNOTATEPEAKS_CONSENSUS_CONDITION.out.txt.collect{it[1]},
+                HOMER_ANNOTATEPEAKS_CONSENSUS_CONDITION.out.txt
+                    .map { meta, txt -> [meta.antibody, meta, txt] }
+                    .groupTuple(by: 0)
+                    .map { antibody, metas, txts -> [metas[0], txts] },
                 ch_peak_annotation_header,
                 "_peaks.condition.annotatePeaks.txt"
             )

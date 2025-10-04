@@ -34,29 +34,60 @@ process PLOT_CONDITION_INTERSECT {
     def condition_names = condition_ids.collect { it.replaceAll("_peaks\\.${peak_type}\$", "") }.join(',')
     
     """
-    # Sort and merge all condition consensus peaks
-    sort -T '.' -k1,1 -k2,2n ${peaks.collect{it.toString()}.sort().join(' ')} \\
-        | mergeBed -c $mergecols -o $collapsecols > ${prefix}.merged.txt
+    # Debug: Print what we received
+    echo "DEBUG: Antibody = ${antibody}"
+    echo "DEBUG: Number of conditions = ${condition_ids.size()}"
+    echo "DEBUG: Condition IDs = ${condition_ids.join(', ')}"
+    echo "DEBUG: Condition names = ${condition_names}"
+    echo "DEBUG: Peak files:"
+    ls -lh ${peaks.collect{it.toString()}.sort().join(' ')}
+    
+    # Approach: Tag each peak with its condition ID, then merge and count overlaps
+    # This is more reliable than relying on peak name parsing
+    
+    # First, add condition identifier to each peak file (column 4)
+    PEAK_FILES=(${peaks.collect{it.toString()}.sort().join(' ')})
+    CONDITION_NAMES=(${condition_names.split(',').join(' ')})
+    
+    for i in "\${!PEAK_FILES[@]}"; do
+        PEAK_FILE="\${PEAK_FILES[\$i]}"
+        COND_NAME="\${CONDITION_NAMES[\$i]}"
+        echo "DEBUG: Tagging \$PEAK_FILE with condition \$COND_NAME"
+        # Add condition name as prefix to peak name (column 4)
+        awk -v cond="\$COND_NAME" 'BEGIN{OFS="\\t"} {print \$1,\$2,\$3,cond"_"\$4,\$5,\$6,\$7,\$8,\$9,\$10}' "\$PEAK_FILE" > "\${COND_NAME}.tagged.bed"
+        echo "DEBUG: Tagged file \${COND_NAME}.tagged.bed created"
+        head -2 "\${COND_NAME}.tagged.bed"
+    done
+    
+    # Sort and merge all tagged peaks
+    cat *.tagged.bed | sort -k1,1 -k2,2n | \\
+        mergeBed -c $mergecols -o $collapsecols > ${prefix}.merged.txt
+    
+    echo "DEBUG: Merged file line count:"
+    wc -l ${prefix}.merged.txt
   
-    # Create boolean matrix to show which CONDITIONS have peaks in each region
-    macs2_merged_expand.py \\
+    echo "DEBUG: First few lines of merged file:"
+    head -3 ${prefix}.merged.txt
+    
+    # Use custom script to generate intersection data directly
+    echo "DEBUG: Running plot_condition_intersect_custom.py with condition_names: ${condition_names}"
+    
+    plot_condition_intersect_custom.py \\
         ${prefix}.merged.txt \\
-        ${condition_names} \\
-        ${prefix}.boolean.txt \\
-        --min_replicates 1 \\
-        $expandparam
+        "${condition_names}" \\
+        ${prefix}.conditions.intersect.txt
+    
+    echo "DEBUG: Intersect file content:"
+    cat ${prefix}.conditions.intersect.txt
 
     # Generate UpSet plot showing peak overlaps between CONDITIONS
-    if [ -s ${prefix}.boolean.intersect.txt ]; then
+    if [ -s ${prefix}.conditions.intersect.txt ]; then
         plot_peak_intersect.r \\
-            -i ${prefix}.boolean.intersect.txt \\
+            -i ${prefix}.conditions.intersect.txt \\
             -o ${prefix}.conditions.intersect.plot.pdf
     else
         echo "No intersect data available for conditions" > ${prefix}.conditions.intersect.plot.pdf
     fi
-
-    # Keep the intersect file for output
-    cp ${prefix}.boolean.intersect.txt ${prefix}.conditions.intersect.txt
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
