@@ -74,7 +74,7 @@ process BAM_FILTER {
 
         cat <<-END_VERSIONS > versions.yml
         "${task.process}":
-            samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+            samtools: \$(samtools --version 2>&1 | head -n1 | sed 's/^samtools //')
         END_VERSIONS
         """
         
@@ -99,7 +99,7 @@ process BAM_FILTER {
 
         cat <<-END_VERSIONS > versions.yml
         "${task.process}":
-            samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+            samtools: \$(samtools --version 2>&1 | head -n1 | sed 's/^samtools //')
         END_VERSIONS
         """
 
