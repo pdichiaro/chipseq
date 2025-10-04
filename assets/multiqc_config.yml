@@ -154,8 +154,8 @@ table_columns_visible:
   # FastQC - show only essential metrics
   FastQC:
     total_sequences: True
-    percent_duplicates: False  # Use Picard instead
-    percent_gc: True
+    percent_duplicates: False  # Hidden - use Picard duplication instead
+    percent_gc: False  # Hidden per user request
     avg_sequence_length: False
     percent_fails: False
     total_sequences_unit: False
@@ -201,11 +201,12 @@ table_columns_visible:
     Unassigned_NoFeatures: False
     Unassigned_Ambiguity: False
     Unassigned_MultiMapping: False
-  # Phantom Peak Qual Tools - show quality scores (critical for ChIP-seq)
+  # Phantom Peak Qual Tools - hide all metrics per user request
   phantompeakqualtools:
-    NSC: True
-    RSC: True
-    phantompeakqualtools_fragment_length: False
+    NSC: False  # Hidden per user request
+    RSC: False  # Hidden per user request
+    phantompeakqualtools_fragment_length: False  # Hidden (Estimated Fragment Length)
+    Estimated_Fragment_Length_bp: False  # Alternative name for fragment length
 
 # Color thresholds for key ChIP-seq quality metrics
 # Helps quickly identify problematic samples in General Statistics table
