@@ -128,7 +128,9 @@ report_section_order:
     after: 06_deseq2_sample_distance
   08_deseq2_pca_top500:
     after: 07_deseq2_pca
-  # ChIP-seq software versions summary - positioned at the end of report
+  # ChIP-seq workflow and software summaries - positioned at the end of report
+  chipseq-summary:
+    order: 9999
   nf-core-chipseq-summary:
     order: 10000
 
