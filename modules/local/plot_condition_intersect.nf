@@ -30,8 +30,8 @@ process PLOT_CONDITION_INTERSECT {
     def collapsecols = params.narrow_peak ? (['collapse']*9).join(',') : (['collapse']*8).join(',')
     def expandparam = params.narrow_peak ? '--is_narrow_peak' : ''
     
-    // Create clean condition names for labeling (remove _peaks.narrowPeak suffix)
-    def condition_names = condition_ids.collect { it.replaceAll("_peaks\\.${peak_type}\$", "") }.join(',')
+    // Create clean condition names (same method as PLOT_MACS2_QC_CONSENSUS)
+    def condition_names = condition_ids.join(',').replaceAll("_peaks\\.${peak_type}", "")
     
     """
     # Debug: Print what we received
