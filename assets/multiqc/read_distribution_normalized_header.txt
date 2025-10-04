@@ -13,5 +13,5 @@
 #    orientation: 'v'
 #    xlab: 'Sample'
 #    ylab: 'Normalized Expression (log2)'
-extra:
-    plot_order: 1
+#extra:
+#    plot_order: 1
