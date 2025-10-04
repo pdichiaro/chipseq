@@ -140,7 +140,7 @@ process DESEQ2_TRANSFORM {
         ls -lah
         exit 1
     }
-    echo "✅ Found $(ls *_mqc.txt 2>/dev/null | wc -l) MultiQC files"
+    echo "✅ Found \$(ls *_mqc.txt 2>/dev/null | wc -l) MultiQC files"
     echo "====================="
 
     cat <<END_VERSIONS > versions.yml
