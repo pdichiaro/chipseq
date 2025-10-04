@@ -866,8 +866,8 @@ workflow CHIPSEQ {
         DESEQ2_TRANSFORM.out.multiqc_files
             .flatten()
             .filter { file -> 
-                file.name =~ /.*\.sample\.dists\..*_mqc\.txt$/ || 
-                file.name =~ /.*\.read\.distribution\..*_mqc\.txt$/
+                file.name =~ /.*\.sample\.dists.*_mqc\.txt$/ || 
+                file.name =~ /.*\.read\.distribution.*_mqc\.txt$/
             }
     )
 
