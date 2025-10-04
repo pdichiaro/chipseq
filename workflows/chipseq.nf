@@ -629,6 +629,8 @@ workflow CHIPSEQ {
     ch_macs2_consensus_txt_lib   = Channel.empty()
     ch_deseq2_pca_multiqc        = Channel.empty()
     ch_deseq2_clustering_multiqc = Channel.empty()
+    ch_deseq2_read_dist_multiqc  = Channel.empty()
+    ch_deseq2_all_multiqc        = Channel.empty()
 
     // It makes by default a consensus - this is used to quantify and compute scaling FACTORS:
 
@@ -740,6 +742,8 @@ workflow CHIPSEQ {
     
     ch_deseq2_pca_multiqc        = Channel.empty()
     ch_deseq2_clustering_multiqc = Channel.empty()
+    ch_deseq2_read_dist_multiqc  = Channel.empty()
+    ch_deseq2_all_multiqc        = Channel.empty()
     ch_size_factors              = Channel.empty()
     ch_scaling_factors_all       = Channel.empty()
     ch_deseq2_raw_files          = Channel.empty()
@@ -847,25 +851,41 @@ workflow CHIPSEQ {
     ch_versions = ch_versions.mix(DESEQ2_TRANSFORM.out.versions.first())
     
     // Populate MultiQC channels with transformed DESeq2 files
-    // Sort files to ensure deterministic ordering in MultiQC report
+    // Separate files into 3 channels, then combine and sort at the end
+    
+    // Channel 1: Read distribution files
+    ch_deseq2_read_dist_multiqc = DESEQ2_TRANSFORM.out.multiqc_files
+        .flatten()
+        .filter { file -> file.name =~ /.*read\.distribution.*_mqc\.txt$/ }
+    
+    // Channel 2: Clustering files (sample distance)
+    ch_deseq2_clustering_multiqc = ch_deseq2_clustering_multiqc.mix(
+        DESEQ2_TRANSFORM.out.multiqc_files
+            .flatten()
+            .filter { file -> file.name =~ /.*\.sample\.dists.*_mqc\.txt$/ }
+    )
+    
+    // Channel 3: PCA files
     ch_deseq2_pca_multiqc = ch_deseq2_pca_multiqc.mix(
         DESEQ2_TRANSFORM.out.multiqc_files
             .flatten()
             .filter { file -> file.name =~ /.*\.pca\..*_mqc\.txt$/ }
-            .toSortedList { a, b -> a.name <=> b.name }
-            .flatten()
     )
-
-    ch_deseq2_clustering_multiqc = ch_deseq2_clustering_multiqc.mix(
-        DESEQ2_TRANSFORM.out.multiqc_files
-            .flatten()
-            .filter { file -> 
-                file.name =~ /.*\.sample\.dists.*_mqc\.txt$/ || 
-                file.name =~ /.*read\.distribution.*_mqc\.txt$/
+    
+    // Combine all three channels in order: read_dist + clustering + pca
+    // Then sort alphabetically to ensure deterministic ordering
+    ch_deseq2_all_multiqc = ch_deseq2_read_dist_multiqc
+        .mix(ch_deseq2_clustering_multiqc)
+        .mix(ch_deseq2_pca_multiqc)
+        .toSortedList { a, b -> a.name <=> b.name }
+        .map { sortedList ->
+            println "[DEBUG] All DESeq2 files sorted order:"
+            sortedList.eachWithIndex { file, idx ->
+                println "  ${idx + 1}. ${file.name}"
             }
-            .toSortedList { a, b -> a.name <=> b.name }
-            .flatten()
-    )
+            sortedList
+        }
+        .flatten()
 
     ch_versions = ch_versions.mix(ch_normalization_versions)
 
@@ -1045,8 +1065,8 @@ workflow CHIPSEQ {
             ch_plothomerannotatepeaks_multiqc.collect().ifEmpty([]),
             ch_subreadfeaturecounts_multiqc.collect{it[1]}.ifEmpty([]),
 
-            ch_deseq2_pca_multiqc.collect().ifEmpty([]),
-            ch_deseq2_clustering_multiqc.collect().ifEmpty([])
+            ch_deseq2_all_multiqc.collect().ifEmpty([]),
+            Channel.empty().collect().ifEmpty([])
         )
         multiqc_report = MULTIQC.out.report.toList()
     }
