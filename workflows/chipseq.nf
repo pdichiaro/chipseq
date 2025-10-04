@@ -879,13 +879,6 @@ workflow CHIPSEQ {
         .mix(ch_deseq2_clustering_multiqc)
         .mix(ch_deseq2_pca_multiqc)
         .toSortedList { a, b -> a.name <=> b.name }
-        .map { sortedList ->
-            println "[DEBUG] All DESeq2 files sorted order:"
-            sortedList.eachWithIndex { file, idx ->
-                println "  ${idx + 1}. ${file.name}"
-            }
-            sortedList
-        }
 
     ch_versions = ch_versions.mix(ch_normalization_versions)
 
@@ -1025,6 +1018,15 @@ workflow CHIPSEQ {
     if (!params.skip_multiqc) {
         workflow_summary    = WorkflowChipseq.paramsSummaryMultiqc(workflow, summary_params)
         ch_workflow_summary = Channel.value(workflow_summary)
+
+        // Debug: Verify DESeq2 file order before passing to MultiQC
+        ch_deseq2_all_multiqc
+            .subscribe { fileList ->
+                println "[DEBUG] DESeq2 files being passed to MultiQC (final order):"
+                fileList.eachWithIndex { file, idx ->
+                    println "  ${idx + 1}. ${file.name}"
+                }
+            }
 
         MULTIQC (
             ch_multiqc_config,
