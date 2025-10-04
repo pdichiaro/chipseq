@@ -14,7 +14,26 @@ After implementing the two-level consensus system:
 
 The final MACS2_CONSENSUS step was trying to create an UpSet plot with only 2-3 input files (condition consensus peaks), which doesn't have enough dimensions for the R UpSet plot.
 
-## Solution: Two Separate Plots
+## Solution: Input Validation + Two Separate Plots
+
+### 0. R Script Input Validation (ADDED)
+**Modified:** `bin/plot_peak_intersect.r`
+
+Added validation to check if there are at least 2 sets before creating UpSet plot:
+
+```r
+# Check if we have at least 2 sets for UpSet plot
+if (length(sets) < 2) {
+    warning("Not enough sets for UpSet plot (need at least 2, found ", length(sets), "). Creating empty PDF.")
+    pdf(opt$output_file,onefile=F,height=10,width=20)
+    plot.new()
+    text(0.5, 0.5, paste0("Not enough data for UpSet plot\n(need at least 2 sets, found ", length(sets), ")"), cex=1.5)
+    dev.off()
+    quit(save="no", status=0)
+}
+```
+
+This prevents the `colSums()` error by gracefully handling edge cases with insufficient data.
 
 ### 1. Individual Samples Plot (NEW)
 **Module:** `modules/local/plot_peak_intersect_samples.nf`
@@ -66,6 +85,6 @@ Now you get **TWO** UpSet plots per antibody:
 Both plots are meaningful and have sufficient data dimensions for the UpSet visualization.
 
 ## Files Modified
-- `chipseq/modules/local/plot_peak_intersect_samples.nf` (NEW)
-- `chipseq/workflows/chipseq.nf` (added include and process call)
-- `chipseq/modules/local/macs2_consensus.nf` (reverted to original - no try/catch)
+- `bin/plot_peak_intersect.r` (MODIFIED - added input validation)
+- `modules/local/plot_peak_intersect_samples.nf` (NEW)
+- `workflows/chipseq.nf` (added include and process call)
