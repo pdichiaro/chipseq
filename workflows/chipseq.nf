@@ -1004,6 +1004,8 @@ workflow CHIPSEQ {
         MULTIQC (
             ch_multiqc_config,
             ch_multiqc_custom_config.collect().ifEmpty([]),
+            CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect(),
+            ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'),
 
             ch_fastqc_raw_multiqc.collect{it[1]}.ifEmpty([]),
             ch_fastqc_trim_multiqc.collect{it[1]}.ifEmpty([]),
@@ -1039,10 +1041,7 @@ workflow CHIPSEQ {
             ch_subreadfeaturecounts_multiqc.collect{it[1]}.ifEmpty([]),
 
             ch_deseq2_pca_multiqc.collect().ifEmpty([]),
-            ch_deseq2_clustering_multiqc.collect().ifEmpty([]),
-
-            CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect(),
-            ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml')
+            ch_deseq2_clustering_multiqc.collect().ifEmpty([])
         )
         multiqc_report = MULTIQC.out.report.toList()
     }
