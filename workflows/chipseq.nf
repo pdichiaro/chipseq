@@ -641,8 +641,12 @@ workflow CHIPSEQ {
 
     ch_macs2_peaks
         .map { 
-            meta, peak -> 
-                [ meta.antibody, meta.id.split('_')[0..-2].join('_'), peak ] 
+            meta, peak ->
+                // Extract group identifier by removing _REP{N}_T{M} suffix
+                // Handle edge cases where id may not have expected format
+                def id_parts = meta.id.split('_')
+                def group_id = id_parts.size() >= 3 ? id_parts[0..-3].join('_') : meta.id
+                [ meta.antibody, group_id, peak ] 
         }
         .groupTuple()
         .map {
