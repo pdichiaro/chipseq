@@ -7,8 +7,8 @@ data_format: "yaml"
 
 export_plots: true
 
-custom_content:
-  order: []
+# DESeq2 plot ordering handled by numbered prefixes in section_name (01., 02., 03., 04.)
+# to force alphabetical sorting (same approach as pdichiaro/rnaseq)
 
 run_modules:
   - custom_content
