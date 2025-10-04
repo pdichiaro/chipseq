@@ -10,14 +10,14 @@ export_plots: true
 custom_content:
   order:
     # DESeq2 plots ordered by number prefix (01-08)
-    - '01_deseq2_read_distribution_*'
-    - '02_deseq2_sample_distance_*'
-    - '03_deseq2_pca_*'
-    - '04_deseq2_pca_top500_*'
-    - '05_deseq2_read_distribution_*'
-    - '06_deseq2_sample_distance_*'
-    - '07_deseq2_pca_*'
-    - '08_deseq2_pca_top500_*'
+    - '01_featurecounts.deseq2.all_genes.read.distribution_*'
+    - '02_featurecounts.deseq2.all_genes.sample.dists_*'
+    - '03_featurecounts.deseq2.all_genes.pca*'
+    - '04_featurecounts.deseq2.all_genes.pca.top500*'
+    - '05_featurecounts.deseq2.invariant_genes.read.distribution_*'
+    - '06_featurecounts.deseq2.invariant_genes.sample.dists_*'
+    - '07_featurecounts.deseq2.invariant_genes.pca*'
+    - '08_featurecounts.deseq2.invariant_genes.pca.top500*'
 
 run_modules:
   - custom_content
