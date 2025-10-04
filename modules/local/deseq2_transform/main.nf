@@ -52,7 +52,9 @@ process DESEQ2_TRANSFORM {
         echo "Processing ${file_name}"
         echo "Using header: \${HEADER_FILE}"
         echo "Creating: ${output_name}"
-        cat "\${HEADER_FILE}" ${deseq2_file} > "${output_name}"
+        # Remove leading # from header lines, then concatenate with data
+        sed 's/^#//' "\${HEADER_FILE}" > temp_header.txt
+        cat temp_header.txt ${deseq2_file} > "${output_name}"
     else
         echo "Warning: No specific header found for ${file_name}"
         echo "Available headers:"
