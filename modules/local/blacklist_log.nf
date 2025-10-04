@@ -23,25 +23,21 @@ process BLACKLIST_LOG {
     script:
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    # Calculate total reads BEFORE filtering
-    TOTAL_READS=\$(samtools view -c ${bam_before})
+    # Count reads BEFORE blacklist filtering
+    READS_BEFORE=\$(samtools view -c ${bam_before})
     
-    # Calculate reads in blacklist regions (from BEFORE BAM)
-    READS_IN_BL=\$(bedtools intersect -a ${bam_before} -b ${blacklist} -u | samtools view -c -)
+    # Count reads AFTER blacklist filtering
+    READS_AFTER=\$(samtools view -c ${bam_after})
     
-    # Calculate ACTUAL reads in the AFTER BAM (the real filtered count)
-    READS_AFTER_BL=\$(samtools view -c ${bam_after})
+    # Calculate reads removed
+    READS_REMOVED=\$((READS_BEFORE - READS_AFTER))
     
     # Calculate percentages
-    PERCENT_REMOVED=\$(awk "BEGIN {printf \\"%.2f\\", (\$READS_IN_BL / \$TOTAL_READS) * 100}")
-    PERCENT_RETAINED=\$(awk "BEGIN {printf \\"%.2f\\", (\$READS_AFTER_BL / \$TOTAL_READS) * 100}")
+    PERCENT_REMOVED=\$(awk "BEGIN {printf \\"%.2f\\", (\$READS_REMOVED / \$READS_BEFORE) * 100}")
+    PERCENT_RETAINED=\$(awk "BEGIN {printf \\"%.2f\\", (\$READS_AFTER / \$READS_BEFORE) * 100}")
     
     # Number of blacklist regions
     NUM_BL_REGIONS=\$(wc -l < ${blacklist})
-    
-    # Calculate expected vs actual difference
-    EXPECTED_AFTER_BL=\$((TOTAL_READS - READS_IN_BL))
-    DIFF=\$((READS_AFTER_BL - EXPECTED_AFTER_BL))
     
     # Generate log
     cat > ${prefix}.blacklist.log <<EOF
@@ -50,36 +46,26 @@ BLACKLIST FILTERING LOG - Sample: ${meta.id}
 ========================================================================
 
 Date: \$(date '+%Y-%m-%d %H:%M:%S')
-Input BAM (before): ${bam_before}
-Output BAM (after): ${bam_after}
-Blacklist: ${blacklist}
+Input BAM (before filtering):  ${bam_before}
+Output BAM (after filtering):  ${bam_after}
+Blacklist regions file:        ${blacklist}
 
 ------------------------------------------------------------------------
 STATISTICS
 ------------------------------------------------------------------------
 
-Total reads in input BAM:                \$(printf "%15s" "\$(printf "%'d" \$TOTAL_READS)")
+Reads BEFORE blacklist filtering:  \$(printf "%15s" "\$(printf "%'d" \$READS_BEFORE)")
+Reads AFTER blacklist filtering:   \$(printf "%15s" "\$(printf "%'d" \$READS_AFTER)")
+Reads REMOVED:                     \$(printf "%15s" "\$(printf "%'d" \$READS_REMOVED)")  (\${PERCENT_REMOVED}%)
 
-Reads IN blacklist regions:              \$(printf "%15s" "\$(printf "%'d" \$READS_IN_BL)")  (\${PERCENT_REMOVED}%)
-Reads ACTUALLY retained (from output):   \$(printf "%15s" "\$(printf "%'d" \$READS_AFTER_BL)")  (\${PERCENT_RETAINED}%)
-
-Expected reads after filtering:          \$(printf "%15s" "\$(printf "%'d" \$EXPECTED_AFTER_BL)")
-Actual reads in filtered BAM:            \$(printf "%15s" "\$(printf "%'d" \$READS_AFTER_BL)")
-Difference (actual - expected):          \$(printf "%15s" "\$(printf "%'d" \$DIFF)")
-
-Number of blacklist regions:             \$(printf "%15s" "\$(printf "%'d" \$NUM_BL_REGIONS)")
+Number of blacklist regions:       \$(printf "%15s" "\$(printf "%'d" \$NUM_BL_REGIONS)")
 
 ------------------------------------------------------------------------
 SUMMARY
 ------------------------------------------------------------------------
 
-Reads removed by blacklist:     \$(printf "%'d" \$READS_IN_BL) (\${PERCENT_REMOVED}%)
-Reads in final filtered BAM:    \$(printf "%'d" \$READS_AFTER_BL) (\${PERCENT_RETAINED}%)
-
-$(if [ \$DIFF -ne 0 ]; then
-    echo "WARNING: Difference detected between expected and actual filtered reads!"
-    echo "         This may indicate additional filtering steps (e.g., quality, flags)"
-fi)
+Total reads removed:    \$(printf "%'d" \$READS_REMOVED) (\${PERCENT_REMOVED}%)
+Total reads retained:   \$(printf "%'d" \$READS_AFTER) (\${PERCENT_RETAINED}%)
 
 ========================================================================
 EOF
