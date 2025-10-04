@@ -53,35 +53,22 @@ process PLOT_CONDITION_INTERSECT {
     for i in "\${!PEAK_FILES[@]}"; do
         PEAK_FILE="\${PEAK_FILES[\$i]}"
         COND_NAME="\${CONDITION_NAMES[\$i]}"
-        echo "DEBUG: Tagging \$PEAK_FILE with condition \$COND_NAME"
         # Add condition name as prefix to peak name (column 4)
         awk -v cond="\$COND_NAME" 'BEGIN{OFS="\\t"} {print \$1,\$2,\$3,cond"_"\$4,\$5,\$6,\$7,\$8,\$9,\$10}' "\$PEAK_FILE" > "\${COND_NAME}.tagged.bed"
-        echo "DEBUG: Tagged file \${COND_NAME}.tagged.bed created with \$(wc -l < "\${COND_NAME}.tagged.bed") lines"
-        head -2 "\${COND_NAME}.tagged.bed"
     done
     
     # Sort and merge all tagged peaks
     cat *.tagged.bed | sort -k1,1 -k2,2n | \\
         mergeBed -c $mergecols -o $collapsecols > ${prefix}.merged.txt
     
-    echo "DEBUG: Merged file line count:"
-    wc -l ${prefix}.merged.txt
-  
-    echo "DEBUG: First few lines of merged file:"
-    head -3 ${prefix}.merged.txt
-    
     # Use custom script to generate intersection data directly
     # Create comma-separated list from bash array
     CONDITION_NAMES_CSV=\$(IFS=, ; echo "\${CONDITION_NAMES[*]}")
-    echo "DEBUG: Running plot_condition_intersect_custom.py with condition_names: \$CONDITION_NAMES_CSV"
     
     plot_condition_intersect_custom.py \\
         ${prefix}.merged.txt \\
         "\$CONDITION_NAMES_CSV" \\
         ${prefix}.conditions.intersect.txt
-    
-    echo "DEBUG: Intersect file content:"
-    cat ${prefix}.conditions.intersect.txt
 
     # Generate UpSet plot showing peak overlaps between CONDITIONS
     if [ -s ${prefix}.conditions.intersect.txt ]; then
