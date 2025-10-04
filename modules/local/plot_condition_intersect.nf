@@ -47,11 +47,11 @@ process PLOT_CONDITION_INTERSECT {
     PEAK_FILES=(${peaks.collect{it.toString()}.sort().join(' ')})
     CONDITION_IDS_SORTED=(${condition_ids.sort().join(' ')})
     
-    # Extract clean condition names from sorted IDs
+    # Extract clean condition names by removing _peaks.narrowPeak suffix from file names
     CONDITION_NAMES=()
-    for cond_id in "\${CONDITION_IDS_SORTED[@]}"; do
+    for peak_file in "\${PEAK_FILES[@]}"; do
         # Remove _peaks.narrowPeak or _peaks.broadPeak suffix
-        clean_name=\$(echo "\$cond_id" | sed 's/_peaks\.${peak_type}\$//')
+        clean_name=\$(basename "\$peak_file" | sed 's/_peaks\.${peak_type}\$//')
         CONDITION_NAMES+=("\$clean_name")
     done
     
