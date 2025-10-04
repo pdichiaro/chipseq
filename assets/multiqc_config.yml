@@ -176,26 +176,30 @@ table_columns_placement:
     RSC: 710
 
 table_columns_visible:
-  # FastQC - show only essential metrics
-  FastQC:
+  # FastQC modules - use full module names from module_order
+  "LIB: FastQC (raw)":
     total_sequences: True
     percent_duplicates: False
     percent_gc: False
     avg_sequence_length: False
     percent_fails: False
     total_sequences_unit: False
+  "LIB: FastQC (trimmed)":
+    total_sequences: False  # Already shown in raw
+    percent_duplicates: False
+    percent_gc: False
+    avg_sequence_length: False
+    percent_fails: False
+    total_sequences_unit: False
   # Cutadapt - show trimming efficiency
-  Cutadapt:
+  "LIB: cutadapt (trimmed)":
     percent_trimmed: True
     pairs_trimmed: False
-  # SAMTools - show only filtered library stats (most relevant for ChIP-seq)
-  # All columns here apply to ALL SAMTools modules (LIB, unfiltered, filtered)
-  Samtools:
-    # Show only filtered library metrics (these are the most important)
-    reads_mapped: True
-    reads_mapped_percent: True
-    error_rate: True
-    # Hide all other SAMTools metrics per user request
+  # SAMTools modules - use full module names from module_order
+  "LIB: SAMTools":
+    reads_mapped: False  # Individual library stats - less relevant
+    reads_mapped_percent: False
+    error_rate: False
     reads_duplicated: False
     reads_MQ0_percent: False
     raw_total_sequences: False
@@ -206,8 +210,46 @@ table_columns_visible:
     reads_unmapped_percent: False
     mapped_passed: False
     mapped_passed_pct: False
-  # Picard - show duplication metrics
-  Picard:
+  "MERGED LIB: SAMTools (unfiltered)":
+    reads_mapped: False
+    reads_mapped_percent: False
+    error_rate: False
+    reads_duplicated: False
+    reads_MQ0_percent: False
+    raw_total_sequences: False
+    flagstat_total: False
+    non_primary_alignments: False
+    reads_properly_paired_percent: False
+    reads_unmapped: False
+    reads_unmapped_percent: False
+    mapped_passed: False
+    mapped_passed_pct: False
+  "MERGED LIB: SAMTools (filtered)":
+    # Show only filtered library metrics (these are the most important)
+    reads_mapped: True
+    reads_mapped_percent: True
+    error_rate: True
+    # Hide all other SAMTools metrics
+    reads_duplicated: False
+    reads_MQ0_percent: False
+    raw_total_sequences: False
+    flagstat_total: False
+    non_primary_alignments: False
+    reads_properly_paired_percent: False
+    reads_unmapped: False
+    reads_unmapped_percent: False
+    mapped_passed: False
+    mapped_passed_pct: False
+  # Picard modules - use full module names
+  "MERGED LIB: Picard (unfiltered)":
+    PERCENT_DUPLICATION: False
+    ESTIMATED_LIBRARY_SIZE: False
+    READ_PAIRS_EXAMINED: False
+    UNPAIRED_READS_EXAMINED: False
+    READ_PAIR_DUPLICATES: False
+    READ_PAIR_OPTICAL_DUPLICATES: False
+    UNMAPPED_READS: False
+  "MERGED LIB: Picard (filtered)":
     PERCENT_DUPLICATION: True
     ESTIMATED_LIBRARY_SIZE: False
     READ_PAIRS_EXAMINED: False
@@ -216,7 +258,7 @@ table_columns_visible:
     READ_PAIR_OPTICAL_DUPLICATES: False
     UNMAPPED_READS: False
   # Preseq - hide by default (specialized metric)
-  Preseq:
+  "MERGED LIB: Preseq (unfiltered)":
     lc_extrap_unique_reads: False
     lc_extrap_max_reads: False
   # Peak metrics - show all (critical for ChIP-seq)
@@ -225,7 +267,7 @@ table_columns_visible:
   FRiP:
     frip_score: True
   # featureCounts - show assignment metrics
-  featureCounts:
+  "MERGED LIB: featureCounts":
     percent_assigned: True
     Assigned: True
     Unassigned_NoFeatures: False
