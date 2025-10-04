@@ -429,9 +429,13 @@ workflow CHIPSEQ {
 
     //
     // MODULE: Call peaks with MACS2
+    // FIX: Use ch_antibody_bam when running without input controls
+    // This ensures MACS2 runs on merged replicates grouped by antibody
     //
+    def ch_macs2_input = ch_with_inputs ? ch_ip_control_bam : ch_antibody_bam
+    
     MACS2_CALLPEAK_SINGLE (
-         ch_ip_control_bam,
+         ch_macs2_input,
          ch_macs_gsize
     )
     ch_versions = ch_versions.mix(MACS2_CALLPEAK_SINGLE.out.versions.first())
@@ -549,7 +553,8 @@ workflow CHIPSEQ {
     )
 
     // Create channels: [ meta, ip_bam, peaks ]
-    ch_ip_control_bam
+    // FIX: Use the same channel that was used for MACS2 peak calling
+    ch_macs2_input
         .join(ch_macs2_peaks, by: [0])
         .map { 
             it -> 
