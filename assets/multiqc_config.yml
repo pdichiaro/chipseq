@@ -6,6 +6,11 @@ report_comment: >
 data_format: "yaml"
 
 export_plots: true
+disable_version_detection: true
+sample_names_replace_exact: true
+
+# DESeq2 plot ordering within parent sections handled by numbered prefixes in plot titles
+# (01., 02., 03., 04., etc.) to force alphabetical sorting since plot_order doesn't work in nested sections
 
 custom_content:
   order:
@@ -87,29 +92,31 @@ module_order:
         - "./macs2/featurecounts/*.summary"
 
 report_section_order:
+  # Peak calling and QC metrics
   peak_count:
-    before: mlib_deeptools
+    order: 3000
   frip_score:
-    before: peak_count
+    order: 3000
   peak_annotation:
-    before: frip_score
+    order: 3000
   strand_shift_correlation:
-    before: peak_annotation
+    order: 3000
   nsc_coefficient:
-    before: strand_shift_correlation
+    order: 3000
   rsc_coefficient:
-    before: nsc_coefficient
+    order: 3000
+  mlib_deeptools:
+    order: 3000
   mlib_featurecounts:
-    before: rsc_coefficient
+    order: 3000
   # DESeq2 QC parent sections (ChIP-seq uses featureCounts)
-  # Positioned after featureCounts for logical flow
   deseq2-featurecounts-qc:
-    after: mlib_featurecounts
+    order: 1000
   # ChIP-seq workflow and software summaries - positioned at the end of report
   chipseq-summary:
-    order: 9999
+    order: -1000
   nf-core-chipseq-summary:
-    order: 10000
+    order: -1001
 
 custom_plot_config:
   picard_insert_size:
