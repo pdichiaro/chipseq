@@ -294,7 +294,7 @@ workflow CHIPSEQ {
     ch_versions = ch_versions.mix(BAM_FILTER_SUBWF.out.versions.first().ifEmpty(null))
 
     //
-    // MODULE: Generate blacklist removal log (after filtering)
+    // MODULE: Generate filtering metrics log (blacklist + duplicates + other filters)
     //
     if (params.blacklist) {
         // Join all channels by meta to ensure correct pairing
@@ -308,7 +308,8 @@ workflow CHIPSEQ {
         
         BLACKLIST_LOG (
             ch_blacklist_input,
-            PREPARE_GENOME.out.filtered_bed.first()
+            PREPARE_GENOME.out.filtered_bed.first(),
+            PREPARE_GENOME.out.blacklist.first()
         )
         ch_versions = ch_versions.mix(BLACKLIST_LOG.out.versions.first().ifEmpty(null))
     }

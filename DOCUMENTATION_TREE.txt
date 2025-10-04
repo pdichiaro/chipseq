@@ -1,0 +1,241 @@
+📚 FILTERING LOG IMPROVEMENTS - DOCUMENTATION TREE
+═══════════════════════════════════════════════════
+
+chipseq/
+│
+├── 🚀 README_FILTERING_IMPROVEMENTS.md  ⭐ START HERE
+│   └─ Quick overview and navigation guide
+│   └─ "I want to..." sections for quick access
+│   └─ 2-minute quick start
+│
+├── 📖 FILTERING_DOCUMENTATION_INDEX.md
+│   └─ Complete documentation index
+│   └─ Use case finder
+│   └─ Cross-reference guide
+│
+├── 📋 SUMMARY_OF_CHANGES.md
+│   └─ What changed and why
+│   └─ Files modified with diffs
+│   └─ Benefits table
+│
+├── 🔬 FILTERING_LOG_IMPROVEMENTS.md
+│   └─ Technical deep-dive
+│   └─ Problem identification
+│   └─ Solution details
+│
+├── 📊 INTERPRETING_FILTERING_LOGS.md  ⭐ RECOMMENDED
+│   ├─ Understanding the Numbers
+│   ├─ Example Scenarios
+│   │   ├─ Scenario 1: Healthy sample (>60% retention)
+│   │   ├─ Scenario 2: High duplication
+│   │   ├─ Scenario 3: High blacklist overlap
+│   │   └─ Scenario 4: High "other filters"
+│   ├─ Quick Reference Table
+│   └─ Troubleshooting Workflow
+│
+├── ❓ FILTERING_FAQ.md  ⭐ TROUBLESHOOTING
+│   ├─ General Questions (Q1-Q4)
+│   │   ├─ Q1: Why percentages > 100%?
+│   │   ├─ Q2: Blacklist vs removed?
+│   │   ├─ Q3: Why low retention?
+│   │   └─ Q4: Is 60% good?
+│   ├─ Technical Questions (Q5-Q9)
+│   │   ├─ Q5: Which BAM is before/after?
+│   │   ├─ Q6: How calculate blacklist?
+│   │   ├─ Q7: How blacklist filtering works?
+│   │   ├─ Q8: Change thresholds?
+│   │   └─ Q9: What are "other filters"?
+│   ├─ Interpretation Questions (Q10-Q14)
+│   │   ├─ Q10: 0% blacklist normal?
+│   │   ├─ Q11: Duplicates+blacklist overlap?
+│   │   ├─ Q12: Thresholds appropriate?
+│   │   ├─ Q13: Keep duplicates?
+│   │   └─ Q14: Numbers don't add up?
+│   ├─ Troubleshooting Questions (Q15-Q16)
+│   │   ├─ Q15: Log not generated?
+│   │   └─ Q16: Run manually?
+│   └─ Advanced Questions (Q17-Q20)
+│       ├─ Q17: Visualize reads?
+│       ├─ Q18: Per-chromosome stats?
+│       ├─ Q19: Performance impact?
+│       └─ Q20: How to cite?
+│
+├── 🧪 test_filtering_calculations.sh
+│   └─ Validation script
+│   └─ Shows example calculations
+│   └─ Run: chmod +x && ./test_filtering_calculations.sh
+│
+└── 📄 DOCUMENTATION_TREE.txt  (this file)
+    └─ Visual overview of all documentation
+
+
+═══════════════════════════════════════════════════
+MODIFIED PIPELINE FILES
+═══════════════════════════════════════════════════
+
+subworkflows/local/prepare_genome.nf
+├─ ADDED: blacklist emission
+└─ Lines: ~280-285
+
+modules/local/blacklist_log.nf
+├─ REWRITTEN: Complete overhaul of script section
+├─ RENAMED: *.blacklist.log → *.filtering.log
+├─ ADDED: Separate calculations for each filter
+└─ Lines: ALL (full file rewrite)
+
+workflows/chipseq.nf
+├─ UPDATED: BLACKLIST_LOG process call
+├─ ADDED: PREPARE_GENOME.out.blacklist.first() parameter
+└─ Lines: ~490-495
+
+
+═══════════════════════════════════════════════════
+READING PATHS BY USER TYPE
+═══════════════════════════════════════════════════
+
+🔰 BEGINNER (Never used pipeline before)
+│
+├─ 1. README_FILTERING_IMPROVEMENTS.md
+│   └─ Get oriented (5 min)
+│
+├─ 2. SUMMARY_OF_CHANGES.md
+│   └─ Understand what changed (5 min)
+│
+└─ 3. INTERPRETING_FILTERING_LOGS.md
+    └─ Learn to read results (15 min)
+
+
+📊 ANALYST (Running pipeline, analyzing results)
+│
+├─ 1. Run pipeline → Get filtering log
+│
+├─ 2. INTERPRETING_FILTERING_LOGS.md
+│   ├─ Compare to Quick Reference Table
+│   └─ Find matching scenario
+│
+├─ 3. FILTERING_FAQ.md
+│   └─ Look up specific questions
+│
+└─ 4. test_filtering_calculations.sh
+    └─ Verify numbers (optional)
+
+
+🔧 DEVELOPER (Modifying pipeline)
+│
+├─ 1. FILTERING_LOG_IMPROVEMENTS.md
+│   └─ Technical deep-dive (10 min)
+│
+├─ 2. Review code changes
+│   ├─ subworkflows/local/prepare_genome.nf
+│   ├─ modules/local/blacklist_log.nf
+│   └─ workflows/chipseq.nf
+│
+├─ 3. FILTERING_FAQ.md - Q8, Q17-20
+│   └─ Advanced customization
+│
+└─ 4. test_filtering_calculations.sh
+    └─ Test modifications
+
+
+🆘 TROUBLESHOOTER (Something went wrong)
+│
+├─ 1. FILTERING_FAQ.md
+│   ├─ Q15: Log not generated?
+│   ├─ Q1: Percentages weird?
+│   └─ Q10: Blacklist = 0%?
+│
+├─ 2. INTERPRETING_FILTERING_LOGS.md
+│   └─ Troubleshooting Workflow section
+│
+└─ 3. test_filtering_calculations.sh
+    └─ Verify calculations manually
+
+
+═══════════════════════════════════════════════════
+QUICK LOOKUP TABLE
+═══════════════════════════════════════════════════
+
+Question/Need                        → Document → Section
+─────────────────────────────────────────────────────────
+What changed?                        → SUMMARY → All
+How to read results?                 → INTERPRETING → Understanding Numbers
+Is my retention % good?              → INTERPRETING → Quick Ref Table
+Why low retention?                   → FAQ → Q3
+Why percentages > 100%?              → FAQ → Q1
+Change filtering thresholds?         → FAQ → Q8
+Log not generated?                   → FAQ → Q15
+Verify calculations?                 → test_filtering_calculations.sh
+High duplicates, what to do?         → INTERPRETING → Scenario 2
+High blacklist, what to do?          → INTERPRETING → Scenario 3
+Technical details?                   → IMPROVEMENTS → All
+Which BAM is before/after?           → FAQ → Q5
+How blacklist filtering works?       → FAQ → Q7
+Visualize reads per category?        → FAQ → Q17
+Per-chromosome stats?                → FAQ → Q18
+Citation?                            → FAQ → Q20
+
+
+═══════════════════════════════════════════════════
+FILE SIZES & READ TIMES
+═══════════════════════════════════════════════════
+
+File                                Size    Read Time
+────────────────────────────────────────────────────────
+README_FILTERING_IMPROVEMENTS.md    10.4 KB  5 min  ⭐
+FILTERING_DOCUMENTATION_INDEX.md     9.6 KB  5 min
+SUMMARY_OF_CHANGES.md                7.7 KB  5 min  ⭐
+FILTERING_LOG_IMPROVEMENTS.md        5.2 KB  10 min
+INTERPRETING_FILTERING_LOGS.md       9.6 KB  15 min ⭐
+FILTERING_FAQ.md                    16.0 KB  Browse ⭐
+test_filtering_calculations.sh       4.6 KB  Run
+DOCUMENTATION_TREE.txt               ~4 KB   2 min
+
+⭐ = Recommended reading
+Total documentation: ~67 KB
+Total reading time: ~45-60 minutes (if reading all)
+
+
+═══════════════════════════════════════════════════
+EXTERNAL LINKS & RESOURCES
+═══════════════════════════════════════════════════
+
+📚 Documentation:
+├─ nf-core/chipseq: https://nf-co.re/chipseq
+├─ ENCODE ChIP-seq: https://www.encodeproject.org/chip-seq/
+├─ Picard Metrics: https://broadinstitute.github.io/picard/
+└─ SAMtools: http://www.htslib.org/doc/samtools.html
+
+💬 Community:
+├─ nf-core Slack: https://nf-co.re/join/slack
+└─ GitHub Issues: https://github.com/nf-core/chipseq/issues
+
+📖 Papers:
+├─ SAMtools: PMID 19505943
+├─ ENCODE Blacklist: PMID 31249361
+└─ nf-core: PMID 32055031
+
+
+═══════════════════════════════════════════════════
+KEYWORDS FOR SEARCHING
+═══════════════════════════════════════════════════
+
+Filtering, Blacklist, Duplicates, MAPQ, Fragment size
+Retention rate, BAM filtering, Quality control, ChIP-seq
+Picard MarkDuplicates, SAMtools, ENCODE, nf-core
+Read removal, PCR duplicates, Multi-mappers, Secondary alignments
+Data quality, Troubleshooting, Interpretation, Statistics
+
+
+═══════════════════════════════════════════════════
+
+📍 START HERE:
+   → README_FILTERING_IMPROVEMENTS.md
+
+📧 Questions?
+   → Check FILTERING_FAQ.md first
+   → Then ask on nf-core Slack
+
+🧪 Want to test?
+   → Run: ./test_filtering_calculations.sh
+
+═══════════════════════════════════════════════════

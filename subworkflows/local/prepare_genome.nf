@@ -148,6 +148,7 @@ workflow PREPARE_GENOME {
     gene_bed       = ch_gene_bed                          //    path: gene.bed
     chrom_sizes    = ch_chrom_sizes                       //    path: genome.sizes
     filtered_bed   = ch_genome_filtered_bed               //    path: *.include_regions.bed
+    blacklist      = ch_blacklist                         //    path: blacklist.bed (original)
     bowtie2_index  = ch_bowtie2_index                     //    path: bowtie2/index/
 
     versions       = ch_versions.ifEmpty(null) // channel: [ versions.yml ]

@@ -1,10 +1,11 @@
 /*
- * Generate a simple log showing how many reads are removed by blacklist filtering
+ * Generate a detailed log showing reads removed by all filtering steps
+ * Specifically calculates reads removed by blacklist filtering separately from other filters
  */
 process BLACKLIST_LOG {
     tag "$meta.id"
     label 'process_low'
-    publishDir path: { "${params.outdir}/${params.aligner}/mergedLibrary/blacklist_metrics" }, mode: params.publish_dir_mode
+    publishDir path: { "${params.outdir}/${params.aligner}/mergedLibrary/filtering_metrics" }, mode: params.publish_dir_mode
 
     conda (params.enable_conda ? "bioconda::bedtools=2.30.0 bioconda::samtools=1.15.1" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -13,58 +14,84 @@ process BLACKLIST_LOG {
 
     input:
     tuple val(meta), path(bam_before), path(bai_before), path(bam_after), path(bai_after)
-    path blacklist
+    path filtered_bed
+    path blacklist_bed
 
     output:
-    path "*.blacklist.log", emit: log
+    path "*.filtering.log", emit: log
     path "versions.yml"   , emit: versions
 
     script:
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    # Count reads BEFORE blacklist filtering
+    # Count reads BEFORE any filtering (from MARK_DUPLICATES output)
     READS_BEFORE=\$(samtools view -c ${bam_before})
     
-    # Count reads AFTER blacklist filtering
+    # Count reads AFTER all filtering (duplicates + blacklist + MAPQ + fragment size)
     READS_AFTER=\$(samtools view -c ${bam_after})
     
-    # Calculate reads removed
-    READS_REMOVED=\$((READS_BEFORE - READS_AFTER))
+    # Count reads that overlap blacklist regions in the BEFORE BAM
+    READS_IN_BLACKLIST=\$(samtools view -c -L ${blacklist_bed} ${bam_before})
+    
+    # Count duplicates marked in BEFORE BAM
+    DUPLICATES_MARKED=\$(samtools view -c -f 0x0400 ${bam_before})
+    
+    # Calculate total reads removed by ALL filters
+    TOTAL_REMOVED=\$((READS_BEFORE - READS_AFTER))
     
     # Calculate percentages
-    PERCENT_REMOVED=\$(awk "BEGIN {printf \\"%.2f\\", (\$READS_REMOVED / \$READS_BEFORE) * 100}")
+    PERCENT_BLACKLIST=\$(awk "BEGIN {printf \\"%.2f\\", (\$READS_IN_BLACKLIST / \$READS_BEFORE) * 100}")
+    PERCENT_DUPLICATES=\$(awk "BEGIN {printf \\"%.2f\\", (\$DUPLICATES_MARKED / \$READS_BEFORE) * 100}")
+    PERCENT_TOTAL_REMOVED=\$(awk "BEGIN {printf \\"%.2f\\", (\$TOTAL_REMOVED / \$READS_BEFORE) * 100}")
     PERCENT_RETAINED=\$(awk "BEGIN {printf \\"%.2f\\", (\$READS_AFTER / \$READS_BEFORE) * 100}")
     
+    # Calculate OTHER filters (MAPQ, fragment size, etc.)
+    OTHER_FILTERS=\$((TOTAL_REMOVED - DUPLICATES_MARKED - READS_IN_BLACKLIST))
+    PERCENT_OTHER=\$(awk "BEGIN {printf \\"%.2f\\", (\$OTHER_FILTERS / \$READS_BEFORE) * 100}")
+    
     # Number of blacklist regions
-    NUM_BL_REGIONS=\$(wc -l < ${blacklist})
+    NUM_BL_REGIONS=\$(wc -l < ${blacklist_bed})
     
     # Generate log
-    cat > ${prefix}.blacklist.log <<EOF
+    cat > ${prefix}.filtering.log <<EOF
 ========================================================================
-BLACKLIST FILTERING LOG - Sample: ${meta.id}
+BAM FILTERING LOG - Sample: ${meta.id}
 ========================================================================
 
 Date: \$(date '+%Y-%m-%d %H:%M:%S')
-Input BAM (before filtering):  ${bam_before}
+Input BAM (MARK_DUPLICATES):   ${bam_before}
 Output BAM (after filtering):  ${bam_after}
-Blacklist regions file:        ${blacklist}
+Blacklist file:                ${blacklist_bed}
 
 ------------------------------------------------------------------------
-STATISTICS
+FILTERING STATISTICS
 ------------------------------------------------------------------------
 
-Reads BEFORE blacklist filtering:  \$(printf "%15s" "\$(printf "%'d" \$READS_BEFORE)")
-Reads AFTER blacklist filtering:   \$(printf "%15s" "\$(printf "%'d" \$READS_AFTER)")
-Reads REMOVED:                     \$(printf "%15s" "\$(printf "%'d" \$READS_REMOVED)")  (\${PERCENT_REMOVED}%)
+Total reads (input):                      \$(printf "%15s" "\$(printf "%'d" \$READS_BEFORE)")
 
-Number of blacklist regions:       \$(printf "%15s" "\$(printf "%'d" \$NUM_BL_REGIONS)")
+Reads overlapping blacklist regions:      \$(printf "%15s" "\$(printf "%'d" \$READS_IN_BLACKLIST)")  (\${PERCENT_BLACKLIST}%)
+Duplicate reads (marked by Picard):       \$(printf "%15s" "\$(printf "%'d" \$DUPLICATES_MARKED)")  (\${PERCENT_DUPLICATES}%)
+Reads removed by other filters*:          \$(printf "%15s" "\$(printf "%'d" \$OTHER_FILTERS)")  (\${PERCENT_OTHER}%)
+  (*MAPQ < 1, fragment size > 500bp, secondary/supplementary alignments)
 
 ------------------------------------------------------------------------
-SUMMARY
+TOTAL FILTERING IMPACT
 ------------------------------------------------------------------------
 
-Total reads removed:    \$(printf "%'d" \$READS_REMOVED) (\${PERCENT_REMOVED}%)
-Total reads retained:   \$(printf "%'d" \$READS_AFTER) (\${PERCENT_RETAINED}%)
+Total reads REMOVED (all filters):        \$(printf "%15s" "\$(printf "%'d" \$TOTAL_REMOVED)")  (\${PERCENT_TOTAL_REMOVED}%)
+Total reads RETAINED:                     \$(printf "%15s" "\$(printf "%'d" \$READS_AFTER)")  (\${PERCENT_RETAINED}%)
+
+Number of blacklist regions:              \$(printf "%15s" "\$(printf "%'d" \$NUM_BL_REGIONS)")
+
+------------------------------------------------------------------------
+NOTE
+------------------------------------------------------------------------
+- Blacklist count shows reads overlapping blacklist regions
+- Duplicate count shows reads marked by Picard MarkDuplicates
+- Other filters include: multi-mappers (MAPQ<1), large fragments (>500bp),
+  secondary/supplementary alignments, unmapped reads
+- Some reads may be counted in multiple categories (e.g., a duplicate
+  read in a blacklist region contributes to both counts)
 
 ========================================================================
 EOF
