@@ -106,8 +106,6 @@ report_section_order:
   # Positioned after featureCounts for logical flow
   deseq2-featurecounts-qc:
     after: mlib_featurecounts
-  software_versions:
-    order: -3600
   nf-core-chipseq-summary:
     order: -3700
 
