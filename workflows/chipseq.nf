@@ -648,9 +648,8 @@ workflow CHIPSEQ {
                 // Extract group identifier by removing _REP{N}_T{M} suffix (last 2 parts)
                 def id_parts = meta.id.split('_')
                 def group_id = id_parts.size() >= 2 ? id_parts[0..-3].join('_') : meta.id
-                // Extract antibody from the last part of group_id
-                def antibody = group_id.split('_')[-1]
-                [ group_id, antibody, peak ] 
+                // Use antibody from metadata instead of extracting from ID
+                [ group_id, meta.antibody, peak ] 
         }
         .groupTuple(by: 0)
         .map {
@@ -712,11 +711,8 @@ workflow CHIPSEQ {
         .bed
         .map { 
             meta, bed ->
-                // Extract antibody from group_id (last part before replicates)
-                // WT_BCATENIN -> BCATENIN
-                def parts = meta.id.split('_')
-                def antibody = parts.size() > 1 ? parts[-1] : meta.id
-                [ antibody, meta.id, bed ] 
+                // Use antibody from metadata instead of extracting from ID
+                [ meta.antibody, meta.id, bed ] 
         }
         .groupTuple(by: 0)
         .map {
