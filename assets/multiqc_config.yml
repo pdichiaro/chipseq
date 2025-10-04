@@ -9,16 +9,15 @@ export_plots: true
 
 custom_content:
   order:
-    # ALL GENES normalization method - ordered: 1.Read Dist, 2.Sample Dist, 3.PCA All, 4.PCA Top
-    - deseq2_all_genes_read_dist_header
-    - deseq2_all_genes_sample_dist_header
-    - deseq2_all_genes_pca_all_header
-    - deseq2_all_genes_pca_top_header
-    # INVARIANT GENES normalization method - ordered: 1.Read Dist, 2.Sample Dist, 3.PCA All, 4.PCA Top
-    - deseq2_invariant_genes_read_dist_header
-    - deseq2_invariant_genes_sample_dist_header
-    - deseq2_invariant_genes_pca_all_header
-    - deseq2_invariant_genes_pca_top_header
+    # DESeq2 plots ordered by number prefix (01-08)
+    - '01_deseq2_read_distribution_*'
+    - '02_deseq2_sample_distance_*'
+    - '03_deseq2_pca_*'
+    - '04_deseq2_pca_top500_*'
+    - '05_deseq2_read_distribution_*'
+    - '06_deseq2_sample_distance_*'
+    - '07_deseq2_pca_*'
+    - '08_deseq2_pca_top500_*'
 
 run_modules:
   - custom_content
