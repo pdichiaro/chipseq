@@ -640,16 +640,17 @@ workflow CHIPSEQ {
 
     // STEP 1: Create consensus peaks BY CONDITION (intermediate files)
     // Extract condition from sample ID and group peaks by condition+antibody
-    // Example: TLBR2_shMCM5_CT_REP1_T1 -> group_id = TLBR2_shMCM5_CT
-    // Example: TLBR2_shMCM5_CT_RNAseA_REP1_T1 -> group_id = TLBR2_shMCM5_CT_RNAseA
-    // Example: TLBR2_shMCM5_DOX_RNAseA_REP2_T1 -> group_id = TLBR2_shMCM5_DOX_RNAseA
+    // Example: TLBR2_shMCM5_CT_REP1 -> group_id = TLBR2_shMCM5_CT
+    // Example: TLBR2_shMCM5_CT_RNAseA_REP1 -> group_id = TLBR2_shMCM5_CT_RNAseA
+    // Example: TLBR2_shMCM5_DOX_RNAseA_REP2 -> group_id = TLBR2_shMCM5_DOX_RNAseA
     
     ch_macs2_peaks
         .map { 
             meta, peak ->
-                // Extract group identifier by removing ONLY the replicate suffix (_REP{N}_T{M})
+                // Extract group identifier by removing ONLY the replicate suffix (_REP{N})
                 // This preserves all condition information including treatment suffixes like _RNAseA
-                def group_id = meta.id.replaceAll(/_REP\d+_T\d+$/, '')
+                // Handles both patterns: _REP\d+_T\d+ (old format) and _REP\d+ (current format)
+                def group_id = meta.id.replaceAll(/_REP\d+(_T\d+)?$/, '')
                 
                 // Debug: verify grouping is correct
                 println "════════════════════════════════════════════════════════════════"
