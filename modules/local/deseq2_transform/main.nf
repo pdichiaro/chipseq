@@ -96,7 +96,7 @@ process DESEQ2_TRANSFORM {
         cat temp_header.txt ${deseq2_file} > temp_output.txt
         mv temp_output.txt "\${numbered_output}"
         echo "Created \${numbered_output} with PCA header (ID: \${PLOT_ID}, parent: \${QUANTIFIER})"
-    elif [[ "${file_name}" == *".sample.dists."* ]]; then
+    elif [[ "${file_name}" == *".sample.dists.txt" ]]; then
         # Sample distance - ORDER: 2 or 6
         PLOT_NUM=\$((2 + OFFSET))
         PLOT_ID="\$(printf '%02d' \$PLOT_NUM)_deseq2_sample_distance_\${QUANTIFIER_SHORT}_\${LEVEL}"
