@@ -284,7 +284,17 @@ workflow CHIPSEQ {
     ch_versions = ch_versions.mix(MARK_DUPLICATES_PICARD.out.versions)
 
     //
-    // MODULE: Generate blacklist removal log (before filtering)
+    // SUBWORKFLOW: Filter BAM file with BamTools 
+    //
+    
+    BAM_FILTER_SUBWF (
+        MARK_DUPLICATES_PICARD.out.bam.join(MARK_DUPLICATES_PICARD.out.bai, by: [0]),
+        PREPARE_GENOME.out.filtered_bed.first()
+    )
+    ch_versions = ch_versions.mix(BAM_FILTER_SUBWF.out.versions.first().ifEmpty(null))
+
+    //
+    // MODULE: Generate blacklist removal log (after filtering)
     //
     if (params.blacklist) {
         BLACKLIST_LOG (
@@ -294,16 +304,6 @@ workflow CHIPSEQ {
         )
         ch_versions = ch_versions.mix(BLACKLIST_LOG.out.versions.first().ifEmpty(null))
     }
-
-    //
-    // SUBWORKFLOW: Filter BAM file with BamTools 
-    //
-    
-    BAM_FILTER_SUBWF (
-        MARK_DUPLICATES_PICARD.out.bam.join(MARK_DUPLICATES_PICARD.out.bai, by: [0]),
-        PREPARE_GENOME.out.filtered_bed.first()
-    )
-    ch_versions = ch_versions.mix(BAM_FILTER_SUBWF.out.versions.first().ifEmpty(null))
 
     //
     // MODULE: Picard post alignment QC
