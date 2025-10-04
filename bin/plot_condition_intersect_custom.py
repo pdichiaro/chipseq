@@ -35,8 +35,10 @@ def main():
     found_conditions = set()
     
     # Read merged peaks file
+    line_num = 0
     with open(args.merged_file, 'r') as f:
         for line in f:
+            line_num += 1
             fields = line.strip().split('\t')
             if len(fields) < 6:
                 continue
@@ -44,6 +46,10 @@ def main():
             # Column 5 (index 5) contains comma-separated peak names
             # Format: CONDITION_Interval_N,CONDITION2_Interval_M,...
             peak_names = fields[5].split(',')
+            
+            # Debug first few lines
+            if line_num <= 3:
+                print(f"DEBUG Line {line_num}: peak_names = {peak_names[:3]}...", file=sys.stderr)
             
             # Extract condition names from peak names
             peak_conditions = set()
@@ -53,10 +59,16 @@ def main():
                 parts = peak_name.split('_')
                 if len(parts) > 0:
                     # Try to match against known conditions (longest first to avoid partial matches)
+                    matched = False
                     for cond in conditions_sorted:
                         if peak_name.startswith(cond + '_'):
                             peak_conditions.add(cond)
+                            matched = True
                             break
+                    
+                    # Debug unmatched peak names
+                    if not matched and line_num <= 10:
+                        print(f"DEBUG: Could not match peak_name='{peak_name}' against conditions", file=sys.stderr)
             
             # Only count if we found valid conditions
             if peak_conditions:
