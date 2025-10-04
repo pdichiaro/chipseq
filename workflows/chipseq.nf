@@ -67,6 +67,7 @@ include { PLOT_MACS2_QC as PLOT_MACS2_QC_CONSENSUS_CONDITION       } from '../mo
 include { PLOT_HOMER_ANNOTATEPEAKS                                 } from '../modules/local/plot_homer_annotatepeaks'
 include { PLOT_HOMER_ANNOTATEPEAKS as PLOT_HOMER_ANNOTATEPEAKS_CONSENSUS_CONDITION } from '../modules/local/plot_homer_annotatepeaks'
 include { PLOT_PEAK_INTERSECT_SAMPLES          } from '../modules/local/plot_peak_intersect_samples'
+include { PLOT_CONDITION_INTERSECT             } from '../modules/local/plot_condition_intersect'
 include { MACS2_CONSENSUS                     } from '../modules/local/macs2_consensus'
 include { MACS2_CONSENSUS_BY_CONDITION        } from '../modules/local/macs2_consensus_by_condition'
 include { ANNOTATE_BOOLEAN_PEAKS              } from '../modules/local/annotate_boolean_peaks'
@@ -745,6 +746,22 @@ workflow CHIPSEQ {
                 "_peaks.condition.annotatePeaks.txt"
             )
             ch_versions = ch_versions.mix(PLOT_HOMER_ANNOTATEPEAKS_CONSENSUS_CONDITION.out.versions)
+
+            //
+            // MODULE: Plot condition intersections (UpSet plot across conditions, not replicates)
+            // Only generates plot if antibody has >= 2 conditions
+            //
+            MACS2_CONSENSUS_BY_CONDITION
+                .out
+                .peaks
+                .map { meta, peak -> [ meta.antibody, meta.id, peak ] }
+                .groupTuple(by: 0)
+                .set { ch_condition_peaks_for_plot }
+            
+            PLOT_CONDITION_INTERSECT (
+                ch_condition_peaks_for_plot
+            )
+            ch_versions = ch_versions.mix(PLOT_CONDITION_INTERSECT.out.versions.first())
         }
     }
 
