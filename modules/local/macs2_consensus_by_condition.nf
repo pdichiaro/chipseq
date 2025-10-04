@@ -46,10 +46,17 @@ process MACS2_CONSENSUS_BY_CONDITION {
         --min_replicates $params.min_reps_consensus \\
         $expandparam
 
+    # Generate BED6 for compatibility
     awk -v FS='\t' -v OFS='\t' 'FNR > 1 { print \$1, \$2, \$3, \$4, "0", "+" }' ${prefix}.boolean.txt > ${prefix}.bed
     
-    # Create symlink with peak_type suffix for QC plotting compatibility
-    ln -s ${prefix}.bed ${prefix}_peaks.${peak_type}
+    # Generate full narrowPeak/broadPeak format (10 or 9 columns) for downstream consensus
+    if [ "${peak_type}" == "narrowPeak" ]; then
+        # narrowPeak format: chr start end name score strand signalValue pValue qValue peak
+        awk -v FS='\t' -v OFS='\t' 'FNR > 1 { print \$1, \$2, \$3, \$4, "0", ".", "0", "-1", "-1", "-1" }' ${prefix}.boolean.txt > ${prefix}_peaks.${peak_type}
+    else
+        # broadPeak format: chr start end name score strand signalValue pValue qValue
+        awk -v FS='\t' -v OFS='\t' 'FNR > 1 { print \$1, \$2, \$3, \$4, "0", ".", "0", "-1", "-1" }' ${prefix}.boolean.txt > ${prefix}_peaks.${peak_type}
+    fi
 
     echo -e "GeneID\tChr\tStart\tEnd\tStrand" > ${prefix}.saf
     awk -v FS='\t' -v OFS='\t' 'FNR > 1 { print \$4, \$1, \$2, \$3,  "+" }' ${prefix}.boolean.txt >> ${prefix}.saf

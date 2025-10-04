@@ -708,20 +708,20 @@ workflow CHIPSEQ {
     
     MACS2_CONSENSUS_BY_CONDITION
         .out
-        .bed
+        .peaks  // Use .peaks (narrowPeak/broadPeak format) instead of .bed for proper format
         .map { 
-            meta, bed ->
+            meta, peak_file ->
                 // Use antibody from metadata instead of extracting from ID
-                [ meta.antibody, meta.id, bed ] 
+                [ meta.antibody, meta.id, peak_file ] 
         }
         .groupTuple(by: 0)
         .map {
-            antibody, group_ids, beds ->
+            antibody, group_ids, peak_files ->
                 def meta_new = [:]
                 meta_new.id = antibody
                 meta_new.multiple_groups = group_ids.size() > 1
                 meta_new.replicates_exist = true  // Conditions already have consensus from replicates
-                [ meta_new, beds ] 
+                [ meta_new, peak_files ] 
         }
         .set { ch_antibody_peaks }
     
