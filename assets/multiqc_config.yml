@@ -105,6 +105,23 @@ report_section_order:
   # Positioned after featureCounts for logical flow
   deseq2-featurecounts-qc:
     after: mlib_featurecounts
+  # DESeq2 individual plots ordered within parent section
+  01_deseq2_read_distribution:
+    after: deseq2-featurecounts-qc
+  02_deseq2_sample_distance:
+    after: 01_deseq2_read_distribution
+  03_deseq2_pca:
+    after: 02_deseq2_sample_distance
+  04_deseq2_pca_top500:
+    after: 03_deseq2_pca
+  05_deseq2_read_distribution:
+    after: 04_deseq2_pca_top500
+  06_deseq2_sample_distance:
+    after: 05_deseq2_read_distribution
+  07_deseq2_pca:
+    after: 06_deseq2_sample_distance
+  08_deseq2_pca_top500:
+    after: 07_deseq2_pca
   # ChIP-seq software versions summary - positioned at the end of report
   nf-core-chipseq-summary:
     order: 10000
