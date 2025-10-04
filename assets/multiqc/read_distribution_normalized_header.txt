@@ -10,5 +10,8 @@
 #    title: 'DESeq2: Normalized Read Distribution'
 #    scale: false
 #    plot_type: 'box'
+#    orientation: 'v'
+#    xlab: 'Sample'
+#    ylab: 'Normalized Expression (log2)'
 extra:
     plot_order: 1
