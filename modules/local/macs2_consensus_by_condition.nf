@@ -20,7 +20,6 @@ process MACS2_CONSENSUS_BY_CONDITION {
     tuple val(meta), path("*.bed")          , emit: bed
     tuple val(meta), path("*_peaks.*Peak")  , emit: peaks // for QC plotting
     tuple val(meta), path("*.saf")          , emit: saf
-    tuple val(meta), path("*.pdf")          , emit: pdf
     tuple val(meta), path("*.condition.txt"), emit: txt
     tuple val(meta), path("*.boolean.txt")  , emit: boolean_txt
     tuple val(meta), path("*.intersect.txt"), emit: intersect_txt
@@ -60,8 +59,6 @@ process MACS2_CONSENSUS_BY_CONDITION {
 
     echo -e "GeneID\tChr\tStart\tEnd\tStrand" > ${prefix}.saf
     awk -v FS='\t' -v OFS='\t' 'FNR > 1 { print \$4, \$1, \$2, \$3,  "+" }' ${prefix}.boolean.txt >> ${prefix}.saf
-
-    plot_peak_intersect.r -i ${prefix}.boolean.intersect.txt -o ${prefix}.boolean.intersect.plot.pdf
 
     echo "${prefix}.bed\t${meta.id}/${prefix}.bed" > ${prefix}.condition.txt
 
