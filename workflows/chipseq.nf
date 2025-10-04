@@ -63,9 +63,9 @@ ch_with_inputs = params.with_inputs ? params.with_inputs.toBoolean() : false
 
 include { FRIP_SCORE                                               } from '../modules/local/frip_score'
 include { PLOT_MACS2_QC                                            } from '../modules/local/plot_macs2_qc'
-include { PLOT_MACS2_QC as PLOT_MACS2_QC_CONSENSUS_CONDITION       } from '../modules/local/plot_macs2_qc'
+include { PLOT_MACS2_QC_CONSENSUS                                  } from '../modules/local/plot_macs2_qc_consensus'
 include { PLOT_HOMER_ANNOTATEPEAKS                                 } from '../modules/local/plot_homer_annotatepeaks'
-include { PLOT_HOMER_ANNOTATEPEAKS as PLOT_HOMER_ANNOTATEPEAKS_CONSENSUS_CONDITION } from '../modules/local/plot_homer_annotatepeaks'
+include { PLOT_HOMER_ANNOTATEPEAKS_CONSENSUS                       } from '../modules/local/plot_homer_annotatepeaks_consensus'
 include { PLOT_PEAK_INTERSECT_SAMPLES          } from '../modules/local/plot_peak_intersect_samples'
 include { PLOT_CONDITION_INTERSECT             } from '../modules/local/plot_condition_intersect'
 include { MACS2_CONSENSUS                     } from '../modules/local/macs2_consensus'
@@ -78,6 +78,7 @@ include { DESEQ2_TRANSFORM                    } from '../modules/local/deseq2_tr
 include { MULTIQC                             } from '../modules/local/multiqc'
 include { MULTIQC_CUSTOM_PHANTOMPEAKQUALTOOLS } from '../modules/local/multiqc_custom_phantompeakqualtools'
 include { MULTIQC_CUSTOM_PEAKS                } from '../modules/local/multiqc_custom_peaks'
+include { BLACKLIST_LOG                       } from '../modules/local/blacklist_log'
 
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
@@ -281,6 +282,17 @@ workflow CHIPSEQ {
         PICARD_MERGESAMFILES.out.bam
     )
     ch_versions = ch_versions.mix(MARK_DUPLICATES_PICARD.out.versions)
+
+    //
+    // MODULE: Generate blacklist removal log (before filtering)
+    //
+    if (params.blacklist) {
+        BLACKLIST_LOG (
+            MARK_DUPLICATES_PICARD.out.bam.join(MARK_DUPLICATES_PICARD.out.bai, by: [0]),
+            PREPARE_GENOME.out.filtered_bed.first()
+        )
+        ch_versions = ch_versions.mix(BLACKLIST_LOG.out.versions.first().ifEmpty(null))
+    }
 
     //
     // SUBWORKFLOW: Filter BAM file with BamTools 
@@ -736,24 +748,26 @@ workflow CHIPSEQ {
             //
             // MODULE: MACS2 QC plots for consensus peaks by condition
             //
-            PLOT_MACS2_QC_CONSENSUS_CONDITION (
+            PLOT_MACS2_QC_CONSENSUS (
                 MACS2_CONSENSUS_BY_CONDITION.out.peaks
-                    .map { meta, peaks -> peaks }
-                    .collect()
+                    .map { meta, peaks -> [ meta.antibody, meta, peaks ] }
+                    .groupTuple(by: 0)
+                    .map { antibody, metas, peaks -> [ metas[0], peaks ] }
             )
-            ch_versions = ch_versions.mix(PLOT_MACS2_QC_CONSENSUS_CONDITION.out.versions)
+            ch_versions = ch_versions.mix(PLOT_MACS2_QC_CONSENSUS.out.versions)
 
             //
             // MODULE: Peak annotation QC plots for consensus peaks by condition
             //
-            PLOT_HOMER_ANNOTATEPEAKS_CONSENSUS_CONDITION (
+            PLOT_HOMER_ANNOTATEPEAKS_CONSENSUS (
                 HOMER_ANNOTATEPEAKS_CONSENSUS_CONDITION.out.txt
-                    .map { meta, txt -> txt }
-                    .collect(),
+                    .map { meta, txt -> [ meta.antibody, meta, txt ] }
+                    .groupTuple(by: 0)
+                    .map { antibody, metas, txts -> [ metas[0], txts ] },
                 ch_peak_annotation_header,
                 "_peaks.condition.annotatePeaks.txt"
             )
-            ch_versions = ch_versions.mix(PLOT_HOMER_ANNOTATEPEAKS_CONSENSUS_CONDITION.out.versions)
+            ch_versions = ch_versions.mix(PLOT_HOMER_ANNOTATEPEAKS_CONSENSUS.out.versions)
 
             //
             // MODULE: Plot condition intersections (UpSet plot across conditions, not replicates)
