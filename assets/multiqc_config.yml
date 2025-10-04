@@ -171,6 +171,8 @@ sp:
     fn: "*plotProfile*"
   phantompeakqualtools/out:
     fn: "*.spp.out"
+  software_versions:
+    fn: "EXCLUDE_THIS_FILE"
 
 
 # DESeq2 plots are now handled dynamically by DESEQ2_TRANSFORM module headers
