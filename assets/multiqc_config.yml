@@ -92,26 +92,26 @@ module_order:
         - "./macs2/featurecounts/*.summary"
 
 report_section_order:
-  # Peak calling and QC metrics
-  peak_count:
-    order: 3000
-  frip_score:
-    order: 3000
-  peak_annotation:
-    order: 3000
-  strand_shift_correlation:
-    order: 3000
-  nsc_coefficient:
-    order: 3000
-  rsc_coefficient:
-    order: 3000
-  mlib_deeptools:
-    order: 3000
-  mlib_featurecounts:
-    order: 3000
-  # DESeq2 QC parent sections (ChIP-seq uses featureCounts)
+  # DESeq2 QC parent sections (ChIP-seq uses featureCounts) - positioned at the top
   deseq2-featurecounts-qc:
-    order: 1000
+    order: 10000
+  # Peak calling and QC metrics - positioned after DESeq2 sections
+  peak_count:
+    order: 9000
+  frip_score:
+    order: 8900
+  peak_annotation:
+    order: 8800
+  strand_shift_correlation:
+    order: 8700
+  nsc_coefficient:
+    order: 8600
+  rsc_coefficient:
+    order: 8500
+  mlib_deeptools:
+    order: 8400
+  mlib_featurecounts:
+    order: 8300
   # ChIP-seq workflow and software summaries - positioned at the end of report
   chipseq-summary:
     order: -1000

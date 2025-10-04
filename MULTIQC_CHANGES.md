@@ -37,18 +37,30 @@ The configuration organizes modules by processing stage:
 - **MERGED LIB (unfiltered/filtered)**: Pre- and post-filtering stages
 
 ### 3. **Report Section Ordering**
-Prioritizes sections with explicit order values:
+Uses descending order values to position sections correctly (higher = earlier in report):
 ```yaml
 report_section_order:
-  # Peak calling and QC metrics (high priority)
-  peak_count:
-    order: 3000
-  frip_score:
-    order: 3000
-  # DESeq2 QC parent sections
+  # DESeq2 QC parent sections (highest priority - appears first)
   deseq2-featurecounts-qc:
-    order: 1000
-  # Summary sections (at the end)
+    order: 10000
+  # Peak calling and QC metrics (high priority - appears after DESeq2)
+  peak_count:
+    order: 9000
+  frip_score:
+    order: 8900
+  peak_annotation:
+    order: 8800
+  strand_shift_correlation:
+    order: 8700
+  nsc_coefficient:
+    order: 8600
+  rsc_coefficient:
+    order: 8500
+  mlib_deeptools:
+    order: 8400
+  mlib_featurecounts:
+    order: 8300
+  # Summary sections (negative values = at the end)
   chipseq-summary:
     order: -1000
   nf-core-chipseq-summary:
