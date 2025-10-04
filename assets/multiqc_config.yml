@@ -106,30 +106,13 @@ report_section_order:
     before: nsc_coefficient
   mlib_featurecounts:
     before: rsc_coefficient
-  # DESeq2 plots with negative ordering (nf-core style)
-  # Positioned after featureCounts and before software versions
+  # DESeq2 parent section positioned after featureCounts
+  # Plot ordering handled automatically via numeric prefixes in section names
   deseq2-featurecounts-qc:
-    order: -1000
-  # Individual DESeq2 plots in alphabetical order (All Genes: 01-04, Invariant: 05-08)
-  01_deseq2_read_distribution_featurecounts_all_genes:
-    order: -1100
-  02_deseq2_sample_distance_featurecounts_all_genes:
-    order: -1200
-  03_deseq2_pca_featurecounts_all_genes:
-    order: -1300
-  04_deseq2_pca_top500_featurecounts_all_genes:
-    order: -1400
-  05_deseq2_read_distribution_featurecounts_invariant_genes:
-    order: -1500
-  06_deseq2_sample_distance_featurecounts_invariant_genes:
-    order: -1600
-  07_deseq2_pca_featurecounts_invariant_genes:
-    order: -1700
-  08_deseq2_pca_top500_featurecounts_invariant_genes:
-    order: -1800
+    after: mlib_featurecounts
   # ChIP-seq workflow summary - positioned at the end of report
   nf-core-chipseq-summary:
-    order: -2000
+    order: -3700
 
 custom_plot_config:
   picard_insert_size:
