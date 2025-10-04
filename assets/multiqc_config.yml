@@ -96,6 +96,23 @@ report_section_order:
   # Plot ordering within section handled automatically via numeric prefixes in section names
   deseq2-featurecounts-qc:
     before: mlib_featurecounts
+  # Explicit ordering for DESeq2 subsections (numeric prefixes alone don't guarantee order)
+  01_deseq2_read_distribution_featurecounts_all_genes:
+    order: 1000
+  02_deseq2_sample_distances_featurecounts_all_genes:
+    order: 900
+  03_deseq2_pca_featurecounts_all_genes:
+    order: 800
+  04_deseq2_pca_top500_featurecounts_all_genes:
+    order: 700
+  05_deseq2_read_distribution_featurecounts_invariant_genes:
+    order: 600
+  06_deseq2_sample_distances_featurecounts_invariant_genes:
+    order: 500
+  07_deseq2_pca_featurecounts_invariant_genes:
+    order: 400
+  08_deseq2_pca_top500_featurecounts_invariant_genes:
+    order: 300
   # ChIP-seq workflow summary - positioned at the end of report
   nf-core-chipseq-summary:
     order: -999
