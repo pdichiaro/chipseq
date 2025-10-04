@@ -1,6 +1,6 @@
 #id: 'deseq2_invariant_genes_sample_dist'
-#section_name: 'INVARIANT GENES: 2. Sample Distance'
-#section_anchor: 'deseq2-invariant-genes-qc'
+#section_name: '6. INVARIANT GENES: Sample Distance'
+#section_anchor: 'deseq2-featurecounts-qc'
 #description: "Sample-to-sample distance heatmap based on Euclidean distances.
 #              Values are calculated using <a href='https://bioconductor.org/packages/release/bioc/html/DESeq2.html' target='_blank'>DESeq2</a>
 #              variance-stabilizing transformation. Normalization method: invariant genes."
