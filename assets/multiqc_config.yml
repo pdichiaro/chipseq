@@ -88,22 +88,26 @@ module_order:
         - "./macs2/featurecounts/*.summary"
 
 report_section_order:
+  # Use explicit numeric ordering for precise control
+  # Lower numbers appear first in the report
+  mlib_deeptools:
+    order: 100
   peak_count:
-    before: mlib_deeptools
+    order: 200
   frip_score:
-    before: peak_count
+    order: 300
   peak_annotation:
-    before: frip_score
-  deseq2-featurecounts-qc:
-    before: peak_annotation
+    order: 400
   strand_shift_correlation:
-    before: deseq2-featurecounts-qc
+    order: 500
   nsc_coefficient:
-    before: strand_shift_correlation
+    order: 600
   rsc_coefficient:
-    before: nsc_coefficient
+    order: 700
   mlib_featurecounts:
-    before: rsc_coefficient
+    order: 800
+  deseq2-featurecounts-qc:
+    order: 900
   # ChIP-seq software versions and workflow summary - positioned at the end of report
   software_versions:
     order: 10000
