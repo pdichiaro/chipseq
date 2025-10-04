@@ -106,10 +106,11 @@ report_section_order:
     before: nsc_coefficient
   mlib_featurecounts:
     before: rsc_coefficient
-  # DESeq2 parent section positioned after featureCounts
-  # Plot ordering handled automatically via numeric prefixes in section names
+  # DESeq2 parent section positioned after main workflow sections
+  # Uses negative order value (nf-core style) to position before final summary
+  # Plot ordering within section handled automatically via numeric prefixes in section names
   deseq2-featurecounts-qc:
-    after: mlib_featurecounts
+    order: -1000
   # ChIP-seq workflow summary - positioned at the end of report
   nf-core-chipseq-summary:
     order: -3700
