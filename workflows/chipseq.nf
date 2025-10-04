@@ -700,15 +700,6 @@ workflow CHIPSEQ {
                 // Handles both patterns: _REP\d+_T\d+ (old format) and _REP\d+ (current format)
                 def group_id = meta.id.replaceAll(/_REP\d+(_T\d+)?$/, '')
                 
-                // Debug: verify grouping is correct
-                println "════════════════════════════════════════════════════════════════"
-                println "🔍 CONDITION GROUPING DEBUG:"
-                println "   Original sample ID: ${meta.id}"
-                println "   → Condition group:  ${group_id}"
-                println "   → Antibody:         ${meta.antibody}"
-                println "   → Peak file:        ${peak.getName()}"
-                println "════════════════════════════════════════════════════════════════"
-                
                 [ group_id, meta.antibody, peak ] 
         }
         .groupTuple(by: 0)
