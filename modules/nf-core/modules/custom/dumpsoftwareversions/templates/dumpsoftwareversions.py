@@ -72,38 +72,56 @@ except Exception as e:
 versions_by_process.update(versions_this_module)
 
 # aggregate versions by the module name (derived from fully-qualified process name)
-# IMPROVED: Better error handling for version conflicts
+# IMPROVED: Intelligent version merging to avoid false conflicts
+def deep_merge_versions(base_dict, new_dict):
+    """
+    Recursively merge version dictionaries.
+    If values are dicts themselves, merge them recursively.
+    Otherwise, keep the base value (first occurrence).
+    """
+    merged = base_dict.copy()
+    for key, value in new_dict.items():
+        if key in merged:
+            # If both values are dicts, merge them recursively
+            if isinstance(merged[key], dict) and isinstance(value, dict):
+                merged[key] = deep_merge_versions(merged[key], value)
+            # Otherwise keep the existing value (first occurrence)
+        else:
+            merged[key] = value
+    return merged
+
+def flatten_versions(versions_dict):
+    """
+    Flatten nested version dictionaries to extract actual tool versions.
+    Returns a dict of {tool: version} at the top level.
+    """
+    flat = {}
+    for key, value in versions_dict.items():
+        if isinstance(value, dict):
+            # Recursively flatten nested dicts
+            flat.update(flatten_versions(value))
+        else:
+            # It's an actual version string
+            flat[key] = value
+    return flat
+
 versions_by_module = {}
-version_conflicts = []
 
 for process, process_versions in versions_by_process.items():
     module = process.split(":")[-1]
     
     if module in versions_by_module:
-        # Check if versions match
-        if versions_by_module[module] != process_versions:
-            # Log the conflict but don't fail - use first occurrence
-            conflict_msg = (
-                f"Version conflict for module '{module}': "
-                f"existing={versions_by_module[module]}, "
-                f"new={process_versions} (from {process})"
-            )
-            version_conflicts.append(conflict_msg)
-            print(f"Warning: {conflict_msg}")
-            # Keep the first occurrence
-            continue
-    
-    versions_by_module[module] = process_versions
+        # Merge versions intelligently instead of treating as conflict
+        versions_by_module[module] = deep_merge_versions(
+            versions_by_module[module], 
+            process_versions
+        )
+    else:
+        versions_by_module[module] = process_versions
 
-# Write conflicts to log if any were detected
-if version_conflicts:
-    with open("version_conflicts.log", "w") as f:
-        f.write("Software Version Conflicts Detected\\n")
-        f.write("=" * 80 + "\\n\\n")
-        for conflict in version_conflicts:
-            f.write(conflict + "\\n")
-        f.write("\\nNote: Using first occurrence for each conflicting module.\\n")
-    print(f"Warning: {len(version_conflicts)} version conflict(s) detected. See version_conflicts.log")
+# Flatten any nested structures for cleaner output
+for module in versions_by_module:
+    versions_by_module[module] = flatten_versions(versions_by_module[module])
 
 versions_by_module["Workflow"] = {
     "Nextflow": "$workflow.nextflow.version",
