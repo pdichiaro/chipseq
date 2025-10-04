@@ -32,6 +32,7 @@ run_modules:
 
 exclude_modules:
   - "general_stats"
+  - "software_versions"
 
 module_order:
   - fastqc:
@@ -105,8 +106,9 @@ report_section_order:
   # Positioned after featureCounts for logical flow
   deseq2-featurecounts-qc:
     after: mlib_featurecounts
+  # ChIP-seq software versions summary - positioned at the end of report
   nf-core-chipseq-summary:
-    order: -3700
+    order: 10000
 
 custom_plot_config:
   picard_insert_size:
