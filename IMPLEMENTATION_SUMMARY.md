@@ -65,24 +65,28 @@ Individual Peaks → Group by Condition → MACS2_CONSENSUS_BY_CONDITION
 
 ```
 results/
-├── consensus_peaks/
-│   ├── by_condition/          # NEW: Intermediate condition-level consensus
-│   │   ├── WT_BCATENIN.bed
-│   │   ├── WT_BCATENIN.saf
-│   │   ├── WT_BCATENIN.pdf
-│   │   ├── WT_BCATENIN.condition.txt
-│   │   ├── WT_BCATENIN.boolean.txt
-│   │   ├── WT_BCATENIN.intersect.txt
-│   │   ├── NAIVE_BCATENIN.bed
-│   │   ├── NAIVE_BCATENIN.saf
-│   │   └── ... (other conditions)
-│   │
-│   └── BCATENIN/              # EXISTING: Final antibody-level consensus
-│       ├── BCATENIN.bed
-│       ├── BCATENIN.saf
-│       ├── BCATENIN.pdf
-│       └── ...
+└── consensus_peaks/
+    └── BCATENIN/                    # Antibody directory
+        ├── by_condition/            # NEW: Condition-level consensus (intermediate)
+        │   ├── WT_BCATENIN.bed
+        │   ├── WT_BCATENIN.saf
+        │   ├── WT_BCATENIN.pdf
+        │   ├── WT_BCATENIN.condition.txt
+        │   ├── WT_BCATENIN.boolean.txt
+        │   ├── WT_BCATENIN.intersect.txt
+        │   ├── NAIVE_BCATENIN.bed
+        │   ├── NAIVE_BCATENIN.saf
+        │   └── ... (other conditions)
+        │
+        └── BCATENIN.bed             # EXISTING: Final antibody consensus
+        └── BCATENIN.saf
+        └── BCATENIN.pdf
+        └── ...
 ```
+
+This structure logically groups all consensus files for each antibody:
+- The `by_condition/` subdirectory contains intermediate consensus for each condition
+- The antibody directory root contains the final merged consensus across all conditions
 
 ## Benefits of This Approach
 

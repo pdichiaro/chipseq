@@ -637,7 +637,7 @@ workflow CHIPSEQ {
 
     // STEP 1: Create consensus peaks BY CONDITION (intermediate files)
     // Extract condition from sample ID and group peaks by condition+antibody
-    // Example: WT_BCATENIN_IP_REP1_T1 -> group_id = WT_BCATENIN
+    // Example: WT_BCATENIN_IP_REP1_T1 -> group_id = WT_BCATENIN, antibody = BCATENIN
     
     ch_macs2_peaks
         .map { 
@@ -645,20 +645,23 @@ workflow CHIPSEQ {
                 // Extract group identifier by removing _REP{N}_T{M} suffix
                 def id_parts = meta.id.split('_')
                 def group_id = id_parts.size() >= 3 ? id_parts[0..-3].join('_') : meta.id
-                [ group_id, peak ] 
+                // Extract antibody from the last part of group_id
+                def antibody = group_id.split('_')[-1]
+                [ group_id, antibody, peak ] 
         }
-        .groupTuple()
+        .groupTuple(by: 0)
         .map {
-            group_id, peaks ->
+            group_id, antibodies, peaks ->
                 def meta_new = [:]
                 meta_new.id = group_id
+                meta_new.antibody = antibodies[0]  // All should have same antibody
                 [ meta_new, peaks ] 
         }
         .set { ch_condition_peaks }
     
     //
     // MODULE: Generate consensus peaks BY CONDITION (e.g., WT_BCATENIN, NAIVE_BCATENIN)
-    // These are intermediate files that will be published to consensus_peaks/by_condition/
+    // These are intermediate files published to consensus_peaks/{antibody}/by_condition/
     //
     MACS2_CONSENSUS_BY_CONDITION (
         ch_condition_peaks

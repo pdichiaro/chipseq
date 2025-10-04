@@ -1,11 +1,12 @@
 /*
  * Consensus peaks BY CONDITION (intermediate files before final merge by antibody)
+ * Publishes to: consensus_peaks/{antibody}/by_condition/
  */
 process MACS2_CONSENSUS_BY_CONDITION {
     tag "$meta.id"
     label 'process_long'
     
-    publishDir "${params.outdir}/consensus_peaks/by_condition", mode: params.publish_dir_mode
+    publishDir "${params.outdir}/consensus_peaks/${meta.antibody}/by_condition", mode: params.publish_dir_mode
 
     conda (params.enable_conda ? "conda-forge::biopython conda-forge::r-optparse=1.7.1 conda-forge::r-upsetr=1.4.0 bioconda::bedtools=2.30.0" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
