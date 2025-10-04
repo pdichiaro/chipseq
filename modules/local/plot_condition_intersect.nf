@@ -30,15 +30,11 @@ process PLOT_CONDITION_INTERSECT {
     def collapsecols = params.narrow_peak ? (['collapse']*9).join(',') : (['collapse']*8).join(',')
     def expandparam = params.narrow_peak ? '--is_narrow_peak' : ''
     
-    // Create clean condition names (same method as PLOT_MACS2_QC_CONSENSUS)
-    def condition_names = condition_ids.join(',').replaceAll("_peaks\\.${peak_type}", "")
-    
     """
     # Debug: Print what we received
     echo "DEBUG: Antibody = ${antibody}"
     echo "DEBUG: Number of conditions = ${condition_ids.size()}"
     echo "DEBUG: Condition IDs = ${condition_ids.join(', ')}"
-    echo "DEBUG: Condition names = ${condition_names}"
     echo "DEBUG: Peak files:"
     ls -lh ${peaks.collect{it.toString()}.sort().join(' ')}
     
@@ -46,8 +42,18 @@ process PLOT_CONDITION_INTERSECT {
     # This is more reliable than relying on peak name parsing
     
     # First, add condition identifier to each peak file (column 4)
+    # CRITICAL: Both arrays must be in the same order!
+    # Peak files are sorted alphabetically, so we must sort condition_ids too
     PEAK_FILES=(${peaks.collect{it.toString()}.sort().join(' ')})
-    CONDITION_NAMES=(${condition_names.split(',').join(' ')})
+    CONDITION_IDS_SORTED=(${condition_ids.sort().join(' ')})
+    
+    # Extract clean condition names from sorted IDs
+    CONDITION_NAMES=()
+    for cond_id in "\${CONDITION_IDS_SORTED[@]}"; do
+        # Remove _peaks.narrowPeak or _peaks.broadPeak suffix
+        clean_name=\$(echo "\$cond_id" | sed 's/_peaks\.${peak_type}\$//')
+        CONDITION_NAMES+=("\$clean_name")
+    done
     
     for i in "\${!PEAK_FILES[@]}"; do
         PEAK_FILE="\${PEAK_FILES[\$i]}"
@@ -70,11 +76,13 @@ process PLOT_CONDITION_INTERSECT {
     head -3 ${prefix}.merged.txt
     
     # Use custom script to generate intersection data directly
-    echo "DEBUG: Running plot_condition_intersect_custom.py with condition_names: ${condition_names}"
+    # Create comma-separated list from bash array
+    CONDITION_NAMES_CSV=\$(IFS=, ; echo "\${CONDITION_NAMES[*]}")
+    echo "DEBUG: Running plot_condition_intersect_custom.py with condition_names: \$CONDITION_NAMES_CSV"
     
     plot_condition_intersect_custom.py \\
         ${prefix}.merged.txt \\
-        "${condition_names}" \\
+        "\$CONDITION_NAMES_CSV" \\
         ${prefix}.conditions.intersect.txt
     
     echo "DEBUG: Intersect file content:"
