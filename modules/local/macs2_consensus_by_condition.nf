@@ -18,6 +18,7 @@ process MACS2_CONSENSUS_BY_CONDITION {
 
     output:
     tuple val(meta), path("*.bed")          , emit: bed
+    tuple val(meta), path("*_peaks.*Peak")  , emit: peaks // for QC plotting
     tuple val(meta), path("*.saf")          , emit: saf
     tuple val(meta), path("*.pdf")          , emit: pdf
     tuple val(meta), path("*.condition.txt"), emit: txt
@@ -46,6 +47,9 @@ process MACS2_CONSENSUS_BY_CONDITION {
         $expandparam
 
     awk -v FS='\t' -v OFS='\t' 'FNR > 1 { print \$1, \$2, \$3, \$4, "0", "+" }' ${prefix}.boolean.txt > ${prefix}.bed
+    
+    # Create symlink with peak_type suffix for QC plotting compatibility
+    ln -s ${prefix}.bed ${prefix}_peaks.${peak_type}
 
     echo -e "GeneID\tChr\tStart\tEnd\tStrand" > ${prefix}.saf
     awk -v FS='\t' -v OFS='\t' 'FNR > 1 { print \$4, \$1, \$2, \$3,  "+" }' ${prefix}.boolean.txt >> ${prefix}.saf

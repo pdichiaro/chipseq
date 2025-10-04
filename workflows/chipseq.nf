@@ -61,9 +61,11 @@ ch_with_inputs = params.with_inputs ? params.with_inputs.toBoolean() : false
 */
 
 
-include { FRIP_SCORE                          } from '../modules/local/frip_score'
-include { PLOT_MACS2_QC                       } from '../modules/local/plot_macs2_qc'
-include { PLOT_HOMER_ANNOTATEPEAKS            } from '../modules/local/plot_homer_annotatepeaks'
+include { FRIP_SCORE                                               } from '../modules/local/frip_score'
+include { PLOT_MACS2_QC                                            } from '../modules/local/plot_macs2_qc'
+include { PLOT_MACS2_QC as PLOT_MACS2_QC_CONSENSUS_CONDITION       } from '../modules/local/plot_macs2_qc'
+include { PLOT_HOMER_ANNOTATEPEAKS                                 } from '../modules/local/plot_homer_annotatepeaks'
+include { PLOT_HOMER_ANNOTATEPEAKS as PLOT_HOMER_ANNOTATEPEAKS_CONSENSUS_CONDITION } from '../modules/local/plot_homer_annotatepeaks'
 include { MACS2_CONSENSUS                     } from '../modules/local/macs2_consensus'
 include { MACS2_CONSENSUS_BY_CONDITION        } from '../modules/local/macs2_consensus_by_condition'
 include { ANNOTATE_BOOLEAN_PEAKS              } from '../modules/local/annotate_boolean_peaks'
@@ -109,8 +111,9 @@ include { MACS2_CALLPEAK as MACS2_CALLPEAK_MERGED          } from '../modules/nf
 include { SUBREAD_FEATURECOUNTS         } from '../modules/nf-core/modules/subread/featurecounts/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS   } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
 
-include { HOMER_ANNOTATEPEAKS as HOMER_ANNOTATEPEAKS_MACS2     } from '../modules/nf-core/modules/homer/annotatepeaks/main'
-include { HOMER_ANNOTATEPEAKS as HOMER_ANNOTATEPEAKS_CONSENSUS } from '../modules/nf-core/modules/homer/annotatepeaks/main'
+include { HOMER_ANNOTATEPEAKS as HOMER_ANNOTATEPEAKS_MACS2              } from '../modules/nf-core/modules/homer/annotatepeaks/main'
+include { HOMER_ANNOTATEPEAKS as HOMER_ANNOTATEPEAKS_CONSENSUS          } from '../modules/nf-core/modules/homer/annotatepeaks/main'
+include { HOMER_ANNOTATEPEAKS as HOMER_ANNOTATEPEAKS_CONSENSUS_CONDITION} from '../modules/nf-core/modules/homer/annotatepeaks/main'
 
 //
 // SUBWORKFLOW: Consisting entirely of nf-core/modules
@@ -667,6 +670,38 @@ workflow CHIPSEQ {
         ch_condition_peaks
     )
     ch_versions = ch_versions.mix(MACS2_CONSENSUS_BY_CONDITION.out.versions)
+
+    //
+    // MODULE: Annotate and plot QC for consensus peaks BY CONDITION
+    //
+    if (!params.skip_peak_annotation) {
+        HOMER_ANNOTATEPEAKS_CONSENSUS_CONDITION (
+            MACS2_CONSENSUS_BY_CONDITION.out.bed,
+            PREPARE_GENOME.out.fasta,
+            PREPARE_GENOME.out.gtf
+        )
+        ch_versions = ch_versions.mix(HOMER_ANNOTATEPEAKS_CONSENSUS_CONDITION.out.versions)
+
+        if (!params.skip_peak_qc) {
+            //
+            // MODULE: MACS2 QC plots for consensus peaks by condition
+            //
+            PLOT_MACS2_QC_CONSENSUS_CONDITION (
+                MACS2_CONSENSUS_BY_CONDITION.out.peaks.collect{it[1]}
+            )
+            ch_versions = ch_versions.mix(PLOT_MACS2_QC_CONSENSUS_CONDITION.out.versions)
+
+            //
+            // MODULE: Peak annotation QC plots for consensus peaks by condition
+            //
+            PLOT_HOMER_ANNOTATEPEAKS_CONSENSUS_CONDITION (
+                HOMER_ANNOTATEPEAKS_CONSENSUS_CONDITION.out.txt.collect{it[1]},
+                ch_peak_annotation_header,
+                "_peaks.condition.annotatePeaks.txt"
+            )
+            ch_versions = ch_versions.mix(PLOT_HOMER_ANNOTATEPEAKS_CONSENSUS_CONDITION.out.versions)
+        }
+    }
 
     // STEP 2: Merge condition consensus peaks by ANTIBODY for final analysis
     // Group the condition-level peaks by antibody for the final merge
