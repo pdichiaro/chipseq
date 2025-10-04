@@ -847,10 +847,13 @@ workflow CHIPSEQ {
     ch_versions = ch_versions.mix(DESEQ2_TRANSFORM.out.versions.first())
     
     // Populate MultiQC channels with transformed DESeq2 files
+    // Sort files to ensure deterministic ordering in MultiQC report
     ch_deseq2_pca_multiqc = ch_deseq2_pca_multiqc.mix(
         DESEQ2_TRANSFORM.out.multiqc_files
             .flatten()
             .filter { file -> file.name =~ /.*\.pca\..*_mqc\.txt$/ }
+            .toSortedList { a, b -> a.name <=> b.name }
+            .flatten()
     )
 
     ch_deseq2_clustering_multiqc = ch_deseq2_clustering_multiqc.mix(
@@ -860,6 +863,8 @@ workflow CHIPSEQ {
                 file.name =~ /.*\.sample\.dists.*_mqc\.txt$/ || 
                 file.name =~ /.*read\.distribution.*_mqc\.txt$/
             }
+            .toSortedList { a, b -> a.name <=> b.name }
+            .flatten()
     )
 
     ch_versions = ch_versions.mix(ch_normalization_versions)
