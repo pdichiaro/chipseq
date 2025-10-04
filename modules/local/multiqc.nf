@@ -59,20 +59,11 @@ process MULTIQC {
     def custom_config  = mqc_custom_config ? "--config $mqc_custom_config" : ''
     
     """
-    # Create multiqc_data directory and move DESeq2 files there
-    # This preserves the original numeric-prefixed filenames for proper sorting
-    mkdir -p multiqc_data
-    
-    # Move all DESeq2 *_mqc.txt files to multiqc_data/ directory
-    # These files have numeric prefixes (01_, 02_, etc.) for proper ordering
+    # DESeq2 files are staged with original names (numeric prefixes preserved)
+    # List them for verification - MultiQC will find them automatically
     if ls *_mqc.txt 1> /dev/null 2>&1; then
-        echo "=== Moving DESeq2 files to multiqc_data/ ==="
-        for mqc_file in *_mqc.txt; do
-            echo "  Moving: \${mqc_file}"
-            mv "\${mqc_file}" multiqc_data/
-        done
-        echo "=== DESeq2 MultiQC files in multiqc_data/ ==="
-        ls -lh multiqc_data/*_mqc.txt
+        echo "=== DESeq2 MultiQC files found (will be auto-detected) ==="
+        ls -lh *_mqc.txt
     else
         echo "⚠️  Warning: No *_mqc.txt files found for DESeq2"
     fi
