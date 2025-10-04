@@ -69,7 +69,6 @@ include { ANNOTATE_BOOLEAN_PEAKS              } from '../modules/local/annotate_
 // include { COUNT_NORM                          } from '../modules/local/count_normalization'  // Module not found
 include { NORMALIZE_DESEQ2_QC_INVARIANT_GENES } from '../modules/local/normalize_deseq2_qc_invariant_genes'
 include { NORMALIZE_DESEQ2_QC_ALL_GENES       } from '../modules/local/normalize_deseq2_qc_all_genes'
-include { DESEQ2_SECTION_HEADER               } from '../modules/local/deseq2_section_header'
 include { DESEQ2_TRANSFORM                    } from '../modules/local/deseq2_transform'
 include { MULTIQC                             } from '../modules/local/multiqc'
 include { MULTIQC_CUSTOM_PHANTOMPEAKQUALTOOLS } from '../modules/local/multiqc_custom_phantompeakqualtools'
@@ -741,7 +740,6 @@ workflow CHIPSEQ {
     
     ch_deseq2_pca_multiqc        = Channel.empty()
     ch_deseq2_clustering_multiqc = Channel.empty()
-    ch_deseq2_section_header_multiqc = Channel.empty()
     ch_size_factors              = Channel.empty()
     ch_scaling_factors_all       = Channel.empty()
     ch_deseq2_raw_files          = Channel.empty()
@@ -836,17 +834,6 @@ workflow CHIPSEQ {
         
         ch_size_factors = ch_size_factors.mix(ch_size_factors_all_genes)
     }
-    
-    //
-    // MODULE: Create MultiQC section header for DESeq2 QC
-    //
-    DESEQ2_SECTION_HEADER (
-        "featureCounts"
-    )
-    ch_versions = ch_versions.mix(DESEQ2_SECTION_HEADER.out.versions)
-    
-    // Keep section header separate - it's passed as its own input to MultiQC
-    ch_deseq2_section_header_multiqc = DESEQ2_SECTION_HEADER.out.section_header
     
     //
     // MODULE: Transform DESeq2 files for MultiQC with proper headers
@@ -1054,8 +1041,7 @@ workflow CHIPSEQ {
             ch_subreadfeaturecounts_multiqc.collect{it[1]}.ifEmpty([]),
 
             ch_deseq2_pca_multiqc.collect().ifEmpty([]),
-            ch_deseq2_clustering_multiqc.collect().ifEmpty([]),
-            ch_deseq2_section_header_multiqc.collect().ifEmpty([])
+            ch_deseq2_clustering_multiqc.collect().ifEmpty([])
         )
         multiqc_report = MULTIQC.out.report.toList()
     }

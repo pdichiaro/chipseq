@@ -47,7 +47,6 @@ process MULTIQC {
 
     path ('*')  // DESeq2 PCA plots
     path ('*')  // DESeq2 clustering/distance plots
-    path ('*')  // DESeq2 section header
 
     output:
     path "*multiqc_report.html", emit: report
