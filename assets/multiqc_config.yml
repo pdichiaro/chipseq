@@ -123,11 +123,9 @@ report_section_order:
     order: -1700
   08_deseq2_pca_top500:
     order: -1800
-  # ChIP-seq software versions and workflow summary - positioned at the end of report
-  software_versions:
-    order: -2000
+  # ChIP-seq workflow summary - positioned at the end of report
   nf-core-chipseq-summary:
-    order: -2100
+    order: -2000
 
 custom_plot_config:
   picard_insert_size:
