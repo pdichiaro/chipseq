@@ -9,5 +9,5 @@
 #pconfig:
 #    title: 'DESeq2: Normalized Read Distribution'
 #    scale: false
-#extra:
-#    plot_order: 1
+extra:
+    plot_order: 1
