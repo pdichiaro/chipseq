@@ -18,11 +18,21 @@ def main():
     args = parser.parse_args()
     
     conditions = args.condition_names.split(',')
+    # Sort conditions by length (descending) to match longer names first
+    # This prevents "WT" from matching "WT_TREATMENT_Interval_1" before "WT_TREATMENT" can
+    conditions_sorted = sorted(conditions, key=len, reverse=True)
     condition_set = set(conditions)
     
     # Dictionary to count peak intersections
     # Key: frozenset of conditions, Value: count
     intersect_counts = defaultdict(int)
+    
+    # Debug output
+    print(f"DEBUG: Processing {len(conditions)} conditions: {conditions}", file=sys.stderr)
+    print(f"DEBUG: Sorted for matching: {conditions_sorted}", file=sys.stderr)
+    
+    # Track which conditions we actually find
+    found_conditions = set()
     
     # Read merged peaks file
     with open(args.merged_file, 'r') as f:
@@ -42,8 +52,8 @@ def main():
                 # Extract the first part before _Interval or before _peaks
                 parts = peak_name.split('_')
                 if len(parts) > 0:
-                    # Try to match against known conditions
-                    for cond in conditions:
+                    # Try to match against known conditions (longest first to avoid partial matches)
+                    for cond in conditions_sorted:
                         if peak_name.startswith(cond + '_'):
                             peak_conditions.add(cond)
                             break
@@ -51,6 +61,8 @@ def main():
             # Only count if we found valid conditions
             if peak_conditions:
                 intersect_counts[frozenset(peak_conditions)] += 1
+                # Track which conditions we found
+                found_conditions.update(peak_conditions)
     
     # Write output in UpSetR compatible format
     # Format: condition1&condition2&condition3  count
@@ -66,6 +78,14 @@ def main():
             f.write(f"{'&'.join(cond_list)}\t{count}\n")
     
     print(f"Generated intersection file with {len(intersect_counts)} unique combinations")
+    print(f"Expected conditions: {sorted(conditions)}")
+    print(f"Found conditions in data: {sorted(found_conditions)}")
+    
+    # Check for missing conditions
+    missing_conditions = set(conditions) - found_conditions
+    if missing_conditions:
+        print(f"WARNING: Missing conditions in data: {sorted(missing_conditions)}", file=sys.stderr)
+    
     for cond_set, count in sorted_intersects[:5]:  # Show top 5
         print(f"  {'&'.join(sorted(cond_set))}: {count} peaks")
 
