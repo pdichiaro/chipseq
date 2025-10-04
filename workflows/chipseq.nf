@@ -871,7 +871,7 @@ workflow CHIPSEQ {
             .flatten()
             .filter { file -> 
                 file.name =~ /.*\.sample\.dists.*_mqc\.txt$/ || 
-                file.name =~ /.*\.read\.distribution.*_mqc\.txt$/
+                file.name =~ /.*read\.distribution.*_mqc\.txt$/
             }
     )
 
