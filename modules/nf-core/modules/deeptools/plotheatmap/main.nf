@@ -30,7 +30,7 @@ process DEEPTOOLS_PLOTHEATMAP {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        deeptools: \$(plotHeatmap --version 2>&1 | head -n1 | sed 's/^plotHeatmap //')
+        deeptools: \$(plotHeatmap --version 2>&1 | grep -v "Matplotlib" | grep -v "MPLCONFIGDIR" | head -n1 | sed 's/^plotHeatmap //')
     END_VERSIONS
     """
 }

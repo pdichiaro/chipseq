@@ -30,7 +30,7 @@ process DEEPTOOLS_PLOTPROFILE {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        deeptools: \$(plotProfile --version 2>&1 | head -n1 | sed 's/^plotProfile //')
+        deeptools: \$(plotProfile --version 2>&1 | grep -v "Matplotlib" | grep -v "MPLCONFIGDIR" | head -n1 | sed 's/^plotProfile //')
     END_VERSIONS
     """
 }
