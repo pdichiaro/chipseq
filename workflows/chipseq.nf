@@ -611,7 +611,9 @@ workflow CHIPSEQ {
             // MODULE: MACS2 QC plots with R
             //
             PLOT_MACS2_QC (
-                ch_macs2_peaks.collect{it[1]}
+                ch_macs2_peaks
+                    .map { meta, peaks -> peaks }
+                    .collect()
             )
             ch_versions = ch_versions.mix(PLOT_MACS2_QC.out.versions)
 
@@ -619,7 +621,9 @@ workflow CHIPSEQ {
             // MODULE: Peak annotation QC plots with R
             //
             PLOT_HOMER_ANNOTATEPEAKS (
-                HOMER_ANNOTATEPEAKS_MACS2.out.txt.collect{it[1]},
+                HOMER_ANNOTATEPEAKS_MACS2.out.txt
+                    .map { meta, txt -> txt }
+                    .collect(),
                 ch_peak_annotation_header,
                 "_peaks.annotatePeaks.txt"
             )
