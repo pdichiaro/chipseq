@@ -51,6 +51,14 @@ sets <- sort(unique(unlist(strsplit(names(comb.vec),split='&'))), decreasing = T
 num_sets <- length(sets)
 num_intersects <- length(comb.vec)
 
+# Debug output
+cat("DEBUG: Input file:", opt$input_file, "\n")
+cat("DEBUG: Number of sets:", num_sets, "\n")
+cat("DEBUG: Sets:", paste(sets, collapse=", "), "\n")
+cat("DEBUG: Number of intersections:", num_intersects, "\n")
+cat("DEBUG: First few intersection names:\n")
+print(head(names(comb.vec), 10))
+
 if (num_sets < 2 || num_intersects < 2) {
     warning("Not enough data for UpSet plot (need at least 2 sets and 2 intersections, found ", num_sets, " sets and ", num_intersects, " intersections). Creating placeholder PDF.")
     pdf(opt$output_file,onefile=F,height=10,width=20)
