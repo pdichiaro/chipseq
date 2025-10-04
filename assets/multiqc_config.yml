@@ -85,12 +85,6 @@ module_order:
       info: "This section of the report shows featureCounts results for the number of reads assigned to merged library consensus peaks."
       path_filters:
         - "./macs2/featurecounts/*.summary"
-  - custom_content:
-      name: "MERGED LIB: DESeq2 QC (featureCounts)"
-      anchor: "deseq2-featurecounts-qc"
-      info: "This section shows DESeq2 QC plots for consensus peaks quantified by featureCounts."
-      path_filters:
-        - "./macs2/deseq2_qc/*"
 
 report_section_order:
   peak_count:
