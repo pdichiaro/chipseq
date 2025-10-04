@@ -42,10 +42,8 @@ process PLOT_CONDITION_INTERSECT {
     # This is more reliable than relying on peak name parsing
     
     # First, add condition identifier to each peak file (column 4)
-    # CRITICAL: Both arrays must be in the same order!
-    # Peak files are sorted alphabetically, so we must sort condition_ids too
+    # CRITICAL: Extract condition names from peak file names (sorted alphabetically)
     PEAK_FILES=(${peaks.collect{it.toString()}.sort().join(' ')})
-    CONDITION_IDS_SORTED=(${condition_ids.sort().join(' ')})
     
     # Extract clean condition names by removing _peaks.narrowPeak suffix from file names
     CONDITION_NAMES=()
