@@ -19,11 +19,15 @@ process MULTIQC_CUSTOM_PHANTOMPEAKQUALTOOLS {
     script:
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    cp $correlation_header ${prefix}.spp_correlation_mqc.tsv
+    # Remove leading # from header files for MultiQC parsing
+    sed 's/^#//' $correlation_header > ${prefix}.spp_correlation_mqc.tsv
+    sed 's/^#//' $nsc_header > nsc_header_clean.txt
+    sed 's/^#//' $rsc_header > rsc_header_clean.txt
+    
     Rscript --max-ppsize=500000 -e "load('$rdata'); write.table(crosscorr\\\$cross.correlation, file=\\"${prefix}.spp_correlation_mqc.tsv\\", sep=",", quote=FALSE, row.names=FALSE, col.names=FALSE,append=TRUE)"
 
-    awk -v OFS='\t' '{print "${meta.id}", \$9}'  $spp | cat $nsc_header - > ${prefix}.spp_nsc_mqc.tsv
-    awk -v OFS='\t' '{print "${meta.id}", \$10}' $spp | cat $rsc_header - > ${prefix}.spp_rsc_mqc.tsv
+    awk -v OFS='\t' '{print "${meta.id}", \$9}'  $spp | cat nsc_header_clean.txt - > ${prefix}.spp_nsc_mqc.tsv
+    awk -v OFS='\t' '{print "${meta.id}", \$10}' $spp | cat rsc_header_clean.txt - > ${prefix}.spp_rsc_mqc.tsv
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

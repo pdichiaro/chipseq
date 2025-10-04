@@ -27,7 +27,9 @@ process PLOT_HOMER_ANNOTATEPEAKS {
         -p $prefix \\
         $args
 
-    find ./ -type f -name "*summary.txt" -exec cat {} \\; | cat $mqc_header - > ${prefix}.summary_mqc.tsv
+    # Remove leading # from header file for MultiQC parsing
+    sed 's/^#//' $mqc_header > mqc_header_clean.txt
+    find ./ -type f -name "*summary.txt" -exec cat {} \\; | cat mqc_header_clean.txt - > ${prefix}.summary_mqc.tsv
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
