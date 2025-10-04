@@ -37,34 +37,36 @@ The configuration organizes modules by processing stage:
 - **MERGED LIB (unfiltered/filtered)**: Pre- and post-filtering stages
 
 ### 3. **Report Section Ordering**
-Uses descending order values to position sections correctly (higher = earlier in report):
+Uses `before` and `after` directives to create a logical flow of sections:
 ```yaml
 report_section_order:
-  # DESeq2 QC parent sections (highest priority - appears first)
-  deseq2-featurecounts-qc:
-    order: 10000
-  # Peak calling and QC metrics (high priority - appears after DESeq2)
+  # Peak calling and QC metrics chain (using before directives)
   peak_count:
-    order: 9000
+    before: mlib_deeptools
   frip_score:
-    order: 8900
+    before: peak_count
   peak_annotation:
-    order: 8800
+    before: frip_score
   strand_shift_correlation:
-    order: 8700
+    before: peak_annotation
   nsc_coefficient:
-    order: 8600
+    before: strand_shift_correlation
   rsc_coefficient:
-    order: 8500
-  mlib_deeptools:
-    order: 8400
+    before: nsc_coefficient
   mlib_featurecounts:
-    order: 8300
-  # Summary sections (negative values = at the end)
-  chipseq-summary:
-    order: -1000
+    before: rsc_coefficient
+  # DESeq2 QC parent section (positioned after featureCounts)
+  deseq2-featurecounts-qc:
+    after: mlib_featurecounts
+  # DESeq2 individual plots (ordered within parent section)
+  01_deseq2_read_distribution:
+    after: deseq2-featurecounts-qc
+  02_deseq2_sample_distance:
+    after: 01_deseq2_read_distribution
+  # ... (continues for plots 03-08)
+  # Summary section (positioned at the end)
   nf-core-chipseq-summary:
-    order: -1001
+    order: 10000
 ```
 
 ### 4. **Performance Optimizations**

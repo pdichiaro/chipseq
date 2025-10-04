@@ -6,23 +6,18 @@ report_comment: >
 data_format: "yaml"
 
 export_plots: true
-disable_version_detection: true
-sample_names_replace_exact: true
-
-# DESeq2 plot ordering within parent sections handled by numbered prefixes in plot titles
-# (01., 02., 03., 04., etc.) to force alphabetical sorting since plot_order doesn't work in nested sections
 
 custom_content:
   order:
     # DESeq2 plots ordered by number prefix (01-08)
-    - '01_featurecounts.deseq2.all_genes.read.distribution_*'
-    - '02_featurecounts.deseq2.all_genes.sample.dists_*'
-    - '03_featurecounts.deseq2.all_genes.pca*'
-    - '04_featurecounts.deseq2.all_genes.pca.top500*'
-    - '05_featurecounts.deseq2.invariant_genes.read.distribution_*'
-    - '06_featurecounts.deseq2.invariant_genes.sample.dists_*'
-    - '07_featurecounts.deseq2.invariant_genes.pca*'
-    - '08_featurecounts.deseq2.invariant_genes.pca.top500*'
+    - '01_deseq2_read_distribution_*'
+    - '02_deseq2_sample_distance_*'
+    - '03_deseq2_pca_*'
+    - '04_deseq2_pca_top500_*'
+    - '05_deseq2_read_distribution_*'
+    - '06_deseq2_sample_distance_*'
+    - '07_deseq2_pca_*'
+    - '08_deseq2_pca_top500_*'
 
 run_modules:
   - custom_content
@@ -92,31 +87,44 @@ module_order:
         - "./macs2/featurecounts/*.summary"
 
 report_section_order:
-  # DESeq2 QC parent sections (ChIP-seq uses featureCounts) - positioned at the top
-  deseq2-featurecounts-qc:
-    order: 10000
-  # Peak calling and QC metrics - positioned after DESeq2 sections
   peak_count:
-    order: 9000
+    before: mlib_deeptools
   frip_score:
-    order: 8900
+    before: peak_count
   peak_annotation:
-    order: 8800
+    before: frip_score
   strand_shift_correlation:
-    order: 8700
+    before: peak_annotation
   nsc_coefficient:
-    order: 8600
+    before: strand_shift_correlation
   rsc_coefficient:
-    order: 8500
-  mlib_deeptools:
-    order: 8400
+    before: nsc_coefficient
   mlib_featurecounts:
-    order: 8300
-  # ChIP-seq workflow and software summaries - positioned at the end of report
-  chipseq-summary:
-    order: -1000
+    before: rsc_coefficient
+  # DESeq2 QC parent sections (ChIP-seq uses featureCounts)
+  # Positioned after featureCounts for logical flow
+  deseq2-featurecounts-qc:
+    after: mlib_featurecounts
+  # DESeq2 individual plots ordered within parent section
+  01_deseq2_read_distribution:
+    after: deseq2-featurecounts-qc
+  02_deseq2_sample_distance:
+    after: 01_deseq2_read_distribution
+  03_deseq2_pca:
+    after: 02_deseq2_sample_distance
+  04_deseq2_pca_top500:
+    after: 03_deseq2_pca
+  05_deseq2_read_distribution:
+    after: 04_deseq2_pca_top500
+  06_deseq2_sample_distance:
+    after: 05_deseq2_read_distribution
+  07_deseq2_pca:
+    after: 06_deseq2_sample_distance
+  08_deseq2_pca_top500:
+    after: 07_deseq2_pca
+  # ChIP-seq software versions summary - positioned at the end of report
   nf-core-chipseq-summary:
-    order: -1001
+    order: 10000
 
 custom_plot_config:
   picard_insert_size:
@@ -157,8 +165,6 @@ sp:
     fn: "*plotProfile*"
   phantompeakqualtools/out:
     fn: "*.spp.out"
-  software_versions:
-    fn: "EXCLUDE_THIS_FILE"
 
 
 # DESeq2 plots are now handled dynamically by DESEQ2_TRANSFORM module headers
