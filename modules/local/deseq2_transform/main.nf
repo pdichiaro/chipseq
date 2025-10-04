@@ -128,9 +128,16 @@ process DESEQ2_TRANSFORM {
         mv temp_output.txt "\${numbered_output}"
         echo "Created \${numbered_output} with read distribution header (ID: \${PLOT_ID}, section: \${SECTION_TITLE}, parent: \${QUANTIFIER})"
     else
-        # Unknown file type - copy as-is with _mqc.txt suffix
-        cp ${deseq2_file} "${output_name}"
-        echo "Copied ${output_name} without header (unknown type)"
+        # Unknown file type - ERROR: All file types should be explicitly handled
+        echo "❌ ERROR: Unknown file type for: ${file_name}"
+        echo "   This file does not match any expected pattern:"
+        echo "   - *.pca.top*.vals.txt"
+        echo "   - *.pca.vals.txt"
+        echo "   - *.sample.dists.txt"
+        echo "   - *.read.distribution.normalized.txt"
+        echo ""
+        echo "   Please add explicit handling for this file type in deseq2_transform/main.nf"
+        exit 1
     fi
     
     echo "=== FILES CREATED ==="
