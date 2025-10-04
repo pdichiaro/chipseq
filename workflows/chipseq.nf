@@ -641,15 +641,19 @@ workflow CHIPSEQ {
     // STEP 1: Create consensus peaks BY CONDITION (intermediate files)
     // Extract condition from sample ID and group peaks by condition+antibody
     // Example: TLBR2_shMCM5_CT_REP1_T1 -> group_id = TLBR2_shMCM5_CT
+    // Example: TLBR2_shMCM5_CT_RNAseA_REP1_T1 -> group_id = TLBR2_shMCM5_CT_RNAseA
     // Example: TLBR2_shMCM5_DOX_RNAseA_REP2_T1 -> group_id = TLBR2_shMCM5_DOX_RNAseA
     
     ch_macs2_peaks
         .map { 
             meta, peak ->
-                // Extract group identifier by removing _REP{N}_T{M} suffix using regex
-                // This handles variable-length condition names correctly
+                // Extract group identifier by removing ONLY the replicate suffix (_REP{N}_T{M})
+                // This preserves all condition information including treatment suffixes like _RNAseA
                 def group_id = meta.id.replaceAll(/_REP\d+_T\d+$/, '')
-                // Use antibody from metadata instead of extracting from ID
+                
+                // Debug: verify grouping is correct
+                println "DEBUG GROUPING: ${meta.id} -> group_id: ${group_id}, antibody: ${meta.antibody}"
+                
                 [ group_id, meta.antibody, peak ] 
         }
         .groupTuple(by: 0)
@@ -658,6 +662,10 @@ workflow CHIPSEQ {
                 def meta_new = [:]
                 meta_new.id = group_id
                 meta_new.antibody = antibodies[0]  // All should have same antibody
+                
+                // Debug: verify final grouping
+                println "DEBUG FINAL GROUP: ${group_id} with ${peaks.size()} replicates"
+                
                 [ meta_new, peaks ] 
         }
         .set { ch_condition_peaks }
