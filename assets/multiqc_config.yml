@@ -23,13 +23,6 @@ run_modules:
   - deeptools
   - phantompeakqualtools
 
-exclude_modules:
-  - "software_versions"
-
-# Hide specific sections from the report
-hide_sections:
-  - software_versions
-
 module_order:
   - fastqc:
       name: "LIB: FastQC (raw)"
@@ -106,6 +99,13 @@ report_section_order:
   # ChIP-seq workflow summary - positioned at the end of report
   nf-core-chipseq-summary:
     order: -3700
+  # Summary sections at the very end (nf-core style)
+  "nf-core-chipseq-methods-description-module":
+    order: -1000
+  "software_versions-module":
+    order: -1001
+  "nf-core-chipseq-summary-module":
+    order: -1002
 
 custom_plot_config:
   picard_insert_size:
