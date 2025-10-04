@@ -97,22 +97,23 @@ report_section_order:
   deseq2-featurecounts-qc:
     before: mlib_featurecounts
   # Explicit ordering for DESeq2 subsections (numeric prefixes alone don't guarantee order)
+  # Lower order values appear FIRST in MultiQC reports
   01. Read Distribution (All Genes):
-    order: 1000
+    order: 100
   02. Sample Distances (All Genes):
-    order: 900
+    order: 200
   03. PCA (All Genes):
-    order: 800
-  04. PCA Top 500 (All Genes):
-    order: 700
-  05. Read Distribution (Invariant Genes):
-    order: 600
-  06. Sample Distances (Invariant Genes):
-    order: 500
-  07. PCA (Invariant Genes):
-    order: 400
-  08. PCA Top 500 (Invariant Genes):
     order: 300
+  04. PCA Top 500 (All Genes):
+    order: 400
+  05. Read Distribution (Invariant Genes):
+    order: 500
+  06. Sample Distances (Invariant Genes):
+    order: 600
+  07. PCA (Invariant Genes):
+    order: 700
+  08. PCA Top 500 (Invariant Genes):
+    order: 800
   # ChIP-seq workflow summary - positioned at the end of report
   nf-core-chipseq-summary:
     order: -999
