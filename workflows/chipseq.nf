@@ -289,6 +289,7 @@ workflow CHIPSEQ {
     if (params.blacklist) {
         BLACKLIST_LOG (
             MARK_DUPLICATES_PICARD.out.bam.join(MARK_DUPLICATES_PICARD.out.bai, by: [0]),
+            BAM_FILTER_SUBWF.out.bam.join(BAM_FILTER_SUBWF.out.bai, by: [0]),
             PREPARE_GENOME.out.filtered_bed.first()
         )
         ch_versions = ch_versions.mix(BLACKLIST_LOG.out.versions.first().ifEmpty(null))
