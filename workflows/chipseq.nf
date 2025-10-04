@@ -652,7 +652,13 @@ workflow CHIPSEQ {
                 def group_id = meta.id.replaceAll(/_REP\d+_T\d+$/, '')
                 
                 // Debug: verify grouping is correct
-                println "DEBUG GROUPING: ${meta.id} -> group_id: ${group_id}, antibody: ${meta.antibody}"
+                println "════════════════════════════════════════════════════════════════"
+                println "🔍 CONDITION GROUPING DEBUG:"
+                println "   Original sample ID: ${meta.id}"
+                println "   → Condition group:  ${group_id}"
+                println "   → Antibody:         ${meta.antibody}"
+                println "   → Peak file:        ${peak.getName()}"
+                println "════════════════════════════════════════════════════════════════"
                 
                 [ group_id, meta.antibody, peak ] 
         }
@@ -663,8 +669,17 @@ workflow CHIPSEQ {
                 meta_new.id = group_id
                 meta_new.antibody = antibodies[0]  // All should have same antibody
                 
-                // Debug: verify final grouping
-                println "DEBUG FINAL GROUP: ${group_id} with ${peaks.size()} replicates"
+                // Debug: verify final grouping with all replicate names
+                println "════════════════════════════════════════════════════════════════"
+                println "✅ FINAL CONDITION GROUP:"
+                println "   Condition:     ${group_id}"
+                println "   Antibody:      ${antibodies[0]}"
+                println "   Num replicates: ${peaks.size()}"
+                println "   Peak files:"
+                peaks.eachWithIndex { peak, idx ->
+                    println "      ${idx+1}. ${peak.getName()}"
+                }
+                println "════════════════════════════════════════════════════════════════"
                 
                 [ meta_new, peaks ] 
         }
