@@ -65,6 +65,7 @@ include { FRIP_SCORE                          } from '../modules/local/frip_scor
 include { PLOT_MACS2_QC                       } from '../modules/local/plot_macs2_qc'
 include { PLOT_HOMER_ANNOTATEPEAKS            } from '../modules/local/plot_homer_annotatepeaks'
 include { MACS2_CONSENSUS                     } from '../modules/local/macs2_consensus'
+include { MACS2_CONSENSUS_BY_CONDITION        } from '../modules/local/macs2_consensus_by_condition'
 include { ANNOTATE_BOOLEAN_PEAKS              } from '../modules/local/annotate_boolean_peaks'
 // include { COUNT_NORM                          } from '../modules/local/count_normalization'  // Module not found
 include { NORMALIZE_DESEQ2_QC_INVARIANT_GENES } from '../modules/local/normalize_deseq2_qc_invariant_genes'
@@ -634,43 +635,66 @@ workflow CHIPSEQ {
 
     // It makes by default a consensus - this is used to quantify and compute scaling FACTORS:
 
-    // Create channels: [ meta , [ peaks ] ]
-    // Where meta = [ id:antibody, multiple_groups:true/false, replicates_exist:true/false ]
-
+    // STEP 1: Create consensus peaks BY CONDITION (intermediate files)
+    // Extract condition from sample ID and group peaks by condition+antibody
+    // Example: WT_BCATENIN_IP_REP1_T1 -> group_id = WT_BCATENIN
+    
     ch_macs2_peaks
         .map { 
             meta, peak ->
                 // Extract group identifier by removing _REP{N}_T{M} suffix
-                // Handle edge cases where id may not have expected format
                 def id_parts = meta.id.split('_')
                 def group_id = id_parts.size() >= 3 ? id_parts[0..-3].join('_') : meta.id
-                [ meta.antibody, group_id, peak ] 
+                [ group_id, peak ] 
         }
         .groupTuple()
         .map {
-            antibody, groups, peaks ->
-                [
-                    antibody,
-                    groups.groupBy().collectEntries { [(it.key) : it.value.size()] },
-                    peaks
-                ] 
+            group_id, peaks ->
+                def meta_new = [:]
+                meta_new.id = group_id
+                [ meta_new, peaks ] 
         }
+        .set { ch_condition_peaks }
+    
+    //
+    // MODULE: Generate consensus peaks BY CONDITION (e.g., WT_BCATENIN, NAIVE_BCATENIN)
+    // These are intermediate files that will be published to consensus_peaks/by_condition/
+    //
+    MACS2_CONSENSUS_BY_CONDITION (
+        ch_condition_peaks
+    )
+    ch_versions = ch_versions.mix(MACS2_CONSENSUS_BY_CONDITION.out.versions)
+
+    // STEP 2: Merge condition consensus peaks by ANTIBODY for final analysis
+    // Group the condition-level peaks by antibody for the final merge
+    // Example: WT_BCATENIN + NAIVE_BCATENIN -> BCATENIN
+    
+    MACS2_CONSENSUS_BY_CONDITION
+        .out
+        .bed
+        .map { 
+            meta, bed ->
+                // Extract antibody from group_id (last part before replicates)
+                // WT_BCATENIN -> BCATENIN
+                def parts = meta.id.split('_')
+                def antibody = parts.size() > 1 ? parts[-1] : meta.id
+                [ antibody, meta.id, bed ] 
+        }
+        .groupTuple(by: 0)
         .map {
-            antibody, groups, peaks ->
+            antibody, group_ids, beds ->
                 def meta_new = [:]
                 meta_new.id = antibody
-                meta_new.multiple_groups = groups.size() > 1
-                meta_new.replicates_exist = groups.max { groups.value }.value > 1
-                [ meta_new, peaks ] 
+                meta_new.multiple_groups = group_ids.size() > 1
+                meta_new.replicates_exist = true  // Conditions already have consensus from replicates
+                [ meta_new, beds ] 
         }
         .set { ch_antibody_peaks }
     
     ch_antibody_peaks.view()
     //
-    //  MODULE: Generate consensus peaks across samples
-    //  Consider modifying this: i.e. Merge by condition - using IDR score any peak coming out of this will be a true potential peak
-    //  Final Get all By_condition peak and perform a final merge - with min_overlap to consider equality across condition 
-    //  A final summit has to be computed running MACS2 on all BAMs by antibody - create a channel with sample vs inputs or samples alone and run MACS2
+    //  MODULE: Generate final consensus peaks by ANTIBODY across all conditions
+    //  This merges condition-level consensus (e.g., WT_BCATENIN + NAIVE_BCATENIN -> BCATENIN)
     //
 
     MACS2_CONSENSUS ( 
