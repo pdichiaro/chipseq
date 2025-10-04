@@ -9,7 +9,3 @@
 #    title: 'DESeq2: Principal Component Analysis'
 #    xlab: 'PC1'
 #    ylab: 'PC2'
-#extra:
-#    plot_order: 3000
-#extra:
-#    plot_order: 3
