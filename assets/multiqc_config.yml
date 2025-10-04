@@ -8,17 +8,7 @@ data_format: "yaml"
 export_plots: true
 
 custom_content:
-  order:
-    # DESeq2 plots - ordering primarily controlled by numbered prefixes in section_name metadata
-    # These patterns preserved for compatibility but may be redundant with parent section approach
-    - '01_featurecounts.deseq2.all_genes.read.distribution_*'
-    - '02_featurecounts.deseq2.all_genes.sample.dists_*'
-    - '03_featurecounts.deseq2.all_genes.pca.vals_*'
-    - '04_featurecounts.deseq2.all_genes.pca.top500.vals_*'
-    - '05_featurecounts.deseq2.invariant_genes.read.distribution_*'
-    - '06_featurecounts.deseq2.invariant_genes.sample.dists_*'
-    - '07_featurecounts.deseq2.invariant_genes.pca.vals_*'
-    - '08_featurecounts.deseq2.invariant_genes.pca.top500.vals_*'
+  order: []
 
 run_modules:
   - custom_content
