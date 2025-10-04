@@ -29,37 +29,33 @@ process PLOT_CONDITION_INTERSECT {
     def mergecols = params.narrow_peak ? (2..10).join(',') : (2..9).join(',')
     def collapsecols = params.narrow_peak ? (['collapse']*9).join(',') : (['collapse']*8).join(',')
     def expandparam = params.narrow_peak ? '--is_narrow_peak' : ''
+    // Sort both arrays the same way to maintain correspondence
+    def sorted_conditions = condition_ids.sort()
+    def sorted_peaks = peaks.collect{it.toString()}.sort()
     
     """
     # Debug: Print what we received
     echo "DEBUG: Antibody = ${antibody}"
     echo "DEBUG: Number of conditions = ${condition_ids.size()}"
-    echo "DEBUG: Condition IDs = ${condition_ids.join(', ')}"
-    echo "DEBUG: Peak files:"
-    ls -lh ${peaks.collect{it.toString()}.sort().join(' ')}
+    echo "DEBUG: Condition IDs (sorted) = ${sorted_conditions.join(', ')}"
+    echo "DEBUG: Peak files (sorted):"
+    ls -lh ${sorted_peaks.join(' ')}
     
-    # Approach: Tag each peak with its condition ID, then merge and count overlaps
-    # This is more reliable than relying on peak name parsing
+    # Use the condition IDs directly - they are already sorted to match peak files
+    PEAK_FILES=(${sorted_peaks.join(' ')})
+    CONDITION_NAMES=(${sorted_conditions.collect{"'$it'"}.join(' ')})
     
-    # First, add condition identifier to each peak file (column 4)
-    # CRITICAL: Extract condition names from peak file names (sorted alphabetically)
-    PEAK_FILES=(${peaks.collect{it.toString()}.sort().join(' ')})
+    echo "DEBUG: PEAK_FILES array: \${PEAK_FILES[@]}"
+    echo "DEBUG: CONDITION_NAMES array: \${CONDITION_NAMES[@]}"
     
-    # Extract clean condition names by removing _peaks.narrowPeak suffix from file names
-    CONDITION_NAMES=()
-    for peak_file in "\${PEAK_FILES[@]}"; do
-        # Remove _peaks.narrowPeak or _peaks.broadPeak suffix
-        clean_name=\$(basename "\$peak_file" | sed 's/_peaks\.${peak_type}\$//')
-        CONDITION_NAMES+=("\$clean_name")
-    done
-    
+    # Tag each peak file with its corresponding condition name
     for i in "\${!PEAK_FILES[@]}"; do
         PEAK_FILE="\${PEAK_FILES[\$i]}"
         COND_NAME="\${CONDITION_NAMES[\$i]}"
         echo "DEBUG: Tagging \$PEAK_FILE with condition \$COND_NAME"
         # Add condition name as prefix to peak name (column 4)
         awk -v cond="\$COND_NAME" 'BEGIN{OFS="\\t"} {print \$1,\$2,\$3,cond"_"\$4,\$5,\$6,\$7,\$8,\$9,\$10}' "\$PEAK_FILE" > "\${COND_NAME}.tagged.bed"
-        echo "DEBUG: Tagged file \${COND_NAME}.tagged.bed created"
+        echo "DEBUG: Tagged file \${COND_NAME}.tagged.bed created with \$(wc -l < "\${COND_NAME}.tagged.bed") lines"
         head -2 "\${COND_NAME}.tagged.bed"
     done
     
