@@ -14,8 +14,8 @@ process DESEQ2_TRANSFORM {
     path read_dist_header
 
     output:
-    path "*_mqc.txt", optional: true, emit: multiqc_files
-    path "versions.yml"          , emit: versions
+    path "*_mqc.txt", emit: multiqc_files
+    path "versions.yml", emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -134,7 +134,13 @@ process DESEQ2_TRANSFORM {
     fi
     
     echo "=== FILES CREATED ==="
-    ls -lh *_mqc.txt 2>/dev/null || echo "No *_mqc.txt files found!"
+    ls -lh *_mqc.txt 2>/dev/null || {
+        echo "❌ ERROR: No *_mqc.txt files found!"
+        echo "All files in directory:"
+        ls -lah
+        exit 1
+    }
+    echo "✅ Found $(ls *_mqc.txt 2>/dev/null | wc -l) MultiQC files"
     echo "====================="
 
     cat <<END_VERSIONS > versions.yml

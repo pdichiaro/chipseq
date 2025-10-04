@@ -45,8 +45,7 @@ process MULTIQC {
     path ('macs2/annotation/*')
     path ('macs2/featurecounts/*')
 
-    path ('*')  // DESeq2 PCA plots
-    path ('*')  // DESeq2 clustering/distance plots
+    path ('multiqc_data/*_mqc.txt')  // DESeq2 QC files from multiqc_data/
 
     output:
     path "*multiqc_report.html", emit: report
@@ -60,21 +59,14 @@ process MULTIQC {
     def custom_config  = mqc_custom_config ? "--config $mqc_custom_config" : ''
     
     """
-    # Stage DESeq2 QC files in ordered directory to preserve numeric order
-    # Sort by existing filename (already has 01_, 02_, etc. prefixes)
-    mkdir -p deseq2_qc_staged
-    
-    # Sort files alphabetically and copy to staging directory
-    for file in \$(ls *_mqc.txt 2>/dev/null | sort); do
-        if [ -f "\$file" ]; then
-            cp "\$file" "deseq2_qc_staged/\$file"
-        fi
-    done
-    
-    # Move staged files back to current directory (overwrites originals in sorted order)
-    if [ -d deseq2_qc_staged ] && [ "\$(ls -A deseq2_qc_staged)" ]; then
-        mv deseq2_qc_staged/* .
-        rmdir deseq2_qc_staged
+    # DESeq2 files are in multiqc_data/ directory with numeric prefixes
+    # MultiQC will automatically find them there
+    # Debug: List DESeq2 files if they exist
+    if [ -d multiqc_data ] && [ "\$(ls -A multiqc_data 2>/dev/null)" ]; then
+        echo "=== DESeq2 MultiQC files found ==="
+        ls -lh multiqc_data/*_mqc.txt 2>/dev/null || echo "No *_mqc.txt files in multiqc_data/"
+    else
+        echo "⚠️  Warning: No multiqc_data/ directory or it's empty"
     fi
 
     multiqc \\
