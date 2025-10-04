@@ -1019,15 +1019,6 @@ workflow CHIPSEQ {
         workflow_summary    = WorkflowChipseq.paramsSummaryMultiqc(workflow, summary_params)
         ch_workflow_summary = Channel.value(workflow_summary)
 
-        // Debug: Verify DESeq2 file order before passing to MultiQC
-        ch_deseq2_all_multiqc
-            .subscribe { fileList ->
-                println "[DEBUG] DESeq2 files being passed to MultiQC (final order):"
-                fileList.eachWithIndex { file, idx ->
-                    println "  ${idx + 1}. ${file.name}"
-                }
-            }
-
         MULTIQC (
             ch_multiqc_config,
             ch_multiqc_custom_config.collect().ifEmpty([]),

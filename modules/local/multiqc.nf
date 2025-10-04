@@ -60,6 +60,23 @@ process MULTIQC {
     def custom_config  = mqc_custom_config ? "--config $mqc_custom_config" : ''
     
     """
+    # Stage DESeq2 QC files in ordered directory to preserve numeric order
+    # Sort by existing filename (already has 01_, 02_, etc. prefixes)
+    mkdir -p deseq2_qc_staged
+    
+    # Sort files alphabetically and copy to staging directory
+    for file in \$(ls *_mqc.txt 2>/dev/null | sort); do
+        if [ -f "\$file" ]; then
+            cp "\$file" "deseq2_qc_staged/\$file"
+        fi
+    done
+    
+    # Move staged files back to current directory (overwrites originals in sorted order)
+    if [ -d deseq2_qc_staged ] && [ "\$(ls -A deseq2_qc_staged)" ]; then
+        mv deseq2_qc_staged/* .
+        rmdir deseq2_qc_staged
+    fi
+
     multiqc \\
         -f \\
         $args \\
