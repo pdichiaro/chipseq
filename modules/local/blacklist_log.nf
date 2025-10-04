@@ -12,8 +12,7 @@ process BLACKLIST_LOG {
         'quay.io/biocontainers/mulled-v2-8186960447c5cb2faa697666dc1e6d919ad23f3e:3127fcae6b6bdaf8181e21a26ae61231030a9fcb-0' }"
 
     input:
-    tuple val(meta), path(bam_before), path(bai_before)
-    tuple val(meta2), path(bam_after), path(bai_after)
+    tuple val(meta), path(bam_before), path(bai_before), path(bam_after), path(bai_after)
     path blacklist
 
     output:

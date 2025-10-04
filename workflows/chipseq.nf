@@ -297,9 +297,17 @@ workflow CHIPSEQ {
     // MODULE: Generate blacklist removal log (after filtering)
     //
     if (params.blacklist) {
+        // Join all channels by meta to ensure correct pairing
+        ch_blacklist_input = MARK_DUPLICATES_PICARD.out.bam
+            .join(MARK_DUPLICATES_PICARD.out.bai, by: [0])
+            .join(BAM_FILTER_SUBWF.out.bam, by: [0])
+            .join(BAM_FILTER_SUBWF.out.bai, by: [0])
+            .map { meta, bam_before, bai_before, bam_after, bai_after ->
+                tuple(meta, bam_before, bai_before, bam_after, bai_after)
+            }
+        
         BLACKLIST_LOG (
-            MARK_DUPLICATES_PICARD.out.bam.join(MARK_DUPLICATES_PICARD.out.bai, by: [0]),
-            BAM_FILTER_SUBWF.out.bam.join(BAM_FILTER_SUBWF.out.bai, by: [0]),
+            ch_blacklist_input,
             PREPARE_GENOME.out.filtered_bed.first()
         )
         ch_versions = ch_versions.mix(BLACKLIST_LOG.out.versions.first().ifEmpty(null))
