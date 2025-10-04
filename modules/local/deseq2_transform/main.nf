@@ -77,50 +77,61 @@ process DESEQ2_TRANSFORM {
     
     # Add appropriate header to each file type for MultiQC custom content module
     # Each plot gets nested under parent section with unique ID
-    # Numbers added to SECTION_NAME for visible ordering (MultiQC sorts by section_name in nested sections)
-    # Number ranges: 01-04 for All Genes, 05-08 for Invariant Genes
-    # Plot titles remain clean without numbers
+    # CRITICAL FIX: MultiQC sorts nested sections by section_name alphabetically
+    # To ensure 01→08 ordering, we use ZERO-PADDED numbers in section_name
+    # Format: "A01_..." for All Genes (01-04), "B01_..." for Invariant (05-08 renumbered as B01-B04)
+    # This ensures alphabetical sort: A01, A02, A03, A04, B01, B02, B03, B04
+    # Display titles remain clean without prefix letters
+    # Number ranges: 01-04 for All Genes (A prefix), 01-04 for Invariant (B prefix)
     # IMPORTANT: Check .pca.top*.vals.txt BEFORE .pca.vals.txt to avoid false matches
+    
+    # Determine sort prefix based on gene set
+    if [[ "\${LEVEL}" == "all_genes" ]]; then
+        SORT_PREFIX="A"
+    else
+        SORT_PREFIX="B"
+    fi
+    
     if [[ "${file_name}" == *".pca.top"*".vals.txt" ]]; then
         # PCA top variable genes (pattern: *.pca.top500.vals.txt) - ORDER: 4 or 8
-        PLOT_NUM=\$((4 + OFFSET))
-        PLOT_ID="\$(printf '%02d' \$PLOT_NUM)_deseq2_pca_top500_\${QUANTIFIER_SHORT}_\${LEVEL}"
-        SECTION_TITLE="\$(printf '%02d' \$PLOT_NUM). PCA Top 500 (\${SECTION_NAME})"
+        PLOT_NUM=4
+        PLOT_ID="\$(printf '%s%02d' \$SORT_PREFIX \$PLOT_NUM)_deseq2_pca_top500_\${QUANTIFIER_SHORT}_\${LEVEL}"
+        SECTION_TITLE="\$(printf '%s%02d' \$SORT_PREFIX \$PLOT_NUM)_PCA_Top_500_(\${SECTION_NAME})"
         PLOT_TITLE="PCA Top 500 (\${SECTION_NAME})"
-        numbered_output="\$(printf '%02d' \$PLOT_NUM)_${output_name}"
+        numbered_output="\$(printf '%s%02d' \$SORT_PREFIX \$PLOT_NUM)_${output_name}"
         sed "s|#section_anchor:.*|#parent_id: '\${QUANTIFIER}'\\n#parent_name: '\${PARENT_NAME}'|; s|#section_name:.*|#section_name: '\${SECTION_TITLE}'|; s|#id:.*|#id: '\${PLOT_ID}'|; s|title:.*|title: '\${PLOT_TITLE}'|" ${pca_header} > temp_header.txt
         cat temp_header.txt ${deseq2_file} > temp_output.txt
         mv temp_output.txt "\${numbered_output}"
         echo "Created \${numbered_output} with PCA-500 header (ID: \${PLOT_ID}, parent: \${QUANTIFIER})"
     elif [[ "${file_name}" == *".pca.vals.txt" ]]; then
         # PCA all genes (pattern: *.pca.vals.txt) - ORDER: 3 or 7
-        PLOT_NUM=\$((3 + OFFSET))
-        PLOT_ID="\$(printf '%02d' \$PLOT_NUM)_deseq2_pca_\${QUANTIFIER_SHORT}_\${LEVEL}"
-        SECTION_TITLE="\$(printf '%02d' \$PLOT_NUM). PCA (\${SECTION_NAME})"
+        PLOT_NUM=3
+        PLOT_ID="\$(printf '%s%02d' \$SORT_PREFIX \$PLOT_NUM)_deseq2_pca_\${QUANTIFIER_SHORT}_\${LEVEL}"
+        SECTION_TITLE="\$(printf '%s%02d' \$SORT_PREFIX \$PLOT_NUM)_PCA_(\${SECTION_NAME})"
         PLOT_TITLE="PCA (\${SECTION_NAME})"
-        numbered_output="\$(printf '%02d' \$PLOT_NUM)_${output_name}"
+        numbered_output="\$(printf '%s%02d' \$SORT_PREFIX \$PLOT_NUM)_${output_name}"
         sed "s|#section_anchor:.*|#parent_id: '\${QUANTIFIER}'\\n#parent_name: '\${PARENT_NAME}'|; s|#section_name:.*|#section_name: '\${SECTION_TITLE}'|; s|#id:.*|#id: '\${PLOT_ID}'|; s|title:.*|title: '\${PLOT_TITLE}'|" ${pca_header} > temp_header.txt
         cat temp_header.txt ${deseq2_file} > temp_output.txt
         mv temp_output.txt "\${numbered_output}"
         echo "Created \${numbered_output} with PCA header (ID: \${PLOT_ID}, parent: \${QUANTIFIER})"
     elif [[ "${file_name}" == *".sample.dists.txt" ]]; then
         # Sample distance - ORDER: 2 or 6
-        PLOT_NUM=\$((2 + OFFSET))
-        PLOT_ID="\$(printf '%02d' \$PLOT_NUM)_deseq2_sample_distance_\${QUANTIFIER_SHORT}_\${LEVEL}"
-        SECTION_TITLE="\$(printf '%02d' \$PLOT_NUM). Sample Distances (\${SECTION_NAME})"
+        PLOT_NUM=2
+        PLOT_ID="\$(printf '%s%02d' \$SORT_PREFIX \$PLOT_NUM)_deseq2_sample_distance_\${QUANTIFIER_SHORT}_\${LEVEL}"
+        SECTION_TITLE="\$(printf '%s%02d' \$SORT_PREFIX \$PLOT_NUM)_Sample_Distances_(\${SECTION_NAME})"
         PLOT_TITLE="Sample Distances (\${SECTION_NAME})"
-        numbered_output="\$(printf '%02d' \$PLOT_NUM)_${output_name}"
+        numbered_output="\$(printf '%s%02d' \$SORT_PREFIX \$PLOT_NUM)_${output_name}"
         sed "s|#section_anchor:.*|#parent_id: '\${QUANTIFIER}'\\n#parent_name: '\${PARENT_NAME}'|; s|#section_name:.*|#section_name: '\${SECTION_TITLE}'|; s|#id:.*|#id: '\${PLOT_ID}'|; s|title:.*|title: '\${PLOT_TITLE}'|" ${clustering_header} > temp_header.txt
         cat temp_header.txt ${deseq2_file} > temp_output.txt
         mv temp_output.txt "\${numbered_output}"
         echo "Created \${numbered_output} with sample distance header (ID: \${PLOT_ID}, parent: \${QUANTIFIER})"
     elif [[ "${file_name}" == *".read.distribution.normalized.txt" ]]; then
         # Read distribution - ORDER: 1 or 5
-        PLOT_NUM=\$((1 + OFFSET))
-        PLOT_ID="\$(printf '%02d' \$PLOT_NUM)_deseq2_read_distribution_\${QUANTIFIER_SHORT}_\${LEVEL}"
-        SECTION_TITLE="\$(printf '%02d' \$PLOT_NUM). Read Distribution (\${SECTION_NAME})"
+        PLOT_NUM=1
+        PLOT_ID="\$(printf '%s%02d' \$SORT_PREFIX \$PLOT_NUM)_deseq2_read_distribution_\${QUANTIFIER_SHORT}_\${LEVEL}"
+        SECTION_TITLE="\$(printf '%s%02d' \$SORT_PREFIX \$PLOT_NUM)_Read_Distribution_(\${SECTION_NAME})"
         PLOT_TITLE="Read Distribution (\${SECTION_NAME})"
-        numbered_output="\$(printf '%02d' \$PLOT_NUM)_${output_name}"
+        numbered_output="\$(printf '%s%02d' \$SORT_PREFIX \$PLOT_NUM)_${output_name}"
         sed "s|#section_anchor:.*|#parent_id: '\${QUANTIFIER}'\\n#parent_name: '\${PARENT_NAME}'|; s|#section_name:.*|#section_name: '\${SECTION_TITLE}'|; s|#id:.*|#id: '\${PLOT_ID}'|; s|title:.*|title: '\${PLOT_TITLE}'|" ${read_dist_header} > temp_header.txt
         cat temp_header.txt ${deseq2_file} > temp_output.txt
         mv temp_output.txt "\${numbered_output}"
