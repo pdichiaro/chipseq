@@ -7,10 +7,21 @@ data_format: "yaml"
 
 export_plots: true
 
-# DESeq2 plot ordering handled by numbered prefixes in:
-# - section_name (01., 02., 03., 04.) for visible titles
-# - plot IDs and filenames (01_, 02_, 03_, 04_) for MultiQC sorting
-# (same approach as pdichiaro/rnaseq)
+# DESeq2 plot ordering - explicitly specify subsection order
+# MultiQC doesn't automatically sort nested custom content by section_order
+# We must explicitly list the subsection IDs in the desired order
+custom_content:
+  order:
+    # All Genes (featureCounts) subsections (01-04)
+    - 01_deseq2_read_distribution_featurecounts_all_genes
+    - 02_deseq2_sample_distance_featurecounts_all_genes
+    - 03_deseq2_pca_featurecounts_all_genes
+    - 04_deseq2_pca_top500_featurecounts_all_genes
+    # Invariant Genes (featureCounts) subsections (05-08)
+    - 05_deseq2_read_distribution_featurecounts_invariant_genes
+    - 06_deseq2_sample_distance_featurecounts_invariant_genes
+    - 07_deseq2_pca_featurecounts_invariant_genes
+    - 08_deseq2_pca_top500_featurecounts_invariant_genes
 
 run_modules:
   - custom_content
