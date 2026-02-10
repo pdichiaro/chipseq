@@ -95,8 +95,8 @@ include { BAM_FILTER as BAM_FILTER_SUBWF } from '../subworkflows/local/bam_filte
 include { PICARD_MERGESAMFILES          } from '../modules/nf-core/modules/picard/mergesamfiles/main'
 include { PICARD_COLLECTMULTIPLEMETRICS } from '../modules/nf-core/modules/picard/collectmultiplemetrics/main'
 include { PHANTOMPEAKQUALTOOLS          } from '../modules/nf-core/modules/phantompeakqualtools/main'
-// include { DEEPTOOLS_BIGWIG              } from '../modules/local/deeptools_bw'  // Module not found
-// include { DEEPTOOLS_BIGWIG_NORM         } from '../modules/local/deeptools_bw_norm'  // Module not found
+include { DEEPTOOLS_BIGWIG              } from '../modules/local/deeptools_bw'
+include { DEEPTOOLS_BIGWIG_NORM         } from '../modules/local/deeptools_bw_norm'
 include { DEEPTOOLS_COMPUTEMATRIX       } from '../modules/nf-core/modules/deeptools/computematrix/main'
 include { DEEPTOOLS_PLOTPROFILE         } from '../modules/nf-core/modules/deeptools/plotprofile/main'
 include { DEEPTOOLS_PLOTHEATMAP         } from '../modules/nf-core/modules/deeptools/plotheatmap/main'
