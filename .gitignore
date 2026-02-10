@@ -1,0 +1,23 @@
+# Nextflow temporary files
+.nextflow/
+.nextflow.log*
+work/
+results/
+null/
+
+# Pipeline outputs
+pipeline_info/
+multiqc_data/
+multiqc_report.html
+
+# Temporary and backup files
+*.swp
+*.swo
+*~
+.DS_Store
+*.bak
+
+# IDE files
+.idea/
+.vscode/
+*.iml
