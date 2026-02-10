@@ -18,7 +18,7 @@ process SAMPLESHEET_CHECK {
 
     script: // This script is bundled with the pipeline, in /bin/
     """
-    check_samplesheet_ieo.py \\
+    check_samplesheet.py \\
         $samplesheet \\
         samplesheet.valid.csv
 
