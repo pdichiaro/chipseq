@@ -16,6 +16,12 @@ multiqc_report.html
 *~
 .DS_Store
 *.bak
+.Rhistory
+
+# Generated documentation
+CONVERSION_NOTES.md
+STAR_UPDATE_SUMMARY.md
+STAR_VERSION_COMPARISON.md
 
 # IDE files
 .idea/
