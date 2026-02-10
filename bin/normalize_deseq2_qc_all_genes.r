@@ -38,7 +38,7 @@ suppressPackageStartupMessages(library(ComplexHeatmap))
 
 option_list <- list(
     make_option(c("-i", "--count_file"    ), type="character", default=NULL    , metavar="path"   , help="Count file matrix where rows are genes and columns are samples."                        ),
-    make_option(c("-f", "--count_col"     ), type="integer"  , default=20      , metavar="integer", help="First column containing sample count data."                                             ),
+    make_option(c("-f", "--count_col"     ), type="integer"  , default=2       , metavar="integer", help="First column containing sample count data."                                             ),
     make_option(c("-d", "--id_col"        ), type="integer"  , default=1       , metavar="integer", help="Column containing identifiers to be used."                                              ),
     make_option(c("-r", "--sample_suffix" ), type="character", default=''      , metavar="string" , help="Suffix to remove after sample name in columns e.g. '.rmDup.bam' if 'DRUG_R1.rmDup.bam'."),
     make_option(c("-o", "--outdir"        ), type="character", default='./'    , metavar="path"   , help="Output directory."                                                                      ),
@@ -97,37 +97,10 @@ if (file.exists(opt$count_file)) {
 ################################################
 ################################################
 
-count.table           <- read.delim(file=opt$count_file,header=TRUE, row.names=NULL)
+# Read featureCounts output with skip=1 to skip the command line header
+count.table           <- read.delim(file=opt$count_file,header=TRUE, row.names=NULL, skip=1, check.names=FALSE)
 rownames(count.table) <- count.table[,opt$id_col]
-
-# Identify annotation columns vs sample count columns
-# Annotation columns typically include: gene_id, chromosome, strand, transcript_count, total_*_length, etc.
-# Sample columns are typically numeric and represent actual count data
-# Ensure count_col is valid for this dataset
-if (opt$count_col > ncol(count.table)) {
-    cat("Warning: count_col (", opt$count_col, ") exceeds number of columns (", ncol(count.table), "). Using all columns as samples.\n")
-    opt$count_col <- 2  # Default to column 2 as first sample column
-}
-
-sample_cols <- colnames(count.table)[opt$count_col:ncol(count.table)]
-annotation_cols <- colnames(count.table)[1:(opt$count_col-1)]
-
-cat("Total columns:", ncol(count.table), "\n")
-cat("Count column start:", opt$count_col, "\n") 
-cat("Detected annotation columns:", paste(annotation_cols, collapse = ", "), "\n")
-cat("Detected sample columns:", paste(head(sample_cols, 5), collapse = ", "), "...\n")
-
-# Extract annotation data from the input file (safely)
-annotation_from_input <- NULL
-if (length(annotation_cols) > 0 && opt$count_col > 1) {
-    annotation_from_input <- count.table[, annotation_cols, drop = FALSE]
-    cat("Extracted", ncol(annotation_from_input), "annotation columns from input file\n")
-} else {
-    cat("No annotation columns in input file\n")
-    annotation_from_input <- data.frame(gene_id = rownames(count.table))
-}
-
-
+# Extract only count columns (skip annotation columns from featureCounts)
 count.table           <- count.table[,opt$count_col:ncol(count.table),drop=FALSE]
 colnames(count.table) <- gsub(opt$sample_suffix,"",colnames(count.table))
 colnames(count.table) <- gsub(pattern='\\.$', replacement='', colnames(count.table))
@@ -256,41 +229,18 @@ for (i in 1:nrow(scaling_dat)) {
     cat("  - Created:", sample_file, "with scaling factor:", scaling_factor, "\n")
 }
 
-# Create normalized_counts.txt (normalized count matrix with annotation from input)
+# Create normalized_counts.txt (normalized count matrix without annotation)
 normalized_counts <- counts(dds, normalized = TRUE)
 
-# Create dataframe with normalized counts
-normalized_counts_df <- data.frame(
-    gene_id = rownames(normalized_counts),
-    normalized_counts,
-    check.names = FALSE,
-    stringsAsFactors = FALSE
-)
+cat("Creating normalized_counts.txt...\n")
+cat("Normalized counts dimensions:", nrow(normalized_counts), "x", ncol(normalized_counts), "\n")
 
-# Simple merge by gene_id (handles filtered genes correctly)
-cat("Creating normalized_counts.txt with annotation merge by gene_id...\n")
-
-# Get the original count table with all columns (annotation + counts)  
-original_table <- read.delim(file=opt$count_file, header=TRUE, row.names=NULL)
-original_annotation <- original_table[, 1:(opt$count_col-1), drop = FALSE]
-
-cat("Original annotation rows:", nrow(original_annotation), "\n")
-cat("Normalized counts rows:", nrow(normalized_counts_df), "\n")
-
-# Simple merge by gene_id - only keeps genes present in both
-final_normalized_counts <- merge(original_annotation, normalized_counts_df, 
-                                by = "gene_id", all.y = TRUE, all.x = FALSE)
-
-cat("Final normalized counts dimensions:", nrow(final_normalized_counts), "x", ncol(final_normalized_counts), "\n")
-cat("Annotation columns:", ncol(original_annotation) - 1, "\n")  # -1 for gene_id
-cat("Sample columns:", ncol(normalized_counts), "\n")
-
-write.table(final_normalized_counts, file = paste0(base_dir, "normalized_counts.txt"), sep = "\t",
-           row.names = FALSE, col.names = TRUE, quote = FALSE)
-# Also write to root for Nextflow (now with annotation like rlog_counts) - with prefix
+write.table(normalized_counts, file = paste0(base_dir, "normalized_counts.txt"), sep = "\t",
+           row.names = TRUE, col.names = NA, quote = FALSE)
+# Also write to root for Nextflow - with prefix
 normalized_counts_file_root <- paste0(opt$outprefix, "_normalized_counts.txt")
-write.table(final_normalized_counts, file = normalized_counts_file_root, sep = "\t",
-           row.names = FALSE, col.names = TRUE, quote = FALSE)
+write.table(normalized_counts, file = normalized_counts_file_root, sep = "\t",
+           row.names = TRUE, col.names = NA, quote = FALSE)
 
 cat("Size factors and normalized counts written immediately after estimateSizeFactors\n")
 
@@ -437,43 +387,29 @@ assay(dds, vst_name) <- assay(rld)
 ################################################
 
 # Create VST/rlog transformed rlog_counts.txt (required by module)
-# This uses the transformed data
+# This uses the transformed data (without annotation)
 normalized_counts <- assay(dds, vst_name)
-normalized_counts_output <- data.frame(
-    gene_id = rownames(normalized_counts),
-    normalized_counts,
-    stringsAsFactors = FALSE
-)
 
-# Simple merge by gene_id for rlog counts too
-cat("Adding annotation to VST/rlog transformed counts using merge by gene_id...\n")
-
-cat("Original annotation rows:", nrow(original_annotation), "\n")
-cat("VST/rlog counts rows:", nrow(normalized_counts_output), "\n")
-
-# Simple merge by gene_id - only keeps genes present in both
-normalized_counts_output <- merge(original_annotation, normalized_counts_output, 
-                                 by = "gene_id", all.y = TRUE, all.x = FALSE)
-
-cat("Final rlog counts dimensions:", nrow(normalized_counts_output), "x", ncol(normalized_counts_output), "\n")
+cat("Creating VST/rlog transformed counts...\n")
+cat("VST/rlog counts dimensions:", nrow(normalized_counts), "x", ncol(normalized_counts), "\n")
 
 # Write to organized location (base_dir)
 rlog_file <- paste0(base_dir, "rlog_counts.txt")
-write.table(normalized_counts_output, 
+write.table(normalized_counts, 
            file = rlog_file, 
            sep = "\t", 
            quote = FALSE, 
-           row.names = FALSE, 
-           col.names = TRUE)
+           row.names = TRUE, 
+           col.names = NA)
 
 # Also write to root level for Nextflow module output (with prefix)
 rlog_file_root <- paste0(opt$outprefix, "_rlog_counts.txt")
-write.table(normalized_counts_output, 
+write.table(normalized_counts, 
            file = rlog_file_root, 
            sep = "\t", 
            quote = FALSE, 
-           row.names = FALSE, 
-           col.names = TRUE)
+           row.names = TRUE, 
+           col.names = NA)
 
 # Verify files were created
 if (file.exists(rlog_file)) {
