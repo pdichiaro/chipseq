@@ -138,6 +138,9 @@ workflow CHIPSEQ {
         error('Input samplesheet not specified! Please provide --input <samplesheet.csv>')
     }
     ch_input = Channel.fromPath(params.input, checkIfExists: true)
+    
+    // Create summary_params for MultiQC
+    def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 
     //
     // SUBWORKFLOW: Uncompress and prepare reference genome files
