@@ -2,11 +2,11 @@ process STAR_ALIGN {
     tag "$meta.id"
     label 'process_high'
 
-    // Note: 2.7X indices incompatible with AWS iGenomes.
-    conda "bioconda::star=2.7.10a bioconda::samtools=1.16.1 conda-forge::gawk=5.1.0"
+    // Updated to match pdichiaro/rnaseq version
+    conda "bioconda::htslib=1.21 bioconda::samtools=1.21 bioconda::star=2.7.11b conda-forge::gawk=5.1.0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:1df389393721fc66f3fd8778ad938ac711951107-0' :
-        'quay.io/biocontainers/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:1df389393721fc66f3fd8778ad938ac711951107-0' }"
+        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/26/268b4c9c6cbf8fa6606c9b7fd4fafce18bf2c931d1a809a0ce51b105ec06c89d/data' :
+        'community.wave.seqera.io/library/htslib_samtools_star_gawk:ae438e9a604351a4' }"
 
     input:
     tuple val(meta), path(reads)
@@ -74,6 +74,8 @@ process STAR_ALIGN {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         star: \$(STAR --version | sed -e "s/STAR_//g")
+        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+        gawk: \$(gawk --version | sed '1!d; s/.*Awk //; s/,.*//')
     END_VERSIONS
     """
 }

@@ -1,0 +1,3 @@
+rid,sid,sample,replicate,path,lanes,is_input,which_input,antibody
+run1,s1,ChIP,R1,https://raw.githubusercontent.com/nf-core/test-datasets/chipseq/testdata/SRR1635287_T1.fastq.gz,all,FALSE,input_R1,H3K4me3
+run1,s2,input,R1,https://raw.githubusercontent.com/nf-core/test-datasets/chipseq/testdata/SRR1635287_T1.fastq.gz,all,TRUE,any,input
