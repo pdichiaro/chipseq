@@ -44,6 +44,7 @@ process NORMALIZE_DESEQ2_QC_ALL_GENES {
     
     normalize_deseq2_qc_all_genes.r \\
         --count_file $counts \\
+        --count_col 7 \\
         --outdir ./ \\
         --outprefix "$prefix" \\
         --quantifier "$quantifier" \\
