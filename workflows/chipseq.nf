@@ -19,8 +19,7 @@ def checkPathParamList = [
     params.fasta,params.public_data_ids,
     params.gtf, params.gff, params.gene_bed,
     params.star_index,
-    params.blacklist,
-    params.bamtools_filter_pe_config, params.bamtools_filter_se_config //,params.rerpmsk
+    params.blacklist //,params.rerpmsk
 ]
 for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
@@ -55,10 +54,6 @@ if (anno_readme && file(anno_readme).exists()) {
 
 ch_multiqc_config        = file("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
 ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config) : Channel.empty()
-
-// JSON files required by BAMTools for alignment filtering
-ch_bamtools_filter_se_config = file(params.bamtools_filter_se_config, checkIfExists: true)
-ch_bamtools_filter_pe_config = file(params.bamtools_filter_pe_config, checkIfExists: true)
 
 // Header files for MultiQC
 ch_spp_nsc_header           = file("$projectDir/assets/multiqc/spp_nsc_header.txt", checkIfExists: true)
@@ -96,7 +91,7 @@ include { MULTIQC_CUSTOM_PEAKS                } from '../modules/local/multiqc_c
 include { FASTQ_FROM_SRA } from '../subworkflows/local/fastq_from_sra'
 include { INPUT_CHECK         } from '../subworkflows/local/input_check'
 include { PREPARE_GENOME      } from '../subworkflows/local/prepare_genome'
-include { BAM_FILTER_EM } from '../subworkflows/local/bam_filter_em'
+include { BAM_FILTER as BAM_FILTER_SUBWF } from '../subworkflows/local/bam_filter'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -317,15 +312,11 @@ workflow CHIPSEQ {
     // SUBWORKFLOW: Filter BAM file with BamTools 
     //
     
-    BAM_FILTER_EM (
+    BAM_FILTER_SUBWF (
         MARK_DUPLICATES_PICARD.out.bam.join(MARK_DUPLICATES_PICARD.out.bai, by: [0]),
-        PREPARE_GENOME.out.filtered_bed.first(),
-        PREPARE_GENOME.out.fasta,
-        PREPARE_GENOME.out.chrom_sizes,
-        ch_bamtools_filter_se_config,
-        ch_bamtools_filter_pe_config
+        PREPARE_GENOME.out.filtered_bed.first()
     )
-    ch_versions = ch_versions.mix(BAM_FILTER_EM.out.versions.first().ifEmpty(null))
+    ch_versions = ch_versions.mix(BAM_FILTER_SUBWF.out.versions.first().ifEmpty(null))
 
     //
     // MODULE: Picard post alignment QC
@@ -333,7 +324,7 @@ workflow CHIPSEQ {
     ch_picardcollectmultiplemetrics_multiqc = Channel.empty()
     if (!params.skip_picard_metrics) {
         PICARD_COLLECTMULTIPLEMETRICS (
-            BAM_FILTER_EM.out.bam,
+            BAM_FILTER_SUBWF.out.bam,
             PREPARE_GENOME.out.fasta,
             []
         )
@@ -345,7 +336,7 @@ workflow CHIPSEQ {
     // MODULE: Phantompeaktools strand cross-correlation and QC metrics
     //
     PHANTOMPEAKQUALTOOLS (
-        BAM_FILTER_EM.out.bam
+        BAM_FILTER_SUBWF.out.bam
     )
     ch_versions = ch_versions.mix(PHANTOMPEAKQUALTOOLS.out.versions.first())
 
@@ -365,10 +356,10 @@ workflow CHIPSEQ {
     // Differently from standard nf-core chipseq we can evaluate the possibility to run the chip-seq w/o inputs
     // This needs to be assessed on the fly i.e. check if there ar
     
-    BAM_FILTER_EM
+    BAM_FILTER_SUBWF
         .out
         .bam
-        .join(BAM_FILTER_EM.out.bai, by: [0])
+        .join(BAM_FILTER_SUBWF.out.bai, by: [0])
         .set { ch_genome_bam_bai }
 
     //
@@ -690,7 +681,7 @@ workflow CHIPSEQ {
 
     // Assemble the channel 
     // Given a tab separated matrix with the first column : Sample_id, Scaling_factor convert the matrix to a channel with [Sample_id, Scaling_factor] pairs
-    // Consider that the first line is the header - in principle Sample_id must match the meta.id from BAM_FILTER_EM.out.bam    
+    // Consider that the first line is the header - in principle Sample_id must match the meta.id from BAM_FILTER_SUBWF.out.bam    
 
     ch_genome_bam_bai
         .combine(ch_size_factors)
@@ -789,9 +780,9 @@ workflow CHIPSEQ {
             MARK_DUPLICATES_PICARD.out.idxstats.collect{it[1]}.ifEmpty([]),
             MARK_DUPLICATES_PICARD.out.metrics.collect{it[1]}.ifEmpty([]),
 
-            BAM_FILTER_EM.out.stats.collect{it[1]}.ifEmpty([]),
-            BAM_FILTER_EM.out.flagstat.collect{it[1]}.ifEmpty([]),
-            BAM_FILTER_EM.out.idxstats.collect{it[1]}.ifEmpty([]),
+            BAM_FILTER_SUBWF.out.stats.collect{it[1]}.ifEmpty([]),
+            BAM_FILTER_SUBWF.out.flagstat.collect{it[1]}.ifEmpty([]),
+            BAM_FILTER_SUBWF.out.idxstats.collect{it[1]}.ifEmpty([]),
             ch_picardcollectmultiplemetrics_multiqc.collect{it[1]}.ifEmpty([]),
     
             ch_deeptoolsplotprofile_multiqc.collect{it[1]}.ifEmpty([]),

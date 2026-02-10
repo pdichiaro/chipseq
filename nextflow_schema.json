@@ -289,21 +289,7 @@
                     "fa_icon": "fas fa-sort-numeric-down"
                 },
 
-                "em_eps": {
-                    "type": "number",
-                    "default": 1e-6,
-                    "description": "convergence for the EM algorithm",
-                    "help_text": "The default will be 1e-6 ",
-                    "fa_icon": "fas fa-sort-numeric-down"
-                },
 
-                "em_iter": {
-                    "type": "integer",
-                    "default": 1000,
-                    "description": "maximum iterations",
-                    "help_text": "The default will be 1000",
-                    "fa_icon": "fas fa-sort-numeric-down"
-                },
                 "inser_size": {
                     "type": "integer",
                     "default": 1000,
@@ -316,25 +302,8 @@
                     "description": "Where possible, save unaligned reads from either STAR, HISAT2 or Salmon to the results directory.",
                     "help_text": "This may either be in the form of FastQ or BAM files depending on the options available for that particular tool."
                 },
-                "skip_em": {
-                    "type": "boolean",
-                    "description": "skip_em",
-                    "help_text": "skip_em"
-                },
-                "bamtools_filter_pe_config": {
-                    "type": "string",
-                    "default": "$projectDir/assets/bamtools_filter_pe.json",
-                    "hidden": true,
-                    "description": "BAMTools JSON file with custom filters for paired-end data.",
-                    "fa_icon": "fas fa-cog"
-                },
-                "bamtools_filter_se_config": {
-                    "type": "string",
-                    "default": "$projectDir/assets/bamtools_filter_se.json",
-                    "hidden": true,
-                    "description": "BAMTools JSON file with custom filters for single-end data.",
-                    "fa_icon": "fas fa-cog"
-                },
+
+
                 "times_frag": {
                     "type": "integer",
                     "default": 3,
