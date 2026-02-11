@@ -17,7 +17,6 @@ process DEEPTOOLS_BIGWIG_NORM {
  
     script:
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def pe     = meta.single_end ? '' : '-pc'
     def extend = (meta.single_end && params.fragment_size > 0) ? "--extendReads ${params.fragment_size}" : '--extendReads'
     
     """

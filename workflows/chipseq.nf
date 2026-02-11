@@ -718,9 +718,9 @@ workflow CHIPSEQ {
     ch_versions = ch_versions.mix(DEEPTOOLS_BIGWIG.out.versions.first())
     ch_big_wig = DEEPTOOLS_BIGWIG.out.bigwig
 
-    if ( params.normalize ) {
+    if ( !params.skip_deeptools_norm ) {
         //
-        // MODULE: BedGraph coverage tracks.
+        // MODULE: DESeq2 normalized BigWig coverage tracks.
         //
         DEEPTOOLS_BIGWIG_NORM (
             ch_bam_bai_scale // join with the created channel of scalings - Use deeptool insrtead make directly wiggles
