@@ -1,6 +1,6 @@
 {
-    "name": "mmchipseq",
-    "homePage": "https://github.com/fgualdr/mmchipseq",
+    "name": "chipseq",
+    "homePage": "https://github.com/pdichiaro/chipseq",
     "repos": {
         "nf-core/modules": {
             "git_url": "https://github.com/nf-core/modules.git",
