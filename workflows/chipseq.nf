@@ -404,12 +404,108 @@ workflow CHIPSEQ {
     ch_versions = ch_versions.mix(MACS2_CALLPEAK_SINGLE.out.versions.first())
 
     //
-    // Filter out samples with 0 MACS2 peaks called
+    // Filter out samples with 0 MACS2 peaks called with warning system
     //
     MACS2_CALLPEAK_SINGLE
         .out
         .peak
-        .filter { meta, peaks -> peaks.size() > 0 }
+        .branch { meta, peaks ->
+            passed: peaks.size() > 0
+                return [meta, peaks]
+            failed: true
+                return [meta, peaks]
+        }
+        .set { ch_macs2_branched }
+
+    // Emit warning for each sample with zero peaks
+    ch_macs2_branched
+        .failed
+        .subscribe { meta, peaks ->
+            log.warn """
+            ╔════════════════════════════════════════════════════════════════════════════════╗
+            ║                          ⚠️  MACS2 ZERO PEAKS WARNING                          ║
+            ╚════════════════════════════════════════════════════════════════════════════════╝
+            
+            Sample '${meta.id}' produced 0 peaks from MACS2 peak calling.
+            This sample will be excluded from downstream analysis.
+            
+            Possible causes and solutions:
+            
+            1. Poor ChIP enrichment
+               → Check ChIP-seq quality metrics (FRiP, NSC, RSC scores)
+               → Verify antibody quality and ChIP protocol
+            
+            2. Insufficient sequencing depth
+               → Current depth may be too low for peak detection
+               → Consider deeper sequencing (≥20M reads for TF, ≥40M for histone marks)
+            
+            3. Overly stringent MACS2 parameters
+               → Try adjusting q-value threshold (default: 0.05)
+               → Use --broad flag for broad histone marks
+               → Adjust --mfold parameter
+            
+            4. Poor quality control/input sample
+               → Check if control sample has issues
+               → Verify control matches treatment conditions
+            
+            5. Wrong genome size parameter
+               → Verify --macs_gsize matches your genome
+            
+            6. Biological factors
+               → Low/absent protein binding in experimental conditions
+               → Check positive controls
+            
+            ════════════════════════════════════════════════════════════════════════════════
+            """.stripIndent()
+        }
+
+    // Check if ALL samples failed - this is critical error
+    ch_macs2_branched
+        .passed
+        .count()
+        .subscribe { count ->
+            if (count == 0) {
+                log.error """
+                ╔════════════════════════════════════════════════════════════════════════════════╗
+                ║                      🔴 CRITICAL: ALL SAMPLES FAILED                           ║
+                ╚════════════════════════════════════════════════════════════════════════════════╝
+                
+                ALL samples produced 0 peaks from MACS2 peak calling!
+                The pipeline cannot continue with downstream analysis.
+                
+                IMMEDIATE ACTIONS REQUIRED:
+                
+                1. Review MACS2 parameters:
+                   → Check --macs_gsize parameter
+                   → Review q-value/p-value thresholds
+                   → Consider --broad flag for histone marks
+                
+                2. Verify input data quality:
+                   → Check sequencing depth (FastQC reports)
+                   → Review alignment rates
+                   → Inspect control samples
+                
+                3. Check ChIP-seq quality:
+                   → Review PhantomPeakQualTools metrics
+                   → Check cross-correlation plots
+                   → Verify FRiP scores (if available)
+                
+                4. Review experimental design:
+                   → Verify antibody specificity
+                   → Check ChIP protocol efficiency
+                   → Ensure proper controls
+                
+                Please address these issues before re-running the pipeline.
+                ════════════════════════════════════════════════════════════════════════════════
+                """.stripIndent()
+            } else {
+                log.info "✅ MACS2 peak calling successful for ${count} sample(s)"
+            }
+        }
+
+    // Use only samples that passed
+    ch_macs2_branched
+        .passed
         .set { ch_macs2_peaks }
 
     // If is narrow we call high conf summits by merging all BAMS:
