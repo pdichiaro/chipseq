@@ -390,11 +390,20 @@
                     "default": true
                 },
 
-                "normalize": {
+                "skip_deeptools_norm": {
                     "type": "boolean",
-                    "description": "Whether to normalize with see https://github.com/fgualdr/GeneralNormalizer.",
-                    "help_text": "See https://github.com/fgualdr/GeneralNormalizer.",
-                    "default": true
+                    "description": "Skip generation of normalized BigWig files using DESeq2 scaling factors.",
+                    "help_text": "When false, generates normalized BigWig files using scaling factors from DESeq2 normalization methods (invariant_genes or all_genes).",
+                    "fa_icon": "fas fa-fast-forward",
+                    "default": false
+                },
+                "normalization_method": {
+                    "type": "string",
+                    "description": "Normalization method(s) to use for DESeq2 QC and BigWig generation.",
+                    "help_text": "Choose 'invariant_genes' (Gualdrini et al. 2016 method), 'all_genes' (standard DESeq2), or both separated by comma: 'invariant_genes,all_genes'. Multiple methods will generate separate outputs for each.",
+                    "fa_icon": "fas fa-balance-scale",
+                    "default": "invariant_genes",
+                    "enum": ["invariant_genes", "all_genes", "invariant_genes,all_genes", "all_genes,invariant_genes"]
                 },
 
                 "sigma_times": {
@@ -429,11 +438,7 @@
                     "fa_icon": "fas fa-fast-forward",
                     "description": "Skip DESeq2 PCA and heatmap plotting."
                 },
-                "skip_igv": {
-                    "type": "boolean",
-                    "description": "Skip IGV.",
-                    "fa_icon": "fas fa-fast-forward"
-                },
+
                 "skip_multiqc": {
                     "type": "boolean",
                     "description": "Skip MultiQC.",

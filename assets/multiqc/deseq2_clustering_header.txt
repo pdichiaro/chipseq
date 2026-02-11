@@ -1,12 +1,22 @@
-#id: 'deseq2_clustering'
-#section_name: 'MERGED LIB: DESeq2 sample similarity'
-#description: "Matrix is generated from clustering with Euclidean distances between
-#              <a href='https://bioconductor.org/packages/release/bioc/html/DESeq2.html' target='_blank'>DESeq2</a>
-#              rlog values for each sample
-#              in the <a href='https://github.com/nf-core/chipseq/blob/master/bin/deseq2_qc.r'><code>deseq2_qc.r</code></a> script."
+#id: 'deseq2_sample_distance'
+#section_name: 'Sample Distance'
+#section_anchor: 'deseq2-kallisto-qc'
+#description: "Sample-to-sample distance heatmap based on Euclidean distances.
+#              Values are calculated using <a href='https://bioconductor.org/packages/release/bioc/html/DESeq2.html' target='_blank'>DESeq2</a>
+#              variance-stabilizing transformation."
 #plot_type: 'heatmap'
-#anchor: 'deseq2_clustering'
 #pconfig:
-#    title: 'DESeq2: Heatmap of the sample-to-sample distances'
-#    xlab: True
-#    reverseColors: True
+#    title: 'DESeq2: Sample-to-Sample Distances'
+#    square: true
+#    colstops:
+#        - [0, '#08306B']
+#        - [0.125, '#08519C']
+#        - [0.25, '#2171B5']
+#        - [0.375, '#4292C6']
+#        - [0.5, '#6BAED6']
+#        - [0.625, '#9ECAE1']
+#        - [0.75, '#C6DBEF']
+#        - [0.875, '#DEEBF7']
+#        - [1.0, '#F7FBFF']
+#extra:
+#    plot_order: 2

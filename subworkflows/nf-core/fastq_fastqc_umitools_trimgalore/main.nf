@@ -32,10 +32,10 @@ workflow FASTQ_FASTQC_UMITOOLS_TRIMGALORE {
     min_trimmed_reads // integer: > 0
 
     main:
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
-    fastqc_html = Channel.empty()
-    fastqc_zip  = Channel.empty()
+    fastqc_html = channel.empty()
+    fastqc_zip  = channel.empty()
     if (!skip_fastqc) {
         FASTQC (reads)
         fastqc_html = FASTQC.out.html
@@ -44,7 +44,7 @@ workflow FASTQ_FASTQC_UMITOOLS_TRIMGALORE {
     }
 
     umi_reads = reads
-    umi_log   = Channel.empty()
+    umi_log   = channel.empty()
     if (with_umi && !skip_umi_extract) {
             UMITOOLS_EXTRACT (reads)
             umi_reads   = UMITOOLS_EXTRACT.out.reads
@@ -56,20 +56,19 @@ workflow FASTQ_FASTQC_UMITOOLS_TRIMGALORE {
                 UMITOOLS_EXTRACT
                     .out
                     .reads
-                    .map {
-                        meta, reads ->
-                            meta.single_end ? [ meta, reads ] : [ meta + ['single_end': true], reads[umi_discard_read % 2] ]
+                    .map { meta_in, reads_in ->
+                        meta_in.single_end ? [ meta_in, reads_in ] : [ meta_in + ['single_end': true], reads_in[umi_discard_read % 2] ]
                     }
                     .set { umi_reads }
             }
     }
 
     trim_reads      = umi_reads
-    trim_unpaired   = Channel.empty()
-    trim_html       = Channel.empty()
-    trim_zip        = Channel.empty()
-    trim_log        = Channel.empty()
-    trim_read_count = Channel.empty()
+    trim_unpaired   = channel.empty()
+    trim_html       = channel.empty()
+    trim_zip        = channel.empty()
+    trim_log        = channel.empty()
+    trim_read_count = channel.empty()
     if (!skip_trimming) {
         TRIMGALORE (umi_reads)
         trim_unpaired = TRIMGALORE.out.unpaired
@@ -85,24 +84,23 @@ workflow FASTQ_FASTQC_UMITOOLS_TRIMGALORE {
             .out
             .reads
             .join(trim_log, remainder: true)
-            .map {
-                meta, reads, trim_log ->
-                    if (trim_log) {
-                        num_reads = getTrimGaloreReadsAfterFiltering(meta.single_end ? trim_log : trim_log[-1])
-                        [ meta, reads, num_reads ]
-                    } else {
-                        [ meta, reads, min_trimmed_reads.toFloat() + 1 ]
-                    }
+            .map { meta2, reads2, trim_log2 ->
+                if (trim_log2) {
+                    def num_reads = getTrimGaloreReadsAfterFiltering(meta2.single_end ? trim_log2 : trim_log2[-1])
+                    [ meta2, reads2, num_reads ]
+                } else {
+                    [ meta2, reads2, min_trimmed_reads.toFloat() + 1 ]
+                }
             }
             .set { ch_num_trimmed_reads }
 
         ch_num_trimmed_reads
-            .filter { meta, reads, num_reads -> num_reads >= min_trimmed_reads.toFloat() }
-            .map { meta, reads, num_reads -> [ meta, reads ] }
+            .filter { _meta3, _reads3, num_reads3 -> num_reads3 >= min_trimmed_reads.toFloat() }
+            .map { meta3, reads3, _num_reads3 -> [ meta3, reads3 ] }
             .set { trim_reads }
 
         ch_num_trimmed_reads
-            .map { meta, reads, num_reads -> [ meta, num_reads ] }
+            .map { meta, _reads, num_reads -> [ meta, num_reads ] }
             .set { trim_read_count }
     }
 
