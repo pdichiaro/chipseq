@@ -339,13 +339,25 @@ workflow CHIPSEQ {
     }else{ 
         println "The value of ch_with_inputs set to with the input: ${ch_with_inputs}"
 
+        // Step 1: Prepare control channel with KEY = id
         ch_genome_bam_bai
-        .combine(ch_genome_bam_bai)
-        .map { 
-            meta1, bam1, bai1, meta2, bam2, bai2 ->
-                !meta1.is_input && meta1.which_input == meta2.id ? [ meta1, [ bam1 ], [ bam2 ] ] : null
-        }
-        .set { ch_ip_control_bam } 
+            .filter { meta, bam, bai -> meta.is_input }
+            .map { meta, bam, bai -> 
+                [ meta.id, [ bam ], [ bai ] ] 
+            }
+            .set { ch_control_bam_bai }
+
+        // Step 2: IP samples + combine by key (efficient O(N) instead of O(N²))
+        ch_genome_bam_bai
+            .filter { meta, bam, bai -> !meta.is_input }
+            .map { meta, bam, bai -> 
+                [ meta.which_input, meta, [ bam ], [ bai ] ] 
+            }
+            .combine(ch_control_bam_bai, by: 0)
+            .map { control_id, meta, ip_bam, ip_bai, control_bam, control_bai -> 
+                [ meta, ip_bam, control_bam ] 
+            }
+            .set { ch_ip_control_bam }
 
         // w inputs we simply merge all bams by antibody: from meta,bam,bai - we combine the samples and the inputs:
         // we start from the paired and we group it:
