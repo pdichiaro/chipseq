@@ -23,6 +23,12 @@ CONVERSION_NOTES.md
 STAR_UPDATE_SUMMARY.md
 STAR_VERSION_COMPARISON.md
 
+# Test files and reports
+TEST_REPORT.md
+test_samplesheet.csv
+test_skip_qc/
+test_results/
+
 # IDE files
 .idea/
 .vscode/
