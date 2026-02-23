@@ -52,7 +52,7 @@ ch_deseq2_pca_header        = file("$projectDir/workflows/assets/multiqc/deseq2_
 ch_deseq2_clustering_header = file("$projectDir/workflows/assets/multiqc/deseq2_clustering_header.txt", checkIfExists: true)
 ch_deseq2_read_dist_header  = file("$projectDir/workflows/assets/multiqc/read_distribution_normalized_header.txt", checkIfExists: true)
 
-ch_with_inputs = params.with_inputs.toBoolean()
+ch_with_inputs = params.with_inputs ? params.with_inputs.toBoolean() : False
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -97,6 +97,8 @@ include { PICARD_COLLECTMULTIPLEMETRICS } from '../modules/nf-core/modules/picar
 include { PHANTOMPEAKQUALTOOLS          } from '../modules/nf-core/modules/phantompeakqualtools/main'
 include { DEEPTOOLS_BIGWIG              } from '../modules/local/deeptools_bw'
 include { DEEPTOOLS_BIGWIG_NORM         } from '../modules/local/deeptools_bw_norm'
+include { DEEPTOOLS_BIGWIG_NORM as DEEPTOOLS_BIGWIG_NORM_INVARIANT } from '../modules/local/deeptools_bw_norm'
+include { DEEPTOOLS_BIGWIG_NORM as DEEPTOOLS_BIGWIG_NORM_ALL_GENES } from '../modules/local/deeptools_bw_norm'
 include { DEEPTOOLS_COMPUTEMATRIX       } from '../modules/nf-core/modules/deeptools/computematrix/main'
 include { DEEPTOOLS_PLOTPROFILE         } from '../modules/nf-core/modules/deeptools/plotprofile/main'
 include { DEEPTOOLS_PLOTHEATMAP         } from '../modules/nf-core/modules/deeptools/plotheatmap/main'
@@ -739,7 +741,7 @@ workflow CHIPSEQ {
             .map { row -> 
                 def id = row.Sample_ID
                 def value = row.scaling
-                [ id, value ]
+                [ id, value, 'invariant_genes' ]
             }
             .set { ch_size_factors_invariant }
         
@@ -772,7 +774,7 @@ workflow CHIPSEQ {
             .map { row -> 
                 def id = row.Sample_ID
                 def value = row.scaling
-                [ id, value ]
+                [ id, value, 'all_genes' ]
             }
             .set { ch_size_factors_all_genes }
         
@@ -804,19 +806,34 @@ workflow CHIPSEQ {
     // Given a tab separated matrix with the first column : Sample_id, Scaling_factor convert the matrix to a channel with [Sample_id, Scaling_factor] pairs
     // Consider that the first line is the header - in principle Sample_id must match the meta.id from BAM_FILTER_SUBWF.out.bam    
 
-    ch_genome_bam_bai
-        .combine(ch_size_factors)
-        .map { 
-            meta1, bam1, bai1, id2, scaling2 ->
-                meta1.id == id2 ? [ meta1, bam1, bai1 ,scaling2] : null
+    // Split size factors by normalization method
+    ch_size_factors_invariant = ch_size_factors
+        .filter { id, scaling, method -> method == 'invariant_genes' }
+        .map { id, scaling, method -> [id, scaling] }
+    
+    ch_size_factors_all_genes_only = ch_size_factors
+        .filter { id, scaling, method -> method == 'all_genes' }
+        .map { id, scaling, method -> [id, scaling] }
+    
+    // Create combined channel for invariant genes
+    ch_bam_bai_scale_invariant = ch_genome_bam_bai
+        .combine(ch_size_factors_invariant)
+        .filter { meta1, bam1, bai1, id2, scaling2 -> meta1.id == id2 }
+        .map { meta1, bam1, bai1, id2, scaling2 -> 
+            def new_meta = meta1 + [norm_method: 'invariant_genes']
+            [ new_meta, bam1, bai1, scaling2 ]
         }
-        .set { ch_bam_bai_scale } 
-        
-    ch_bam_bai_scale.view()
+    
+    // Create combined channel for all genes
+    ch_bam_bai_scale_all_genes = ch_genome_bam_bai
+        .combine(ch_size_factors_all_genes_only)
+        .filter { meta1, bam1, bai1, id2, scaling2 -> meta1.id == id2 }
+        .map { meta1, bam1, bai1, id2, scaling2 -> 
+            def new_meta = meta1 + [norm_method: 'all_genes']
+            [ new_meta, bam1, bai1, scaling2 ]
+        }
 
     ch_deeptoolsplotprofile_multiqc = Channel.empty()
-    // DEEPTOOLS_BIGWIG_NORM.out.bigwig && !DEEPTOOLS_BIGWIG_NORM.out.bigwig.ifEmpty([])
-    // execute the below only if params.normalize is false i.e. !params.normalize OR we have one sample OR ch_size_factors is empty
     //
     // Scale to depth of sequencing using Deeptools:
     // 
@@ -828,13 +845,26 @@ workflow CHIPSEQ {
 
     if ( !params.skip_deeptools_norm ) {
         //
-        // MODULE: DESeq2 normalized BigWig coverage tracks.
+        // MODULE: DESeq2 normalized BigWig coverage tracks - invariant genes
         //
-        DEEPTOOLS_BIGWIG_NORM (
-            ch_bam_bai_scale // join with the created channel of scalings - Use deeptool insrtead make directly wiggles
-        )
-        ch_versions = ch_versions.mix(DEEPTOOLS_BIGWIG_NORM.out.versions.first())
-        ch_big_wig = DEEPTOOLS_BIGWIG_NORM.out.bigwig
+        if (normalization_methods.contains('invariant_genes')) {
+            DEEPTOOLS_BIGWIG_NORM_INVARIANT (
+                ch_bam_bai_scale_invariant
+            )
+            ch_versions = ch_versions.mix(DEEPTOOLS_BIGWIG_NORM_INVARIANT.out.versions.first())
+            ch_big_wig = ch_big_wig.mix(DEEPTOOLS_BIGWIG_NORM_INVARIANT.out.bigwig)
+        }
+        
+        //
+        // MODULE: DESeq2 normalized BigWig coverage tracks - all genes
+        //
+        if (normalization_methods.contains('all_genes')) {
+            DEEPTOOLS_BIGWIG_NORM_ALL_GENES (
+                ch_bam_bai_scale_all_genes
+            )
+            ch_versions = ch_versions.mix(DEEPTOOLS_BIGWIG_NORM_ALL_GENES.out.versions.first())
+            ch_big_wig = ch_big_wig.mix(DEEPTOOLS_BIGWIG_NORM_ALL_GENES.out.bigwig)
+        }
     } 
     
     if (!params.skip_plot_profile ) {
