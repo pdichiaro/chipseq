@@ -962,12 +962,9 @@ workflow CHIPSEQ {
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-workflow.onComplete {
-    if (params.email || params.email_on_fail) {
-        NfcoreTemplate.email(workflow, params, summary_params, projectDir, log, multiqc_report)
-    }
-    NfcoreTemplate.summary(workflow, params, log)
-}
+// NOTE: Completion handling is now managed by the PIPELINE_COMPLETION subworkflow
+// in subworkflows/local/utils_nfcore_chipseq_pipeline/main.nf
+// This includes email notifications, completion summary, and webhook notifications (imNotification)
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
