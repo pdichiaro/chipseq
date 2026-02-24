@@ -50,10 +50,16 @@ workflow PIPELINE_INITIALISATION {
     //
     // Validate parameters and generate parameter summary to stdout
     //
+    pre_help_text = nfCoreLogo(monochrome_logs)
+    post_help_text = '\n' + workflowCitation() + '\n' + dashedLine(monochrome_logs)
+    def String workflow_command = "nextflow run ${workflow.manifest.name} -profile <docker/singularity/.../institute> --input samplesheet.csv --genome GRCh37 --outdir <OUTDIR>"
     UTILS_NFVALIDATION_PLUGIN (
-        workflow,
+        help,
+        workflow_command,
+        pre_help_text,
+        post_help_text,
         validate_params,
-        null
+        "nextflow_schema.json"
     )
 
     //
