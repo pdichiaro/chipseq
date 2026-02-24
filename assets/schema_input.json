@@ -1,56 +1,64 @@
 {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/pdichiaro/chipseq/main/assets/schema_input.json",
-    "title": "pdichiaro/chipseq pipeline - params.input schema",
-    "description": "Schema for the samplesheet file provided with params.input. Follows nf-core ChIP-seq standard format.",
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://raw.githubusercontent.com/nf-core/chipseq/master/assets/schema_input.json",
+    "title": "nf-core/chipseq pipeline - params.input schema",
+    "description": "Schema for the file provided with params.input",
     "type": "array",
     "items": {
         "type": "object",
         "properties": {
             "sample": {
                 "type": "string",
-                "pattern": "^[a-zA-Z0-9_.-]+$",
-                "errorMessage": "Sample name must be provided and cannot contain spaces. Use only alphanumeric characters, underscores, dots, and dashes.",
-                "meta": ["sample"]
+                "pattern": "^\\S+$",
+                "errorMessage": "Sample name must be provided and cannot contain spaces",
+                "meta": ["id"]
             },
             "fastq_1": {
                 "type": "string",
                 "format": "file-path",
+                "exists": true,
                 "pattern": "^\\S+\\.f(ast)?q\\.gz$",
-                "errorMessage": "FastQ file for reads 1 must be provided, cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'",
-                "exists": true
+                "errorMessage": "FastQ file for reads 1 must be provided, cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
             },
             "fastq_2": {
-                "type": "string",
-                "format": "file-path",
-                "pattern": "^\\S+\\.f(ast)?q\\.gz$",
-                "errorMessage": "FastQ file for reads 2 cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'. Leave empty for single-end data."
+                "errorMessage": "FastQ file for reads 2 cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'",
+                "anyOf": [
+                    {
+                        "type": "string",
+                        "pattern": "^\\S+\\.f(ast)?q\\.gz$"
+                    },
+                    {
+                        "type": "string",
+                        "maxLength": 0
+                    }
+                ]
             },
             "replicate": {
                 "type": "integer",
-                "minimum": 1,
-                "errorMessage": "Replicate number must be a positive integer (1, 2, 3, ...)",
+                "errorMessage": "Replicate id not an integer!",
                 "meta": ["replicate"]
             },
             "antibody": {
                 "type": "string",
-                "pattern": "^[a-zA-Z0-9_.-]*$",
-                "errorMessage": "Antibody/target name. Use alphanumeric characters, underscores, dots, and dashes. Leave empty for input/control samples.",
+                "pattern": "^\\S+$",
+                "errorMessage": "Antibody entry cannot contain spaces",
+                "dependentRequired": ["control"],
                 "meta": ["antibody"]
             },
             "control": {
                 "type": "string",
-                "pattern": "^[a-zA-Z0-9_.-]*$",
-                "errorMessage": "Control sample name must match a sample name in the 'sample' column. Leave empty for input samples.",
+                "pattern": "^\\S+$",
+                "errorMessage": "Control entry cannot contain spaces",
+                "dependentRequired": ["antibody", "control_replicate"],
                 "meta": ["control"]
             },
             "control_replicate": {
-                "type": "integer",
-                "minimum": 1,
-                "errorMessage": "Control replicate number must be a positive integer matching the replicate column of the control sample. Leave empty for input samples.",
+                "type": "string",
+                "pattern": "^\\S+$",
+                "errorMessage": "Control entry cannot contain spaces",
                 "meta": ["control_replicate"]
             }
         },
-        "required": ["sample", "fastq_1", "replicate"]
+        "required": ["sample", "fastq_1"]
     }
 }

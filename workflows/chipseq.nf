@@ -48,11 +48,19 @@ ch_spp_correlation_header   = file("$projectDir/assets/multiqc/spp_correlation_h
 ch_peak_count_header        = file("$projectDir/assets/multiqc/peak_count_header.txt", checkIfExists: true)
 ch_frip_score_header        = file("$projectDir/assets/multiqc/frip_score_header.txt", checkIfExists: true)
 ch_peak_annotation_header   = file("$projectDir/assets/multiqc/peak_annotation_header.txt", checkIfExists: true)
-ch_deseq2_pca_header        = file("$projectDir/workflows/assets/multiqc/deseq2_pca_header.txt", checkIfExists: true)
-ch_deseq2_clustering_header = file("$projectDir/workflows/assets/multiqc/deseq2_clustering_header.txt", checkIfExists: true)
-ch_deseq2_read_dist_header  = file("$projectDir/workflows/assets/multiqc/read_distribution_normalized_header.txt", checkIfExists: true)
+ch_deseq2_pca_header        = file("$projectDir/assets/multiqc/deseq2_pca_header.txt", checkIfExists: true)
+ch_deseq2_clustering_header = file("$projectDir/assets/multiqc/deseq2_clustering_header.txt", checkIfExists: true)
+ch_deseq2_read_dist_header  = file("$projectDir/assets/multiqc/read_distribution_normalized_header.txt", checkIfExists: true)
 
 ch_with_inputs = params.with_inputs ? params.with_inputs.toBoolean() : false
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    IMPORT PLUGIN FUNCTIONS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+include { paramsSummaryMap } from 'plugin/nf-schema'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -60,7 +68,7 @@ ch_with_inputs = params.with_inputs ? params.with_inputs.toBoolean() : false
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-
+include { INPUT_CHECK                         } from '../subworkflows/local/input_check'
 include { FRIP_SCORE                          } from '../modules/local/frip_score'
 include { PLOT_MACS2_QC                       } from '../modules/local/plot_macs2_qc'
 include { PLOT_HOMER_ANNOTATEPEAKS            } from '../modules/local/plot_homer_annotatepeaks'
@@ -142,7 +150,7 @@ workflow CHIPSEQ {
     ch_input = Channel.fromPath(params.input, checkIfExists: true)
     
     // Create summary_params for MultiQC
-    def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
+    def summary_params = workflow.stubRun ? [:] : paramsSummaryMap(workflow)
 
     //
     // SUBWORKFLOW: Uncompress and prepare reference genome files
@@ -154,12 +162,14 @@ workflow CHIPSEQ {
 
 
     //
-    // CHANNEL: Read in samplesheet, validate and create reads channel
+    // SUBWORKFLOW: Read in samplesheet, validate and create reads channel
     //
-    Channel
-        .fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json"))
-        .map { row -> create_fastq_channel(row) }
-        .set { ch_reads }
+    INPUT_CHECK (
+        ch_input,
+        params.seq_center
+    )
+    ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
+    ch_reads = INPUT_CHECK.out.reads
 
     //
     // SUBWORKFLOW: Read QC, extract UMI and trim adapters with TrimGalore!
@@ -901,7 +911,18 @@ workflow CHIPSEQ {
     // MODULE: MultiQC
     //
     if (!params.skip_multiqc) {
-        workflow_summary    = WorkflowChipseq.paramsSummaryMultiqc(workflow, summary_params)
+        // Convert summary_params to YAML for MultiQC
+        workflow_summary = """
+        |id: 'chipseq-summary'
+        |description: 'Parameters used in this pipeline run'
+        |section_name: 'Workflow Summary'
+        |section_href: 'https://github.com/fgualdr/nf_chipmm'
+        |plot_type: 'html'
+        |data: |
+        |    <dl class=\"dl-horizontal\">
+${summary_params.collect { k,v -> "        |        <dt>$k</dt><dd><samp>${v ?: '<span style=\"color:#999999;\">N/A</a>'}</samp></dd>" }.join("\n")}
+        |    </dl>
+        """.stripMargin()
         ch_workflow_summary = Channel.value(workflow_summary)
 
         MULTIQC (
@@ -958,47 +979,16 @@ workflow CHIPSEQ {
 // in subworkflows/local/utils_nfcore_chipseq_pipeline/main.nf
 // This includes email notifications, completion summary, and webhook notifications (imNotification)
 
+
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    FUNCTIONS
+    ENTRY WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-// Function to get list of [ meta, [ fastq_1, fastq_2 ] ]
-def create_fastq_channel(LinkedHashMap row) {
-    // Create metadata map
-    def meta = [:]
-    meta.id         = row.sample
-    meta.single_end = row.fastq_2 ? false : true
-    meta.replicate  = row.replicate
-    meta.antibody   = row.antibody ?: ''
-    
-    // Handle control with replicate info
-    if (row.control && row.control_replicate) {
-        meta.is_input = false
-        meta.which_input = "${row.control}_REP${row.control_replicate}"
-    } else {
-        meta.is_input = true
-        meta.which_input = ''
-    }
-    
-    // Validate file existence
-    if (!file(row.fastq_1).exists()) {
-        exit 1, "ERROR: Please check input samplesheet -> Read 1 FastQ file does not exist!\n${row.fastq_1}"
-    }
-    
-    // Build the fastq_meta tuple
-    def fastq_meta = []
-    if (meta.single_end) {
-        fastq_meta = [ meta, [ file(row.fastq_1) ] ]
-    } else {
-        if (!file(row.fastq_2).exists()) {
-            exit 1, "ERROR: Please check input samplesheet -> Read 2 FastQ file does not exist!\n${row.fastq_2}"
-        }
-        fastq_meta = [ meta, [ file(row.fastq_1), file(row.fastq_2) ] ]
-    }
-    
-    return fastq_meta
+workflow {
+    CHIPSEQ()
 }
 
 /*
