@@ -78,7 +78,7 @@ include { MULTIQC_CUSTOM_PEAKS                } from '../modules/local/multiqc_c
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
-include { INPUT_CHECK         } from '../subworkflows/local/input_check'
+include { samplesheetToList   } from 'plugin/nf-schema'
 include { PREPARE_GENOME      } from '../subworkflows/local/prepare_genome'
 include { BAM_FILTER as BAM_FILTER_SUBWF } from '../subworkflows/local/bam_filter'
 
@@ -154,15 +154,34 @@ workflow CHIPSEQ {
 
 
     //
-    // SUBWORKFLOW: Read in samplesheet, validate and stage input files
+    // CHANNEL: Read in samplesheet, validate and create reads channel
     //
-    INPUT_CHECK (
-        ch_input
-    )
-    ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
-
-    // Set the reads channel from INPUT_CHECK output
-    INPUT_CHECK.out.reads
+    Channel
+        .fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json"))
+        .map { meta, fastq_1, fastq_2, replicate, antibody, control, control_replicate ->
+            // Create metadata map
+            def new_meta = [:]
+            new_meta.id         = meta.sample
+            new_meta.single_end = !fastq_2
+            new_meta.replicate  = replicate
+            new_meta.antibody   = antibody ?: ''
+            
+            // Handle control with replicate info
+            if (control && control_replicate) {
+                new_meta.is_input = false
+                new_meta.which_input = "${control}_REP${control_replicate}"
+            } else {
+                new_meta.is_input = true
+                new_meta.which_input = ''
+            }
+            
+            // Return channel tuple: [meta, [fastq_1, fastq_2]]
+            if (new_meta.single_end) {
+                return [ new_meta, [ fastq_1 ] ]
+            } else {
+                return [ new_meta, [ fastq_1, fastq_2 ] ]
+            }
+        }
         .set { ch_reads }
 
     //
