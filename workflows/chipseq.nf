@@ -158,30 +158,7 @@ workflow CHIPSEQ {
     //
     Channel
         .fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json"))
-        .map { meta, fastq_1, fastq_2, replicate, antibody, control, control_replicate ->
-            // Create metadata map
-            def new_meta = [:]
-            new_meta.id         = meta.sample
-            new_meta.single_end = !fastq_2
-            new_meta.replicate  = replicate
-            new_meta.antibody   = antibody ?: ''
-            
-            // Handle control with replicate info
-            if (control && control_replicate) {
-                new_meta.is_input = false
-                new_meta.which_input = "${control}_REP${control_replicate}"
-            } else {
-                new_meta.is_input = true
-                new_meta.which_input = ''
-            }
-            
-            // Return channel tuple: [meta, [fastq_1, fastq_2]]
-            if (new_meta.single_end) {
-                return [ new_meta, [ fastq_1 ] ]
-            } else {
-                return [ new_meta, [ fastq_1, fastq_2 ] ]
-            }
-        }
+        .map { row -> create_fastq_channel(row) }
         .set { ch_reads }
 
     //
@@ -980,6 +957,49 @@ workflow CHIPSEQ {
 // NOTE: Completion handling is now managed by the PIPELINE_COMPLETION subworkflow
 // in subworkflows/local/utils_nfcore_chipseq_pipeline/main.nf
 // This includes email notifications, completion summary, and webhook notifications (imNotification)
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    FUNCTIONS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+// Function to get list of [ meta, [ fastq_1, fastq_2 ] ]
+def create_fastq_channel(LinkedHashMap row) {
+    // Create metadata map
+    def meta = [:]
+    meta.id         = row.sample
+    meta.single_end = row.fastq_2 ? false : true
+    meta.replicate  = row.replicate
+    meta.antibody   = row.antibody ?: ''
+    
+    // Handle control with replicate info
+    if (row.control && row.control_replicate) {
+        meta.is_input = false
+        meta.which_input = "${row.control}_REP${row.control_replicate}"
+    } else {
+        meta.is_input = true
+        meta.which_input = ''
+    }
+    
+    // Validate file existence
+    if (!file(row.fastq_1).exists()) {
+        exit 1, "ERROR: Please check input samplesheet -> Read 1 FastQ file does not exist!\n${row.fastq_1}"
+    }
+    
+    // Build the fastq_meta tuple
+    def fastq_meta = []
+    if (meta.single_end) {
+        fastq_meta = [ meta, [ file(row.fastq_1) ] ]
+    } else {
+        if (!file(row.fastq_2).exists()) {
+            exit 1, "ERROR: Please check input samplesheet -> Read 2 FastQ file does not exist!\n${row.fastq_2}"
+        }
+        fastq_meta = [ meta, [ file(row.fastq_1), file(row.fastq_2) ] ]
+    }
+    
+    return fastq_meta
+}
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
