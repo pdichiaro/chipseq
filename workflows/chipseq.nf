@@ -4,33 +4,9 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-def valid_params = [
-    aligners       : [  'star' ]
-]
+// NOTE: valid_params and checkPathParamList moved to workflow block for strict syntax compliance
 
-// Validate input parameters
-// WorkflowChipseq.initialise(params, log, valid_params)  // Disabled: validation now handled by PIPELINE_INITIALISATION
-
-// Check input path parameters to see if they exist
-def checkPathParamList = [
-    params.input, params.multiqc_config,
-    params.fasta,
-    params.gtf, params.gff, params.gene_bed,
-    params.star_index,
-    params.blacklist
-]
-for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
-
-// Check mandatory parameters - moved inside workflow to avoid early exit on --help
-// if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
-// if (params.rerpmsk) { ch_rerpmsk = file(params.rerpmsk) } else { exit 1, 'rerpmsk must be provided!' }
-
-// Save AWS IGenomes file containing annotation version
-def anno_readme = params.genomes[ params.genome ]?.readme
-if (anno_readme && file(anno_readme).exists()) {
-    file("${params.outdir}/genome/").mkdirs()
-    file(anno_readme).copyTo("${params.outdir}/genome/")
-}
+// NOTE: anno_readme logic moved to workflow block for strict syntax compliance
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -38,21 +14,7 @@ if (anno_readme && file(anno_readme).exists()) {
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-ch_multiqc_config        = file("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
-ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config) : Channel.empty()
-
-// Header files for MultiQC
-ch_spp_nsc_header           = file("$projectDir/assets/multiqc/spp_nsc_header.txt", checkIfExists: true)
-ch_spp_rsc_header           = file("$projectDir/assets/multiqc/spp_rsc_header.txt", checkIfExists: true)
-ch_spp_correlation_header   = file("$projectDir/assets/multiqc/spp_correlation_header.txt", checkIfExists: true)
-ch_peak_count_header        = file("$projectDir/assets/multiqc/peak_count_header.txt", checkIfExists: true)
-ch_frip_score_header        = file("$projectDir/assets/multiqc/frip_score_header.txt", checkIfExists: true)
-ch_peak_annotation_header   = file("$projectDir/assets/multiqc/peak_annotation_header.txt", checkIfExists: true)
-ch_deseq2_pca_header        = file("$projectDir/assets/multiqc/deseq2_pca_header.txt", checkIfExists: true)
-ch_deseq2_clustering_header = file("$projectDir/assets/multiqc/deseq2_clustering_header.txt", checkIfExists: true)
-ch_deseq2_read_dist_header  = file("$projectDir/assets/multiqc/read_distribution_normalized_header.txt", checkIfExists: true)
-
-ch_with_inputs = params.with_inputs ? params.with_inputs.toBoolean() : false
+// NOTE: All channel definitions moved to workflow block for strict syntax compliance
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -136,12 +98,55 @@ include { MARK_DUPLICATES_PICARD } from '../subworkflows/nf-core/mark_duplicates
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-// Info required for completion email and summary
-def multiqc_report = []
-
 workflow CHIPSEQ {
 
+    // Info required for completion email and summary (moved here for strict syntax)
+    def multiqc_report = []
+
     ch_versions = Channel.empty()
+    
+    // Config files and MultiQC headers (moved from top-level for strict syntax compliance)
+    def ch_multiqc_config        = file("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
+    def ch_multiqc_custom_config = params.multiqc_config ? channel.fromPath(params.multiqc_config) : channel.empty()
+    
+    // Header files for MultiQC
+    def ch_spp_nsc_header           = file("$projectDir/assets/multiqc/spp_nsc_header.txt", checkIfExists: true)
+    def ch_spp_rsc_header           = file("$projectDir/assets/multiqc/spp_rsc_header.txt", checkIfExists: true)
+    def ch_spp_correlation_header   = file("$projectDir/assets/multiqc/spp_correlation_header.txt", checkIfExists: true)
+    def ch_peak_count_header        = file("$projectDir/assets/multiqc/peak_count_header.txt", checkIfExists: true)
+    def ch_frip_score_header        = file("$projectDir/assets/multiqc/frip_score_header.txt", checkIfExists: true)
+    def ch_peak_annotation_header   = file("$projectDir/assets/multiqc/peak_annotation_header.txt", checkIfExists: true)
+    def ch_deseq2_pca_header        = file("$projectDir/assets/multiqc/deseq2_pca_header.txt", checkIfExists: true)
+    def ch_deseq2_clustering_header = file("$projectDir/assets/multiqc/deseq2_clustering_header.txt", checkIfExists: true)
+    def ch_deseq2_read_dist_header  = file("$projectDir/assets/multiqc/read_distribution_normalized_header.txt", checkIfExists: true)
+    
+    def ch_with_inputs = params.with_inputs ? params.with_inputs.toBoolean() : false
+    
+    // Validate input parameters (moved from top-level for strict syntax compliance)
+    def valid_params = [
+        aligners: ['star']
+    ]
+    
+    // Check input path parameters to see if they exist (using .each() instead of for loop)
+    def checkPathParamList = [
+        params.input, params.multiqc_config,
+        params.fasta,
+        params.gtf, params.gff, params.gene_bed,
+        params.star_index,
+        params.blacklist
+    ]
+    checkPathParamList.each { param ->
+        if (param) {
+            file(param, checkIfExists: true)
+        }
+    }
+    
+    // Save AWS IGenomes file containing annotation version (moved from top-level for strict syntax)
+    def anno_readme = params.genomes[ params.genome ]?.readme
+    if (anno_readme && file(anno_readme).exists()) {
+        file("${params.outdir}/genome/").mkdirs()
+        file(anno_readme).copyTo("${params.outdir}/genome/")
+    }
     
     // Check mandatory input samplesheet parameter
     if (!params.input) {
@@ -379,7 +384,9 @@ workflow CHIPSEQ {
             .groupTuple(by: 0)
             .map {
                 meta, bam1, bam2 ->
-                    [ meta , bam1, bam2 ]
+                    // After groupTuple, bam1 and bam2 are lists of lists
+                    // Flatten them to get a single list of BAM files
+                    [ meta , bam1.flatten(), bam2.flatten() ]
             }
             .set { ch_antibody_bam }
 
