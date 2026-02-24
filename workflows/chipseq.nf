@@ -175,7 +175,7 @@ workflow CHIPSEQ {
         false,
         params.skip_trimming,
         0,
-        1
+        params.min_trimmed_reads
     )
     ch_filtered_reads      = FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.reads
     ch_fastqc_raw_multiqc  = FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.fastqc_zip
