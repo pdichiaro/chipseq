@@ -48,7 +48,6 @@ include { MULTIQC_CUSTOM_PEAKS                } from '../modules/local/multiqc_c
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
-include { samplesheetToList   } from 'plugin/nf-schema'
 include { PREPARE_GENOME      } from '../subworkflows/local/prepare_genome'
 include { BAM_FILTER as BAM_FILTER_SUBWF } from '../subworkflows/local/bam_filter'
 
