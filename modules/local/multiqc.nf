@@ -43,7 +43,7 @@ process MULTIQC {
     path ('macs2/annotation/*')
     path ('macs2/featurecounts/*')
 
-    path ('deseq2/*')
+    path ('multiqc/*')
     path ('deseq2/*')
 
     output:
