@@ -52,7 +52,7 @@ ch_deseq2_pca_header        = file("$projectDir/workflows/assets/multiqc/deseq2_
 ch_deseq2_clustering_header = file("$projectDir/workflows/assets/multiqc/deseq2_clustering_header.txt", checkIfExists: true)
 ch_deseq2_read_dist_header  = file("$projectDir/workflows/assets/multiqc/read_distribution_normalized_header.txt", checkIfExists: true)
 
-ch_with_inputs = params.with_inputs ? params.with_inputs.toBoolean() : False
+ch_with_inputs = params.with_inputs ? params.with_inputs.toBoolean() : false
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
