@@ -615,8 +615,6 @@ workflow CHIPSEQ {
 
     ch_macs2_consensus_bed_lib   = Channel.empty()
     ch_macs2_consensus_txt_lib   = Channel.empty()
-    ch_deseq2_pca_multiqc        = Channel.empty()
-    ch_deseq2_clustering_multiqc = Channel.empty()
 
     // It makes by default a consensus - this is used to quantify and compute scaling FACTORS:
 
@@ -726,8 +724,6 @@ workflow CHIPSEQ {
     def normalization_methods = params.normalization_method instanceof List ? 
         params.normalization_method : params.normalization_method.split(',').collect{it.trim()}
     
-    ch_deseq2_pca_multiqc        = Channel.empty()
-    ch_deseq2_clustering_multiqc = Channel.empty()
     ch_size_factors              = Channel.empty()
     ch_scaling_factors_all       = Channel.empty()
     ch_deseq2_raw_files          = Channel.empty()
@@ -968,8 +964,8 @@ workflow CHIPSEQ {
             ch_plothomerannotatepeaks_multiqc.collect().ifEmpty([]),
             ch_subreadfeaturecounts_multiqc.collect{it[1]}.ifEmpty([]),
 
-            ch_deseq2_pca_multiqc.collect().ifEmpty([]),
-            ch_deseq2_clustering_multiqc.collect().ifEmpty([])
+            DESEQ2_SECTION_HEADER.out.section_header.collect().ifEmpty([]),
+            DESEQ2_TRANSFORM.out.multiqc_files.collect().ifEmpty([])
         )
         multiqc_report = MULTIQC.out.report.toList()
     }
