@@ -174,7 +174,8 @@ def check_samplesheet(file_in, file_out):
                         "fastq_2",
                         "replicate",
                         "antibody",
-                        "control",
+                        "is_input",
+                        "which_input",
                     ]
                 )
                 + "\n"
@@ -229,10 +230,20 @@ def check_samplesheet(file_in, file_out):
                     for idx in range(len(sample_mapping_dict[sample][replicate])):
                         fastq_files = sample_mapping_dict[sample][replicate][idx]
                         sample_id = "{}_REP{}_T{}".format(sample, replicate, idx + 1)
-                        if len(fastq_files) == 1:
-                            fout.write(",".join([sample_id] + fastq_files) + ",\n")
+                        
+                        # Convert control field to is_input and which_input
+                        # fastq_files = [single_end, fastq_1, fastq_2, replicate, antibody, control]
+                        control_id = fastq_files[5] if len(fastq_files) > 5 else ""
+                        is_input = "true" if not fastq_files[4] else "false"  # true if antibody is empty
+                        which_input = "" if is_input == "true" else control_id
+                        
+                        # Rebuild output: [sample, single_end, fastq_1, fastq_2, replicate, antibody, is_input, which_input]
+                        output_fields = [sample_id] + fastq_files[0:5] + [is_input, which_input]
+                        
+                        if len(sample_mapping_dict[sample][replicate]) == 1:
+                            fout.write(",".join(output_fields) + "\n")
                         else:
-                            fout.write(",".join([sample_id] + fastq_files) + "\n")
+                            fout.write(",".join(output_fields) + "\n")
 
     else:
         print_error(f"No entries to process!", "Samplesheet: {file_in}")
