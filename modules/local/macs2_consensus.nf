@@ -37,7 +37,7 @@ process MACS2_CONSENSUS {
   
     macs2_merged_expand.py \\
         ${prefix}.txt \\
-        ${peaks.collect{it.toString()}.sort().join(',').replaceAll("_peaks.${peak_type}","")} \\
+        ${peaks.collect{it.toString()}.sort().join(',').replaceAll("_peaks.${peak_type}","").replaceAll("_chr[^,]*","")} \\
         ${prefix}.boolean.txt \\
         --min_replicates $params.min_reps_consensus \\
         $expandparam
