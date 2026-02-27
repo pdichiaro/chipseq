@@ -235,7 +235,8 @@ def check_samplesheet(file_in, file_out):
                         # fastq_files = [single_end, fastq_1, fastq_2, replicate, antibody, control]
                         control_id = fastq_files[5] if len(fastq_files) > 5 else ""
                         is_input = "true" if not fastq_files[4] else "false"  # true if antibody is empty
-                        which_input = "" if is_input == "true" else control_id
+                        # which_input must match the actual sample ID format: CONTROL_REP{N}_T1
+                        which_input = "" if is_input == "true" else "{}_T1".format(control_id)
                         
                         # Rebuild output: [sample, single_end, fastq_1, fastq_2, replicate, antibody, is_input, which_input]
                         output_fields = [sample_id] + fastq_files[0:5] + [is_input, which_input]
