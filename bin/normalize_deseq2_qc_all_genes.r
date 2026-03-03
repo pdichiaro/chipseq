@@ -255,6 +255,8 @@ homer_annotation <- NULL
 if (!is.null(opt$homer_annotation) && file.exists(opt$homer_annotation)) {
     cat("Loading HOMER annotations from:", opt$homer_annotation, "\n")
     homer_annotation <- read.delim(opt$homer_annotation, header=TRUE, stringsAsFactors=FALSE, comment.char="#")
+    # Rename the first column to "Peak.ID" (HOMER often has malformed column name)
+    colnames(homer_annotation)[1] <- "Peak.ID"
     cat("HOMER annotation column names:", paste(colnames(homer_annotation), collapse=", "), "\n")
     cat("HOMER annotation dimensions:", nrow(homer_annotation), "x", ncol(homer_annotation), "\n")
 }
