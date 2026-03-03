@@ -661,6 +661,8 @@ homer_annotation_rlog <- NULL
 if (!is.null(opt$homer_annotation) && file.exists(opt$homer_annotation)) {
     cat("Loading HOMER annotations for rlog counts from:", opt$homer_annotation, "\n")
     homer_annotation_rlog <- read.delim(opt$homer_annotation, header=TRUE, stringsAsFactors=FALSE, comment.char="#")
+    # Rename the first column to "Peak.ID" (HOMER often has malformed column name)
+    colnames(homer_annotation_rlog)[1] <- "Peak.ID"
 }
 
 # Merge: first with original annotation, then with HOMER if available
