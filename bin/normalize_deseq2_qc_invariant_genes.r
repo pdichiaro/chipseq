@@ -442,7 +442,7 @@ if (!is.null(opt$homer_annotation) && file.exists(opt$homer_annotation)) {
 if (!is.null(homer_annotation)) {
     # First left_join original annotation with HOMER (keeps original_annotation columns, adds HOMER columns)
     cat("Merging original annotation with HOMER annotations...\n")
-    combined_annotation <- original_annotation %>% left_join(homer_annotation, by = "Geneid")
+    combined_annotation <- original_annotation %>% left_join(homer_annotation, by = c("Geneid" = "PeakID"))
     cat("Combined annotation dimensions:", nrow(combined_annotation), "x", ncol(combined_annotation), "\n")
     
     # Then left_join with normalized counts
@@ -664,7 +664,7 @@ if (!is.null(homer_annotation_rlog)) {
     # First left_join original annotation with HOMER
     cat("Merging original annotation with HOMER for rlog counts...\n")
     combined_annotation_rlog <- original_annotation %>% 
-        left_join(homer_annotation_rlog, by = "Geneid")
+        left_join(homer_annotation_rlog, by = c("Geneid" = "PeakID"))
     cat("Combined annotation for rlog dimensions:", nrow(combined_annotation_rlog), "x", ncol(combined_annotation_rlog), "\n")
     
     # Then left_join with rlog counts
