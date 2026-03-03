@@ -255,13 +255,15 @@ homer_annotation <- NULL
 if (!is.null(opt$homer_annotation) && file.exists(opt$homer_annotation)) {
     cat("Loading HOMER annotations from:", opt$homer_annotation, "\n")
     homer_annotation <- read.delim(opt$homer_annotation, header=TRUE, stringsAsFactors=FALSE, comment.char="#")
+    cat("HOMER annotation column names:", paste(colnames(homer_annotation), collapse=", "), "\n")
+    cat("HOMER annotation dimensions:", nrow(homer_annotation), "x", ncol(homer_annotation), "\n")
 }
 
 # Merge: first with original annotation, then with HOMER if available
 if (!is.null(homer_annotation)) {
     # First merge original annotation with HOMER
     cat("Merging original annotation with HOMER annotations...\n")
-    combined_annotation <- left_join(original_annotation, homer_annotation, by = c("Geneid" = "PeakID"))
+    combined_annotation <- left_join(original_annotation, homer_annotation, by = c("Geneid" = "Peak.ID"))
     cat("Combined annotation dimensions:", nrow(combined_annotation), "x", ncol(combined_annotation), "\n")
     
     # Then merge with normalized counts
@@ -454,7 +456,7 @@ if (!is.null(opt$homer_annotation) && file.exists(opt$homer_annotation)) {
 if (!is.null(homer_annotation_rlog)) {
     # First merge original annotation with HOMER
     cat("Merging original annotation with HOMER for rlog counts...\n")
-    combined_annotation_rlog <- left_join(original_annotation, homer_annotation_rlog, by = c("Geneid" = "PeakID"))
+    combined_annotation_rlog <- left_join(original_annotation, homer_annotation_rlog, by = c("Geneid" = "Peak.ID"))
     cat("Combined annotation for rlog dimensions:", nrow(combined_annotation_rlog), "x", ncol(combined_annotation_rlog), "\n")
     
     # Then merge with rlog counts
