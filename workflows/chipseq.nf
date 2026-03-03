@@ -66,7 +66,6 @@ include { PLOT_MACS2_QC                       } from '../modules/local/plot_macs
 include { PLOT_HOMER_ANNOTATEPEAKS            } from '../modules/local/plot_homer_annotatepeaks'
 include { MACS2_CONSENSUS                     } from '../modules/local/macs2_consensus'
 include { ANNOTATE_BOOLEAN_PEAKS              } from '../modules/local/annotate_boolean_peaks'
-include { PREPARE_HOMER_ANNOTATION            } from '../modules/local/prepare_homer_annotation'
 // include { COUNT_NORM                          } from '../modules/local/count_normalization'  // Module not found
 include { NORMALIZE_DESEQ2_QC_INVARIANT_GENES } from '../modules/local/normalize_deseq2_qc_invariant_genes'
 include { NORMALIZE_DESEQ2_QC_ALL_GENES       } from '../modules/local/normalize_deseq2_qc_all_genes'
@@ -716,13 +715,12 @@ workflow CHIPSEQ {
     ch_normalization_scaling_factors = Channel.empty()
     
     //
-    // MODULE: Prepare HOMER gene annotation for normalization
+    // Use consensus peaks annotation instead of gene annotation for normalization
+    // Extract the first consensus peaks annotation file (e.g., pRPA.consensus_peaks.annotatePeaks.txt)
     //
-    PREPARE_HOMER_ANNOTATION (
-        PREPARE_GENOME.out.gtf,
-        PREPARE_GENOME.out.fasta
-    )
-    ch_normalization_versions = ch_normalization_versions.mix(PREPARE_HOMER_ANNOTATION.out.versions)
+    def ch_consensus_annotation = HOMER_ANNOTATEPEAKS_CONSENSUS.out.txt
+        .map { meta, txt -> txt }
+        .first()
     
     //
     // MODULE: Invariant genes normalization (stable genes only)
@@ -731,7 +729,7 @@ workflow CHIPSEQ {
         NORMALIZE_DESEQ2_QC_INVARIANT_GENES (
             SUBREAD_FEATURECOUNTS.out.counts.map { meta, counts -> counts },
             "featureCounts",
-            PREPARE_HOMER_ANNOTATION.out.annotation
+            ch_consensus_annotation
         )
         
         // Collect raw files for DESEQ2_TRANSFORM
@@ -768,7 +766,7 @@ workflow CHIPSEQ {
         NORMALIZE_DESEQ2_QC_ALL_GENES (
             SUBREAD_FEATURECOUNTS.out.counts.map { meta, counts -> counts },
             "featureCounts",
-            PREPARE_HOMER_ANNOTATION.out.annotation
+            ch_consensus_annotation
         )
         
         // Collect raw files for DESEQ2_TRANSFORM
