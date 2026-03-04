@@ -269,11 +269,11 @@ if (!is.null(homer_annotation)) {
     cat("Combined annotation dimensions:", nrow(combined_annotation), "x", ncol(combined_annotation), "\n")
 
     # Then merge with normalized counts
-    normalized_counts_output <- left_join(combined_annotation, deseq2_normalized_df, by = c("Geneid" = "gene_id","Chr" = "Chr","Start" = "Start","End" = "End"))
+    normalized_counts_output <- left_join(combined_annotation, deseq2_normalized_df, by = c("Geneid" = "gene_id"))
     
 } else {
     # Merge annotation with normalized counts
-    normalized_counts_output <- left_join(original_annotation, deseq2_normalized_df,  by = c("Geneid" = "gene_id","Chr" = "Chr","Start" = "Start","End" = "End"))
+    normalized_counts_output <- left_join(original_annotation, deseq2_normalized_df,  by = c("Geneid" = "gene_id"))
 }
 
 cat("Merged normalized counts dimensions:", nrow(normalized_counts_output), "x", ncol(normalized_counts_output), "\n")
@@ -461,11 +461,11 @@ if (!is.null(homer_annotation_rlog)) {
     cat("Combined annotation for rlog dimensions:", nrow(combined_annotation_rlog), "x", ncol(combined_annotation_rlog), "\n")
     
     # Then merge with rlog counts
-    rlog_counts_output <- left_join(combined_annotation_rlog, transformed_counts_df, by = c("Geneid" = "gene_id","Chr" = "Chr","Start" = "Start","End" = "End"))
+    rlog_counts_output <- left_join(combined_annotation_rlog, transformed_counts_df, by = c("Geneid" = "gene_id"))
 
 } else {
     # Merge annotation with transformed counts (reuse original_annotation from earlier)
-    rlog_counts_output <- left_join(original_annotation, transformed_counts_df, by = c("Geneid" = "gene_id","Chr" = "Chr","Start" = "Start","End" = "End"))
+    rlog_counts_output <- left_join(original_annotation, transformed_counts_df, by = c("Geneid" = "gene_id"))
 }
 
 cat("Merged rlog counts dimensions:", nrow(rlog_counts_output), "x", ncol(rlog_counts_output), "\n")
