@@ -450,11 +450,11 @@ if (!is.null(homer_annotation)) {
     cat("Combined annotation dimensions:", nrow(combined_annotation), "x", ncol(combined_annotation), "\n")
     
     # Then left_join with normalized counts
-    final_normalized_counts <- left_join(combined_annotation, deseq2_normalized_df, by = c("Geneid" = "gene_id","Chr" = "Chr","Start" = "Start","End" = "End"))
+    final_normalized_counts <- left_join(combined_annotation, deseq2_normalized_df, by = c("Geneid" = "gene_id"))
     
 } else {
     # Simple left_join by gene_id
-    final_normalized_counts <- left_join(original_annotation, deseq2_normalized_df,  by = c("Geneid" = "gene_id","Chr" = "Chr","Start" = "Start","End" = "End"))
+    final_normalized_counts <- left_join(original_annotation, deseq2_normalized_df,  by = c("Geneid" = "gene_id"))
 }
 
 cat("Final normalized counts dimensions:", nrow(final_normalized_counts), "x", ncol(final_normalized_counts), "\n")
@@ -677,11 +677,11 @@ if (!is.null(homer_annotation_rlog)) {
     cat("Combined annotation for rlog dimensions:", nrow(combined_annotation_rlog), "x", ncol(combined_annotation_rlog), "\n")
     
     # Then left_join with rlog counts
-    rlog_counts_output <- left_join(combined_annotation_rlog, transformed_counts_df, by = c("Geneid" = "gene_id","Chr" = "Chr","Start" = "Start","End" = "End"))
+    rlog_counts_output <- left_join(combined_annotation_rlog, transformed_counts_df, by = c("Geneid" = "gene_id"))
 
 } else {
     # Simple left_join by gene_id
-    rlog_counts_output <- left_join(original_annotation, transformed_counts_df, by = c("Geneid" = "gene_id","Chr" = "Chr","Start" = "Start","End" = "End"))
+    rlog_counts_output <- left_join(original_annotation, transformed_counts_df, by = c("Geneid" = "gene_id"))
 }
 
 cat("Final rlog counts dimensions:", nrow(rlog_counts_output), "x", ncol(rlog_counts_output), "\n")
