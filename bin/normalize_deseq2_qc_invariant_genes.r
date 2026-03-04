@@ -437,7 +437,7 @@ if (!is.null(opt$homer_annotation) && file.exists(opt$homer_annotation)) {
     cat("Loading HOMER annotations from:", opt$homer_annotation, "\n")
     homer_annotation <- read.delim(opt$homer_annotation, header=TRUE, stringsAsFactors=FALSE, comment.char="#")
     # Rename the first column to "Peak.ID" (HOMER often has malformed column name)
-    colnames(homer_annotation)[1] <- "Peak.ID"
+    colnames(homer_annotation)[1] <- "Geneid"
     cat("HOMER annotation column names:", paste(colnames(homer_annotation), collapse=", "), "\n")
     cat("HOMER annotation dimensions:", nrow(homer_annotation), "x", ncol(homer_annotation), "\n")
 }
@@ -446,16 +446,15 @@ if (!is.null(opt$homer_annotation) && file.exists(opt$homer_annotation)) {
 if (!is.null(homer_annotation)) {
     # First left_join original annotation with HOMER (keeps original_annotation columns, adds HOMER columns)
     cat("Merging original annotation with HOMER annotations...\n")
-    combined_annotation <- original_annotation %>% left_join(homer_annotation, by = c("Geneid" = "Peak.ID"))
+    combined_annotation <- left_join(original_annotation, homer_annotation, by = c("Geneid","Chr","Start","End"))
     cat("Combined annotation dimensions:", nrow(combined_annotation), "x", ncol(combined_annotation), "\n")
     
     # Then left_join with normalized counts
-    final_normalized_counts <- deseq2_normalized_df %>% 
-        left_join(combined_annotation, by = c("gene_id" = "Geneid"))
+    final_normalized_counts <- left_join(combined_annotation, deseq2_normalized_df, by = c("Geneid" = "gene_id","Chr" = "Chr","Start" = "Start","End" = "End"))
+    
 } else {
     # Simple left_join by gene_id
-    final_normalized_counts <- deseq2_normalized_df %>% 
-        left_join(original_annotation, by = c("gene_id" = "Geneid"))
+    final_normalized_counts <- left_join(original_annotation, deseq2_normalized_df,  by = c("Geneid" = "gene_id","Chr" = "Chr","Start" = "Start","End" = "End"))
 }
 
 cat("Final normalized counts dimensions:", nrow(final_normalized_counts), "x", ncol(final_normalized_counts), "\n")
@@ -639,13 +638,18 @@ save(dds,file=DDSFile)
 # Create VST/rlog transformed rlog_counts.txt (required by module)
 # This uses the transformed data
 transformed_counts <- assay(dds, vst_name)
-normalized_counts_output <- data.frame(
+
+cat("Creating VST/rlog transformed counts...\n")
+cat("VST/rlog counts dimensions:", nrow(transformed_counts), "x", ncol(transformed_counts), "\n")
+
+# Create dataframe with gene_id from rownames
+transformed_counts_df <- data.frame(
     gene_id = rownames(transformed_counts),
     transformed_counts,
     stringsAsFactors = FALSE,
     check.names = FALSE
 )
-
+                         
 # Simple merge by gene_id for rlog counts too
 cat("Adding annotation to VST/rlog transformed counts using merge by gene_id...\n")
 
@@ -662,31 +666,29 @@ if (!is.null(opt$homer_annotation) && file.exists(opt$homer_annotation)) {
     cat("Loading HOMER annotations for rlog counts from:", opt$homer_annotation, "\n")
     homer_annotation_rlog <- read.delim(opt$homer_annotation, header=TRUE, stringsAsFactors=FALSE, comment.char="#")
     # Rename the first column to "Peak.ID" (HOMER often has malformed column name)
-    colnames(homer_annotation_rlog)[1] <- "Peak.ID"
+    colnames(homer_annotation_rlog)[1] <- "Geneid"
 }
 
 # Merge: first with original annotation, then with HOMER if available
 if (!is.null(homer_annotation_rlog)) {
     # First left_join original annotation with HOMER
     cat("Merging original annotation with HOMER for rlog counts...\n")
-    combined_annotation_rlog <- original_annotation %>% 
-        left_join(homer_annotation_rlog, by = c("Geneid" = "Peak.ID"))
+    combined_annotation_rlog <- left_join(original_annotation, homer_annotation_rlog, by = c("Geneid","Chr","Start","End")))
     cat("Combined annotation for rlog dimensions:", nrow(combined_annotation_rlog), "x", ncol(combined_annotation_rlog), "\n")
     
     # Then left_join with rlog counts
-    normalized_counts_output <- normalized_counts_output %>% 
-        left_join(combined_annotation_rlog, by = c("Geneid"))
+    rlog_counts_output <- left_join(combined_annotation_rlog, transformed_counts_df, by = c("Geneid" = "gene_id","Chr" = "Chr","Start" = "Start","End" = "End"))
+
 } else {
     # Simple left_join by gene_id
-    normalized_counts_output <- normalized_counts_output %>% 
-        left_join(original_annotation, by = c("Geneid"))
+    rlog_counts_output <- left_join(original_annotation, transformed_counts_df, by = c("Geneid" = "gene_id","Chr" = "Chr","Start" = "Start","End" = "End"))
 }
 
-cat("Final rlog counts dimensions:", nrow(normalized_counts_output), "x", ncol(normalized_counts_output), "\n")
+cat("Final rlog counts dimensions:", nrow(rlog_counts_output), "x", ncol(rlog_counts_output), "\n")
                  
 # Write to organized location (base_dir)
 rlog_file <- paste0(base_dir, "rlog_counts.txt")
-write.table(normalized_counts_output, 
+write.table(rlog_counts_output, 
            file = rlog_file, 
            sep = "\t", 
            quote = FALSE, 
@@ -695,7 +697,7 @@ write.table(normalized_counts_output,
 
 # Also write to root level for Nextflow module output (with prefix)
 rlog_file_root <- paste0(opt$outprefix, "_rlog_counts.txt")
-write.table(normalized_counts_output, 
+write.table(rlog_counts_output, 
            file = rlog_file_root, 
            sep = "\t", 
            quote = FALSE, 
@@ -713,7 +715,7 @@ if (file.exists(rlog_file)) {
 if (file.exists(rlog_file_root)) {
     cat("VST/rlog transformed counts written to root:", rlog_file_root, "\n")
     cat("File size:", file.size(rlog_file_root), "bytes\n")
-    cat("Dimensions:", nrow(normalized_counts_output), "x", ncol(normalized_counts_output), "\n")
+    cat("Dimensions:", nrow(transformed_counts), "x", ncol(transformed_counts), "\n")
 } else {
     cat("ERROR: root level rlog_counts.txt file was not created\n")
 }
