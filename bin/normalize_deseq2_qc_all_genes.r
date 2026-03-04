@@ -457,7 +457,7 @@ if (!is.null(opt$homer_annotation) && file.exists(opt$homer_annotation)) {
 if (!is.null(homer_annotation_rlog)) {
     # First merge original annotation with HOMER
     cat("Merging original annotation with HOMER for rlog counts...\n")
-    combined_annotation_rlog <- left_join(original_annotation, homer_annotation_rlog, by = c("Geneid","Chr","Start","End")))
+    combined_annotation_rlog <- left_join(original_annotation, homer_annotation_rlog, by = c("Geneid","Chr","Start","End"))
     cat("Combined annotation for rlog dimensions:", nrow(combined_annotation_rlog), "x", ncol(combined_annotation_rlog), "\n")
     
     # Then merge with rlog counts
