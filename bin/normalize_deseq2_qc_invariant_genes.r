@@ -490,8 +490,19 @@ cat("Creating read distribution plots for invariant gene normalized data...\n")
 
 # Use the final_normalized_counts data for plotting (without annotation columns)
 # Extract only the count columns (skip annotation columns)
-sample_columns <- colnames(final_normalized_counts)[!colnames(final_normalized_counts) %in% c("Geneid", colnames(original_annotation))]
+# Use sample names directly from the normalized matrix to avoid annotation column issues
+sample_columns <- colnames(deseq2_normalized_counts)
+cat("Sample columns for plotting:", paste(sample_columns, collapse=", "), "\n")
+
+# Verify all sample columns exist in final_normalized_counts
+missing_cols <- sample_columns[!sample_columns %in% colnames(final_normalized_counts)]
+if (length(missing_cols) > 0) {
+    cat("WARNING: Missing sample columns:", paste(missing_cols, collapse=", "), "\n")
+    sample_columns <- sample_columns[sample_columns %in% colnames(final_normalized_counts)]
+}
+
 plot_data <- final_normalized_counts[, c("Geneid", sample_columns), drop = FALSE]
+cat("Plot data dimensions:", nrow(plot_data), "x", ncol(plot_data), "\n")
 
 # Check if we have grouping information for coldata setup
 samples.vec <- sample_columns  # Use the actual sample column names
@@ -523,6 +534,15 @@ if (decompose_plots && ncol(coldata_plots) > 1) {
 # Prepare data for plotting - use log-transformed normalized counts
 plot_matrix <- as.matrix(plot_data[, sample_columns])
 rownames(plot_matrix) <- plot_data$Geneid
+
+# Verify matrix is numeric
+if (!is.numeric(plot_matrix)) {
+    cat("ERROR: plot_matrix contains non-numeric values!\n")
+    cat("Class of plot_matrix:", class(plot_matrix), "\n")
+    cat("Sample of plot_matrix (first 5 rows, first 3 cols):\n")
+    print(plot_matrix[1:min(5, nrow(plot_matrix)), 1:min(3, ncol(plot_matrix))])
+    stop("Cannot proceed with non-numeric matrix")
+}
 
 all.reads_z <- as.data.frame(log(plot_matrix + 1))
 all.reads_zz <- all.reads_z[, rownames(coldata_plots)] %>% rownames_to_column(var="gene") %>% as_tibble()            
