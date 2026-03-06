@@ -231,16 +231,13 @@ for (i in 1:nrow(scaling_dat)) {
     cat("  - Created:", sample_file, "with scaling factor:", scaling_factor, "\n")
 }
 
+################################################
+## SAVE NORMALIZED COUNT MATRIX               ##
+################################################
+                               
 # Create normalized_counts.txt (normalized count matrix WITH annotation)
-normalized_counts <- counts(dds, normalized = TRUE)
-
 cat("Creating normalized_counts.txt...\n")
-cat("Normalized counts dimensions:", nrow(normalized_counts), "x", ncol(normalized_counts), "\n")
-
-# Read original featureCounts file to get annotation columns
-cat("Reading annotation from featureCounts file...\n")
-original_annotation <- read.delim(file = opt$count_file, header = TRUE, skip = 1, 
-                                 check.names = FALSE, comment.char = "#")
+normalized_counts <- counts(dds, normalized = TRUE)
 
 # Create dataframe with gene_id from rownames
 deseq2_normalized_df <- data.frame(
@@ -249,13 +246,21 @@ deseq2_normalized_df <- data.frame(
     stringsAsFactors = FALSE,
     check.names = FALSE
 )
+                               
+# Read original featureCounts file to get annotation columns
+cat("Reading annotation from featureCounts file...\n")
+original_table <- read.delim(file=opt$count_file, header=TRUE, row.names=NULL, comment.char="#")
+original_annotation <- original_table[, 1:(opt$count_col-1), drop = FALSE]
 
+cat("Original annotation rows:", nrow(original_annotation), "\n")
+cat("Normalized counts dimensions:", nrow(normalized_counts), "x", ncol(normalized_counts), "\n")
+                               
 # Load HOMER annotations (*consensus_peaks.annotatePeaks.txt) if provided
 homer_annotation <- NULL
 if (!is.null(opt$homer_annotation) && file.exists(opt$homer_annotation)) {
     cat("Loading HOMER annotations from:", opt$homer_annotation, "\n")
     homer_annotation <- read.delim(opt$homer_annotation, header=TRUE, stringsAsFactors=FALSE, comment.char="#")
-    # Rename the first column to "Peak.ID" (HOMER often has malformed column name)
+    # Rename the first column to "GeneID" (HOMER often has malformed column name)
     colnames(homer_annotation)[1] <- "Geneid"
     cat("HOMER annotation column names:", paste(colnames(homer_annotation), collapse=", "), "\n")
     cat("HOMER annotation dimensions:", nrow(homer_annotation), "x", ncol(homer_annotation), "\n")
@@ -434,6 +439,7 @@ assay(dds, vst_name) <- assay(rld)
 transformed_counts <- assay(dds, vst_name)
 
 cat("Creating VST/rlog transformed counts...\n")
+cat("Original annotation rows:", nrow(original_annotation), "\n")
 cat("VST/rlog counts dimensions:", nrow(transformed_counts), "x", ncol(transformed_counts), "\n")
 
 # Create dataframe with gene_id from rownames
@@ -451,6 +457,8 @@ if (!is.null(opt$homer_annotation) && file.exists(opt$homer_annotation)) {
     homer_annotation_rlog <- read.delim(opt$homer_annotation, header=TRUE, stringsAsFactors=FALSE, comment.char="#")
     # Rename the first column to "Peak.ID" (HOMER often has malformed column name)
     colnames(homer_annotation_rlog)[1] <- "Geneid"
+    cat("HOMER annotation column names:", paste(colnames(homer_annotation_rlog), collapse=", "), "\n")
+    cat("HOMER annotation dimensions:", nrow(homer_annotation_rlog), "x", ncol(homer_annotation_rlog), "\n")
 }
 
 # Merge: first with original annotation, then with HOMER if available
