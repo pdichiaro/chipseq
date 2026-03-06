@@ -751,7 +751,9 @@ workflow CHIPSEQ {
                 def id = row.Sample_ID ?: row.sample
                 // Remove .bam suffix and processing suffixes to match meta.id
                 def clean_id = id.replaceAll(/\.mLb\.clN\.sorted\.bam$/, '').replaceAll(/\.bam$/, '')
-                def value = row.scaling_factor ?: row.scaling
+                // Support multiple column name variations: size_factor, scaling_factor, scaling
+                def value = row.size_factor ?: (row.scaling_factor ?: row.scaling)
+                log.info "🔍 SCALING PARSED: sample='${clean_id}', value='${value}'"
                 [ clean_id, value, 'invariant_genes' ]
             }
             .set { ch_size_factors_invariant }
@@ -788,7 +790,9 @@ workflow CHIPSEQ {
                 def id = row.Sample_ID ?: row.sample
                 // Remove .bam suffix and processing suffixes to match meta.id
                 def clean_id = id.replaceAll(/\.mLb\.clN\.sorted\.bam$/, '').replaceAll(/\.bam$/, '')
-                def value = row.scaling_factor ?: row.scaling
+                // Support multiple column name variations: size_factor, scaling_factor, scaling
+                def value = row.size_factor ?: (row.scaling_factor ?: row.scaling)
+                log.info "🔍 SCALING PARSED (all_genes): sample='${clean_id}', value='${value}'"
                 [ clean_id, value, 'all_genes' ]
             }
             .set { ch_size_factors_all_genes }
