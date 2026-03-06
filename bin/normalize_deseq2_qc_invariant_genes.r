@@ -427,7 +427,7 @@ cat("Adding annotation to normalized counts using merge by gene_id...\n")
 # Get the original count table with all columns (annotation + counts) for annotation merge
 original_table <- read.delim(file=opt$count_file, header=TRUE, row.names=NULL, comment.char="#")
 original_annotation <- original_table[, 1:(opt$count_col-1), drop = FALSE]
-
+                               
 cat("Original annotation rows:", nrow(original_annotation), "\n")
 cat("Normalized counts rows:", nrow(deseq2_normalized_df), "\n")
 
@@ -660,6 +660,7 @@ save(dds,file=DDSFile)
 transformed_counts <- assay(dds, vst_name)
 
 cat("Creating VST/rlog transformed counts...\n")
+cat("Original annotation rows:", nrow(original_annotation), "\n")
 cat("VST/rlog counts dimensions:", nrow(transformed_counts), "x", ncol(transformed_counts), "\n")
 
 # Create dataframe with gene_id from rownames
@@ -673,20 +674,15 @@ transformed_counts_df <- data.frame(
 # Simple merge by gene_id for rlog counts too
 cat("Adding annotation to VST/rlog transformed counts using merge by gene_id...\n")
 
-# Get the original count table with all columns (annotation + counts) for rlog annotation
-original_table <- read.delim(file=opt$count_file, header=TRUE, row.names=NULL, comment.char="#")
-original_annotation <- original_table[, 1:(opt$count_col-1), drop = FALSE]
-
-cat("Original annotation rows:", nrow(original_annotation), "\n")
-cat("VST/rlog counts rows:", nrow(normalized_counts_output), "\n")
-
 # Load HOMER annotations if provided (reuse from previous section)
 homer_annotation_rlog <- NULL
 if (!is.null(opt$homer_annotation) && file.exists(opt$homer_annotation)) {
     cat("Loading HOMER annotations for rlog counts from:", opt$homer_annotation, "\n")
     homer_annotation_rlog <- read.delim(opt$homer_annotation, header=TRUE, stringsAsFactors=FALSE, comment.char="#")
-    # Rename the first column to "Peak.ID" (HOMER often has malformed column name)
+    # Rename the first column to "Geneid" (HOMER often has malformed column name)
     colnames(homer_annotation_rlog)[1] <- "Geneid"
+    cat("HOMER annotation column names:", paste(colnames(homer_annotation), collapse=", "), "\n")
+    cat("HOMER annotation dimensions:", nrow(homer_annotation), "x", ncol(homer_annotation), "\n")
 }
 
 # Merge: first with original annotation, then with HOMER if available
