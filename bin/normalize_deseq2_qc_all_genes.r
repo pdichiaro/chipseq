@@ -252,7 +252,12 @@ cat("Reading annotation from featureCounts file...\n")
 original_table <- read.delim(file=opt$count_file, header=TRUE, row.names=NULL, comment.char="#")
 original_annotation <- original_table[, 1:(opt$count_col-1), drop = FALSE]
 
+# Filter annotation to match normalized counts
+genes_to_keep <- deseq2_normalized_df$gene_id
+original_annotation_filtered <- original_annotation %>% filter(Geneid %in% genes_to_keep)
+                               
 cat("Original annotation rows:", nrow(original_annotation), "\n")
+cat("Original annotation filtered rows:", nrow(original_annotation_filtered), "\n")
 cat("Normalized counts dimensions:", nrow(normalized_counts), "x", ncol(normalized_counts), "\n")
                                
 # Load HOMER annotations (*consensus_peaks.annotatePeaks.txt) if provided
@@ -266,11 +271,11 @@ if (!is.null(opt$homer_annotation) && file.exists(opt$homer_annotation)) {
     cat("HOMER annotation dimensions:", nrow(homer_annotation), "x", ncol(homer_annotation), "\n")
 }
 
-# Merge: first with original annotation, then with HOMER if available
+# Merge: first with original annotation filtered, then with HOMER if available
 if (!is.null(homer_annotation)) {
     # First merge original annotation with HOMER
     cat("Merging original annotation with HOMER annotations...\n")
-    combined_annotation <- left_join(original_annotation, homer_annotation, by = c("Geneid","Chr","Start","End"))
+    combined_annotation <- left_join(original_annotation_filtered, homer_annotation, by = c("Geneid","Chr","Start","End"))
     cat("Combined annotation dimensions:", nrow(combined_annotation), "x", ncol(combined_annotation), "\n")
 
     # Then merge with normalized counts
@@ -278,7 +283,7 @@ if (!is.null(homer_annotation)) {
     
 } else {
     # Merge annotation with normalized counts
-    normalized_counts_output <- left_join(original_annotation, deseq2_normalized_df,  by = c("Geneid" = "gene_id"))
+    normalized_counts_output <- left_join(original_annotation_filtered, deseq2_normalized_df,  by = c("Geneid" = "gene_id"))
 }
 
 cat("Merged normalized counts dimensions:", nrow(normalized_counts_output), "x", ncol(normalized_counts_output), "\n")
@@ -439,7 +444,7 @@ assay(dds, vst_name) <- assay(rld)
 transformed_counts <- assay(dds, vst_name)
 
 cat("Creating VST/rlog transformed counts...\n")
-cat("Original annotation rows:", nrow(original_annotation), "\n")
+cat("Original annotation filtered rows:", nrow(original_annotation_filtered), "\n")
 cat("VST/rlog counts dimensions:", nrow(transformed_counts), "x", ncol(transformed_counts), "\n")
 
 # Create dataframe with gene_id from rownames
@@ -455,7 +460,7 @@ homer_annotation_rlog <- NULL
 if (!is.null(opt$homer_annotation) && file.exists(opt$homer_annotation)) {
     cat("Loading HOMER annotations for rlog counts from:", opt$homer_annotation, "\n")
     homer_annotation_rlog <- read.delim(opt$homer_annotation, header=TRUE, stringsAsFactors=FALSE, comment.char="#")
-    # Rename the first column to "Peak.ID" (HOMER often has malformed column name)
+    # Rename the first column to "Geneid" (HOMER often has malformed column name)
     colnames(homer_annotation_rlog)[1] <- "Geneid"
     cat("HOMER annotation column names:", paste(colnames(homer_annotation_rlog), collapse=", "), "\n")
     cat("HOMER annotation dimensions:", nrow(homer_annotation_rlog), "x", ncol(homer_annotation_rlog), "\n")
@@ -465,15 +470,15 @@ if (!is.null(opt$homer_annotation) && file.exists(opt$homer_annotation)) {
 if (!is.null(homer_annotation_rlog)) {
     # First merge original annotation with HOMER
     cat("Merging original annotation with HOMER for rlog counts...\n")
-    combined_annotation_rlog <- left_join(original_annotation, homer_annotation_rlog, by = c("Geneid","Chr","Start","End"))
+    combined_annotation_rlog <- left_join(original_annotation_filtered, homer_annotation_rlog, by = c("Geneid","Chr","Start","End"))
     cat("Combined annotation for rlog dimensions:", nrow(combined_annotation_rlog), "x", ncol(combined_annotation_rlog), "\n")
     
     # Then merge with rlog counts
     rlog_counts_output <- left_join(combined_annotation_rlog, transformed_counts_df, by = c("Geneid" = "gene_id"))
 
 } else {
-    # Merge annotation with transformed counts (reuse original_annotation from earlier)
-    rlog_counts_output <- left_join(original_annotation, transformed_counts_df, by = c("Geneid" = "gene_id"))
+    # Merge annotation with transformed counts (reuse original_annotation filtered from earlier)
+    rlog_counts_output <- left_join(original_annotation_filtered, transformed_counts_df, by = c("Geneid" = "gene_id"))
 }
 
 cat("Merged rlog counts dimensions:", nrow(rlog_counts_output), "x", ncol(rlog_counts_output), "\n")
