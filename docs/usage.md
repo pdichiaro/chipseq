@@ -190,10 +190,69 @@ The `--normalization_method` parameter controls DESeq2 normalization:
 
 ### Advanced Options
 
+#### Trimming Options
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `--clip_r1` | `null` | Remove bp from 5' end of R1 |
+| `--clip_r2` | `null` | Remove bp from 5' end of R2 |
+| `--three_prime_clip_r1` | `null` | Remove bp from 3' end of R1 |
+| `--three_prime_clip_r2` | `null` | Remove bp from 3' end of R2 |
+| `--trim_nextseq` | `null` | NextSeq/NovaSeq poly-G trimming |
+| `--save_trimmed` | `false` | Save trimmed FastQ files |
+| `--min_trimmed_reads` | `10000` | Min reads after trimming |
+| `--extra_trimgalore_args` | `null` | Additional TrimGalore arguments |
+
+#### Alignment Options
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `--outfiltermultimapnmax` | `1` | STAR: Max multimapping alignments |
+| `--outsammultnmax` | `1` | STAR: Max SAM multimapping output |
+| `--winanchormultimapnmax` | `1` | STAR: Max window anchor multimap |
+| `--keep_dups` | `false` | Keep duplicate reads |
+| `--keep_multi_map` | `false` | Keep multimapping reads |
+| `--keep_blacklist` | `false` | Keep blacklist regions (false = remove) |
+| `--save_align_intermeds` | `false` | Save intermediate BAM files |
+| `--save_unaligned` | `false` | Save unaligned reads |
+
+#### Peak Calling Options
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `--narrow_peak` | `false` | Call narrow peaks (vs broad) |
+| `--broad_cutoff` | `0.1` | Broad peak FDR cutoff |
+| `--macs_fdr` | `null` | MACS2 FDR threshold (q-value) |
+| `--macs_pvalue` | `null` | MACS2 p-value threshold |
+| `--min_reps_consensus` | `1` | Min replicates for consensus peaks |
+| `--save_macs_pileup` | `false` | Save MACS2 pileup tracks |
+| `--macs_model` | `true` | Build MACS2 shifting model |
+
+#### DESeq2 Normalization Options
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `--sigma_times` | `1` | Sigma multiplier for invariant genes |
+| `--n_pop` | `1` | Min samples for DESeq2 analysis |
+| `--deseq2_vst` | `true` | Use VST transformation |
+| `--skip_deseq2_qc` | `false` | Skip DESeq2 QC plots |
+
+#### Quality Control Options
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `--fingerprint_bins` | `500000` | Bins for deepTools fingerprint |
+| `--skip_preseq` | `false` | Skip library complexity analysis |
+| `--skip_spp` | `false` | Skip strand cross-correlation QC |
+
+#### Other Advanced Options
+
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `--seq_center` | `null` | Sequencing center for BAM RG |
 | `--multiqc_title` | `null` | Custom MultiQC report title |
 | `--email` | `null` | Email for completion summary |
 | `--email_on_fail` | `null` | Email for failure notification |
+| `--bamtools_filter_pe_config` | `assets/bamtools_filter_pe.json` | Paired-end BAM filtering config |
+| `--bamtools_filter_se_config` | `assets/bamtools_filter_se.json` | Single-end BAM filtering config |
 
