@@ -89,46 +89,23 @@ report_section_order:
     before: nsc_coefficient
   mlib_featurecounts:
     before: rsc_coefficient
-  deseq2_pca_1:
-    order: -1600
-  deseq2_pca_2:
-    order: -1700
-  deseq2_pca_3:
-    order: -1800
-  deseq2_pca_4:
-    order: -1900
-  deseq2_pca_5:
-    order: -2000
-  deseq2_pca_6:
-    order: -2100
-  deseq2_pca_7:
-    order: -2200
-  deseq2_pca_8:
-    order: -2300
-  deseq2_pca_9:
-    order: -2400
-  deseq2_pca_10:
-    order: -2500
-  deseq2_clustering_1:
-    order: -2600
-  deseq2_clustering_2:
-    order: -2700
-  deseq2_clustering_3:
-    order: -2800
-  deseq2_clustering_4:
-    order: -2900
-  deseq2_clustering_5:
-    order: -3000
-  deseq2_clustering_6:
-    order: -3100
-  deseq2_clustering_7:
-    order: -3200
-  deseq2_clustering_8:
-    order: -3300
-  deseq2_clustering_9:
-    order: -3400
-  deseq2_clustering_10:
-    order: -3500
+  # DESeq2 QC parent sections (one per quantifier used in ChIP-seq)
+  deseq2-featurecounts-qc:
+    order: 1007
+  deseq2-kallisto-qc:
+    order: 1006
+  deseq2-salmon-qc:
+    order: 1005
+  deseq2-star-rsem-qc:
+    order: 1004
+  deseq2-star-salmon-qc:
+    order: 1003
+  deseq2-star-genome-qc:
+    order: 1002
+  deseq2-hisat2-genome-qc:
+    order: 1001
+  deseq2-qc:
+    order: 1000
   software_versions:
     order: -3600
   nf-core-chipseq-summary:
@@ -173,3 +150,9 @@ sp:
     fn: "*plotProfile*"
   phantompeakqualtools/out:
     fn: "*.spp.out"
+
+
+# DESeq2 plots are now handled dynamically by DESEQ2_TRANSFORM module headers
+# The module adds parent_id/parent_name for all quantifiers automatically
+# Plot ordering within parent sections is controlled by numbered prefixes (01., 02., 03., 04.)
+# in section titles to ensure correct alphabetical sorting (plot_order doesn't work in nested sections)
