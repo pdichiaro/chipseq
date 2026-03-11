@@ -12,10 +12,15 @@
  * - keep_multi_map = false (default): MAPQ >= 1 filter removes primary with MAPQ=0
  * - keep_multi_map = true: Keeps primary alignment even with MAPQ=0 (ambiguous mapping)
  * 
+ * Fragment size filtering (PE reads only):
+ * - Bowtie2 uses -X 1000 (permissive search limit, ensures no valid pairs are missed)
+ * - BAM_FILTER applies params.insert_size (default: 500bp) for biological quality filtering
+ * - Removes fragments >500bp to filter chimeras, artifacts, and unusually long fragments
+ * - Recommended values: 400-500bp (narrow peaks), 500-600bp (broad marks)
+ * 
  * Other filters:
  * - Removes duplicates (unless keep_dups = true)
  * - Removes blacklisted regions
- * - Filters by fragment size (default: 1000bp for PE reads)
  * - Ensures proper paired-end reads (when applicable)
  */
 process BAM_FILTER {
@@ -46,7 +51,7 @@ process BAM_FILTER {
         "${base_filter} -F 0x004 -F 0x0008 -f 0x001 -f 0x002"  // proper pair selection
     def dup_params       = params.keep_dups ? '' : '-F 0x0400'
     def blacklist_params = params.blacklist ? "-L $bed" : ''
-    def max_frag = params.insert_size ? params.insert_size.toInteger() : 1000
+    def max_frag = params.insert_size ? params.insert_size.toInteger() : 500
 
     if(params.keep_multi_map == false ) {
 
@@ -61,7 +66,7 @@ process BAM_FILTER {
         # Remove multi-mappers (MAPQ < 1) and filter by fragment size
         # -q 1: Keep only reads with MAPQ >= 1 (removes primary alignments with MAPQ=0)
         # Note: Secondary alignments already removed by -F 0x100 in filter_params
-        # awk: Filter pairs with insert size <= max_frag (default: params.insert_size = 1000bp)
+        # awk: Filter pairs with insert size <= max_frag (default: params.insert_size = 500bp)
 
         samtools view -q 1 -h ${prefix}.filter1.bam | \\
             awk -v var="$max_frag" '{if(substr(\$0,1,1)=="@" || ((\$9>=0?\$9:-\$9)<=var)) print \$0}' | \\
@@ -86,7 +91,7 @@ process BAM_FILTER {
         # Filter pairs by insert size (keep_multi_map=true mode)
         # Keep primary alignments with MAPQ=0 (multi-mappers)
         # Note: Secondary alignments already removed by -F 0x100 in filter_params
-        # awk: Filter pairs with insert size <= max_frag (default: params.insert_size = 1000bp)
+        # awk: Filter pairs with insert size <= max_frag (default: params.insert_size = 500bp)
         
         samtools view -h ${prefix}.filter1.bam | \\
             awk -v var="$max_frag" '{if(substr(\$0,1,1)=="@" || ((\$9>=0?\$9:-\$9)<=var)) print \$0}' | \\
