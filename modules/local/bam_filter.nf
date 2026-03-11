@@ -1,9 +1,21 @@
 /*
- * Filter BAM file using standard ChIP-seq filtering approach
- * - Removes multimappers (MAPQ >= 1 filter when keep_multi_map = false)
+ * Filter BAM file using standard ChIP-seq filtering approach (nf-core compatible)
+ * 
+ * Primary/Secondary alignment handling:
+ * - ALWAYS removes secondary (0x100) and supplementary (0x800) alignments
+ * - Only primary alignments are processed downstream
+ * 
+ * Multi-mapper handling (aligned with nf-core/chipseq):
+ * - Bowtie2 with NO -k flag: Reports single best primary alignment (MAPQ=0 if ambiguous)
+ * - Bowtie2 with -k 100: Reports primary (MAPQ=0) + 99 secondary alignments (flag 0x100)
+ * - Secondary alignments are ALWAYS filtered out (via -F 0x100)
+ * - keep_multi_map = false (default): MAPQ >= 1 filter removes primary with MAPQ=0
+ * - keep_multi_map = true: Keeps primary alignment even with MAPQ=0 (ambiguous mapping)
+ * 
+ * Other filters:
  * - Removes duplicates (unless keep_dups = true)
  * - Removes blacklisted regions
- * - Filters by fragment size
+ * - Filters by fragment size (default: 1000bp for PE reads)
  * - Ensures proper paired-end reads (when applicable)
  */
 process BAM_FILTER {
@@ -26,7 +38,12 @@ process BAM_FILTER {
     script:
 
     def prefix           = task.ext.prefix ?: "${meta.id}"
-    def filter_params    = meta.single_end ? '-F 0x004' : '-F 0x004 -F 0x0008 -f 0x001 -f 0x002' // proper pair selection!!
+    // ALWAYS exclude secondary (0x100) and supplementary (0x800) alignments
+    // This ensures only primary alignments are processed, even when keep_multi_map=true
+    def base_filter      = '-F 0x0100 -F 0x0800'  // Exclude secondary + supplementary
+    def filter_params    = meta.single_end ? 
+        "${base_filter} -F 0x004" : 
+        "${base_filter} -F 0x004 -F 0x0008 -f 0x001 -f 0x002"  // proper pair selection
     def dup_params       = params.keep_dups ? '' : '-F 0x0400'
     def blacklist_params = params.blacklist ? "-L $bed" : ''
     def max_frag = params.inser_size ? params.inser_size.toInteger() : 1000
@@ -42,7 +59,8 @@ process BAM_FILTER {
             -b $bam > ${prefix}.filter1.bam
         
         # Remove multi-mappers (MAPQ < 1) and filter by fragment size
-        # -q 1: Keep only reads with MAPQ >= 1 (removes multi-mappers which have MAPQ = 0)
+        # -q 1: Keep only reads with MAPQ >= 1 (removes primary alignments with MAPQ=0)
+        # Note: Secondary alignments already removed by -F 0x100 in filter_params
         # awk: Filter pairs with insert size <= max_frag (default: params.inser_size = 1000bp)
 
         samtools view -q 1 -h ${prefix}.filter1.bam | \\
@@ -65,8 +83,10 @@ process BAM_FILTER {
             $blacklist_params \\
             -b $bam > ${prefix}.filter1.bam
 
-        # Filter pairs by insert size
-        # Keep only pairs with insert size <= max_frag (default: params.inser_size = 1000bp)
+        # Filter pairs by insert size (keep_multi_map=true mode)
+        # Keep primary alignments with MAPQ=0 (multi-mappers)
+        # Note: Secondary alignments already removed by -F 0x100 in filter_params
+        # awk: Filter pairs with insert size <= max_frag (default: params.inser_size = 1000bp)
         
         samtools view -h ${prefix}.filter1.bam | \\
             awk -v var="$max_frag" '{if(substr(\$0,1,1)=="@" || ((\$9>=0?\$9:-\$9)<=var)) print \$0}' | \\
