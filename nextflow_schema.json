@@ -99,12 +99,6 @@
                     "description": "Path to GFF3 annotation file.",
                     "help_text": "This parameter must be specified if `--genome` or `--gtf` are not specified."
                 },
-                "star_index": {
-                    "type": "string",
-                    "format": "path",
-                    "fa_icon": "fas fa-bezier-curve",
-                    "description": "Path to directory or tar.gz archive for pre-built STAR index."
-                },
                 "gene_bed": {
                     "type": "string",
                     "format": "file-path",
@@ -265,11 +259,11 @@
                 },
 
 
-                "inser_size": {
+                "insert_size": {
                     "type": "integer",
-                    "default": 1000,
-                    "description": "maximum inser_size for PE reads",
-                    "help_text": "The default will be 1000"
+                    "default": 500,
+                    "description": "maximum insert_size for PE reads",
+                    "help_text": "The default will be 500"
                 },
                 "save_unaligned": {
                     "type": "boolean",
@@ -285,21 +279,6 @@
                     "description": "How many times the median fragment length to be considered to keep pairs",
                     "help_text": "The default will be 3 times the median - in the future we will add also custom insert size so that one can simply bypass this step",
                     "fa_icon": "fas fa-sort-numeric-down"
-                },
-                "outfiltermultimapnmax": {
-                    "type": "integer",
-                    "default": 1000,
-                    "description": "star parameter outfiltermultimapnmax"
-                },
-                "outsammultnmax": {
-                    "type": "integer",
-                    "default": 1000,
-                    "description": "star parameter outsammultnmax"
-                },
-                "winanchormultimapnmax": {
-                    "type": "integer",
-                    "default": 1000,
-                    "description": "star parameter winanchormultimapnmax"
                 }
 
             }
