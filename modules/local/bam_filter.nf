@@ -29,7 +29,6 @@ process BAM_FILTER {
     def filter_params    = meta.single_end ? '-F 0x004' : '-F 0x004 -F 0x0008 -f 0x001 -f 0x002' // proper pair selection!!
     def dup_params       = params.keep_dups ? '' : '-F 0x0400'
     def blacklist_params = params.blacklist ? "-L $bed" : ''
-    def max_times = params.times_frag ? params.times_frag.toInteger() : 4
     def max_frag = params.inser_size ? params.inser_size.toInteger() : 1000
 
     if(params.keep_multi_map == false ) {
@@ -44,7 +43,7 @@ process BAM_FILTER {
         
         # Remove multi-mappers (MAPQ < 1) and filter by fragment size
         # -q 1: Keep only reads with MAPQ >= 1 (removes multi-mappers which have MAPQ = 0)
-        # awk: Filter pairs with insert size <= max_frag (default 4 * computed insert size)
+        # awk: Filter pairs with insert size <= max_frag (default: params.inser_size = 1000bp)
 
         samtools view -q 1 -h ${prefix}.filter1.bam | \\
             awk -v var="$max_frag" '{if(substr(\$0,1,1)=="@" || ((\$9>=0?\$9:-\$9)<=var)) print \$0}' | \\
@@ -66,8 +65,8 @@ process BAM_FILTER {
             $blacklist_params \\
             -b $bam > ${prefix}.filter1.bam
 
-        # Filter those pairs that have insert size compatible with the fragment length:
-        # Default to 4 * the computed insert size:
+        # Filter pairs by insert size
+        # Keep only pairs with insert size <= max_frag (default: params.inser_size = 1000bp)
         
         samtools view -h ${prefix}.filter1.bam | \\
             awk -v var="$max_frag" '{if(substr(\$0,1,1)=="@" || ((\$9>=0?\$9:-\$9)<=var)) print \$0}' | \\

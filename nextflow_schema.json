@@ -241,7 +241,7 @@
                 },
                 "keep_multi_map": {
                     "type": "boolean",
-                    "description": "Reads mapping to multiple locations are not filtered from alignments.",
+                    "description": "Keep multi-mapping reads. If false (default), Bowtie2 uses default mode (assigns MAPQ=0 to multi-mappers) and 'samtools view -q 1' removes them. If true, Bowtie2 reports up to 100 alignments per read (-k 100) and no MAPQ filtering is applied.",
                     "fa_icon": "fas fa-cart-arrow-down"
                 },
                 "keep_blacklist": {
