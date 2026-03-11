@@ -80,11 +80,17 @@ This document explains the complete alignment and filtering strategy used in thi
 │  STEP 5: FRAGMENT SIZE FILTER (AWK)                            │
 │  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
 │                                                                 │
-│  awk -v maxFrag=500 '                                          │
-│    if (TLEN > 0 && TLEN <= 500)  → KEEP                       │
-│    if (TLEN < 0 && TLEN >= -500) → KEEP                       │
-│    else → DISCARD                                              │
+│  awk -v var=500 '                                              │
+│    if (header line)           → KEEP                           │
+│    if (|TLEN| <= 500)         → KEEP                          │
+│    else                       → DISCARD                        │
 │  '                                                             │
+│                                                                 │
+│  Actual AWK command:                                           │
+│  awk -v var="$max_frag" '{                                     │
+│    if(substr($0,1,1)=="@" || (($9>=0?$9:-$9)<=var))           │
+│      print $0                                                  │
+│  }'                                                            │
 │                                                                 │
 │  ⚙️  params.insert_size = 500 (DEFAULT, USER-CONFIGURABLE)     │
 │                                                                 │
@@ -452,21 +458,26 @@ This is where **params.insert_size** is applied:
 
 ```bash
 # Filter fragments by insert size
-awk -v maxFrag=500 '
-BEGIN {OFS="\t"}
-{
-    if ($1 ~ /^@/) {
-        # Keep header lines
+# Actual command used in the pipeline:
+awk -v var="$max_frag" '{
+    if(substr($0,1,1)=="@" || (($9>=0?$9:-$9)<=var)) 
         print $0
-    } else if ($9 > 0 && $9 <= maxFrag) {
-        # Keep forward read if TLEN ≤ maxFrag
-        print $0
-    } else if ($9 < 0 && $9 >= -maxFrag) {
-        # Keep reverse read if |TLEN| ≤ maxFrag
-        print $0
-    }
 }'
 ```
+
+**How this AWK filter works:**
+
+1. **`-v var="$max_frag"`**: Sets AWK variable `var` to the maximum fragment size (default: 500bp from `params.insert_size`)
+
+2. **`substr($0,1,1)=="@"`**: Checks if the line is a SAM header (starts with `@`)
+   - If true: **KEEP** the header line (required for valid SAM/BAM files)
+
+3. **`(($9>=0?$9:-$9)<=var)`**: Checks the absolute value of TLEN (field 9)
+   - `$9>=0?$9:-$9`: Computes |TLEN| (absolute value)
+   - `<=var`: Checks if |TLEN| ≤ max_frag
+   - If true: **KEEP** the read pair
+
+4. **Otherwise**: **DISCARD** the read pair (fragment too long)
 
 **TLEN (Template Length) Field:**
 - Column 9 in SAM format
@@ -480,8 +491,13 @@ Read2  147  chr1  1200  60  100M  =  1000  -300 ...  (TLEN = -300)
 ```
 
 For `params.insert_size = 500`:
-- ✅ Keeps fragments with |TLEN| ≤ 500bp
+- ✅ Keeps fragments with |TLEN| ≤ 500bp (both reads of the pair)
 - ❌ Removes fragments with |TLEN| > 500bp (potential chimeras, artifacts)
+
+**Why use absolute value?**
+- TLEN is positive for the forward read (+300) and negative for the reverse read (-300)
+- We want to filter based on fragment **size**, not direction
+- `($9>=0?$9:-$9)` computes the absolute value in AWK (equivalent to `abs($9)`)
 
 #### Stage 5: Position Sorting and Indexing
 ```bash
