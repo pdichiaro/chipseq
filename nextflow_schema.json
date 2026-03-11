@@ -230,9 +230,9 @@
                 "aligner": {
                     "type": "string",
                     "default": "star",
-                    "description": "Specifies the alignment algorithm to use - the workflow is based solely on 'star'.",
+                    "description": "Specifies the alignment algorithm to use - supports 'star' and 'bowtie2'.",
                     "fa_icon": "fas fa-map-signs",
-                    "enum": [ "star"]
+                    "enum": ["star", "bowtie2"]
                 },
                 "keep_dups": {
                     "type": "boolean",
