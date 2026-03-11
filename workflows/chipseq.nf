@@ -200,7 +200,6 @@ workflow CHIPSEQ {
     ch_samtools_stats    = FASTQ_ALIGN_BOWTIE2.out.stats
     ch_samtools_flagstat = FASTQ_ALIGN_BOWTIE2.out.flagstat
     ch_samtools_idxstats = FASTQ_ALIGN_BOWTIE2.out.idxstats
-    ch_star_multiqc      = Channel.empty()  // Bowtie2 doesn't produce STAR-like logs
     ch_bowtie2_multiqc   = FASTQ_ALIGN_BOWTIE2.out.log_out  // Capture Bowtie2 logs for MultiQC
 
     ch_versions = ch_versions.mix(FASTQ_ALIGN_BOWTIE2.out.versions)
@@ -986,7 +985,6 @@ workflow CHIPSEQ {
             ch_fastqc_trim_multiqc.collect{it[1]}.ifEmpty([]),
             ch_trim_log_multiqc.collect{it[1]}.ifEmpty([]),
 
-            ch_star_multiqc.collect{it[1]}.ifEmpty([]),
             ch_bowtie2_multiqc.collect{it[1]}.ifEmpty([]),
 
             ch_samtools_stats.collect{it[1]}.ifEmpty([]),
