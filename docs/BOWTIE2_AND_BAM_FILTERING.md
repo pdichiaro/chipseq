@@ -152,10 +152,8 @@ This document explains the complete alignment and filtering strategy used in thi
 │  STEP 1: BOWTIE2 ALIGNMENT                                     │
 │  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
 │                                                                 │
-│  bowtie2 --local --very-sensitive-local \                      │
+│  bowtie2 --very-sensitive \                                    │
 │    -U sample.fq.gz -x genome                                   │
-│                                                                 │
-│  Note: No -X, --no-mixed, --no-discordant (not applicable)    │
 │                                                                 │
 └────────────────────────────────────────────────────────────────┘
          │
