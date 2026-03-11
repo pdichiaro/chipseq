@@ -10,7 +10,6 @@ include {
     GUNZIP as GUNZIP_BLACKLIST } from '../../modules/nf-core/modules/gunzip/main'
 
 include {
-    UNTAR as UNTAR_STAR_INDEX
     UNTAR as UNTAR_BOWTIE2_INDEX } from '../../modules/nf-core/modules/untar/main'
 
 include { GFFREAD                } from '../../modules/nf-core/modules/gffread/main'
@@ -18,7 +17,6 @@ include { CUSTOM_GETCHROMSIZES   } from '../../modules/nf-core/modules/custom/ge
 include { BOWTIE2_BUILD          } from '../../modules/nf-core/modules/bowtie2/build/main'
 include { GTF2BED                } from '../../modules/local/gtf2bed'
 include { GENOME_BLACKLIST_REGIONS } from '../../modules/local/genome_blacklist_regions'
-include { STAR_GENOMEGENERATE    } from '../../modules/local/star_genomegenerate'
 
 workflow PREPARE_GENOME {
     take:
@@ -127,24 +125,6 @@ workflow PREPARE_GENOME {
 
 
     //
-    // Uncompress STAR index or generate from scratch if required
-    //
-    ch_star_index = Channel.empty()
-    if (prepare_tool_index == 'star') {
-        if (params.star_index) {
-            if (params.star_index.endsWith('.tar.gz')) {
-                ch_star_index = UNTAR_STAR_INDEX ( [ [:], params.star_index ] ).untar.map{ it[1] }
-                ch_versions   = ch_versions.mix(UNTAR_STAR_INDEX.out.versions)
-            } else {
-                ch_star_index = file(params.star_index)
-            }
-        } else {
-            ch_star_index = STAR_GENOMEGENERATE ( ch_fasta, ch_gtf ).index
-            ch_versions   = ch_versions.mix(STAR_GENOMEGENERATE.out.versions)
-        }
-    }
-
-    //
     // Uncompress Bowtie2 index or generate from scratch if required
     //
     ch_bowtie2_index = Channel.empty()
@@ -168,7 +148,6 @@ workflow PREPARE_GENOME {
     gene_bed       = ch_gene_bed               //    path: gene.bed
     chrom_sizes    = ch_chrom_sizes            //    path: genome.sizes
     filtered_bed   = ch_genome_filtered_bed    //    path: *.include_regions.bed
-    star_index     = ch_star_index             //    path: star/index/
     bowtie2_index  = ch_bowtie2_index          //    path: bowtie2/index/
 
     versions       = ch_versions.ifEmpty(null) // channel: [ versions.yml ]
