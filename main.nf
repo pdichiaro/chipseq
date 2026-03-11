@@ -35,7 +35,6 @@ def getMacsGsize(params) {
 }
 
 params.fasta         = genomeAttribute(params, 'fasta')
-params.star_index    = genomeAttribute(params, 'star')
 params.bowtie2_index = genomeAttribute(params, 'bowtie2')
 params.gtf           = genomeAttribute(params, 'gtf')
 params.gff           = genomeAttribute(params, 'gff')
