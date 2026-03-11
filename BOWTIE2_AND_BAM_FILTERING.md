@@ -6,6 +6,258 @@ This document explains the complete alignment and filtering strategy used in thi
 
 ---
 
+## 🗺️ Pipeline Workflow Overview
+
+```
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃                     PAIRED-END WORKFLOW                           ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+📁 INPUT: sample_R1.fq.gz + sample_R2.fq.gz
+         │
+         ▼
+┌────────────────────────────────────────────────────────────────┐
+│  STEP 1: BOWTIE2 ALIGNMENT                                     │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│                                                                 │
+│  bowtie2 --local --very-sensitive-local \                      │
+│    -X 1000           ← Max fragment search (FIXED)             │
+│    --no-mixed        ← Suppress unpaired alignments            │
+│    --no-discordant   ← Suppress wrong orientation              │
+│    -x genome -1 R1.fq.gz -2 R2.fq.gz                           │
+│                                                                 │
+│  Output: Unfiltered SAM                                        │
+│  ├─ Concordant pairs (0-1000bp)                                │
+│  ├─ Both reads mapped                                          │
+│  └─ Correct orientation                                        │
+└────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+    raw.sam (all fragments 0-1000bp)
+         │
+         ▼
+┌────────────────────────────────────────────────────────────────┐
+│  STEP 2: CONVERT TO BAM + INITIAL FILTER                       │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│                                                                 │
+│  samtools view -h -b \                                         │
+│    -F 0x004   ← Remove unmapped reads                          │
+│    -F 0x0008  ← Remove reads with unmapped mate                │
+│    -f 0x001   ← Keep only paired reads                         │
+│    -q 1       ← Remove MAPQ < 1                                │
+│                                                                 │
+└────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+    temp1.bam
+         │
+         ▼
+┌────────────────────────────────────────────────────────────────┐
+│  STEP 3: SORT BY NAME                                          │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│                                                                 │
+│  samtools sort -n    ← Group read pairs together               │
+│                                                                 │
+└────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+    temp2.bam (name-sorted)
+         │
+         ▼
+┌────────────────────────────────────────────────────────────────┐
+│  STEP 4: FIX MATE INFORMATION                                  │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│                                                                 │
+│  samtools fixmate -r  ← Fix mate info, remove secondary        │
+│                                                                 │
+└────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+    temp3.bam
+         │
+         ▼
+┌────────────────────────────────────────────────────────────────┐
+│  STEP 5: FRAGMENT SIZE FILTER (AWK)                            │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│                                                                 │
+│  awk -v maxFrag=500 '                                          │
+│    if (TLEN > 0 && TLEN <= 500)  → KEEP                       │
+│    if (TLEN < 0 && TLEN >= -500) → KEEP                       │
+│    else → DISCARD                                              │
+│  '                                                             │
+│                                                                 │
+│  ⚙️  params.insert_size = 500 (DEFAULT, USER-CONFIGURABLE)     │
+│                                                                 │
+│  Removes:                                                      │
+│  ❌ Fragments > 500bp (chimeras, artifacts)                    │
+│  ❌ Unusually long inserts                                     │
+│                                                                 │
+└────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+    temp4.sam (fragments 0-500bp only)
+         │
+         ▼
+┌────────────────────────────────────────────────────────────────┐
+│  STEP 6: CONVERT BACK TO BAM                                   │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│                                                                 │
+│  samtools view -h -b                                           │
+│                                                                 │
+└────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+    temp5.bam
+         │
+         ▼
+┌────────────────────────────────────────────────────────────────┐
+│  STEP 7: SORT BY COORDINATE                                    │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│                                                                 │
+│  samtools sort  ← Position-sorted for downstream tools         │
+│                                                                 │
+└────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+    sample.filtered.bam
+         │
+         ▼
+┌────────────────────────────────────────────────────────────────┐
+│  STEP 8: INDEX BAM                                             │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│                                                                 │
+│  samtools index                                                │
+│                                                                 │
+└────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+📁 OUTPUT: sample.filtered.bam + sample.filtered.bam.bai
+         │
+         ▼
+   [Next: Picard MarkDuplicates → MACS2 Peak Calling]
+
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃                      SINGLE-END WORKFLOW                          ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+📁 INPUT: sample.fq.gz
+         │
+         ▼
+┌────────────────────────────────────────────────────────────────┐
+│  STEP 1: BOWTIE2 ALIGNMENT                                     │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│                                                                 │
+│  bowtie2 --local --very-sensitive-local \                      │
+│    -U sample.fq.gz -x genome                                   │
+│                                                                 │
+│  Note: No -X, --no-mixed, --no-discordant (not applicable)    │
+│                                                                 │
+└────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+    raw.sam
+         │
+         ▼
+┌────────────────────────────────────────────────────────────────┐
+│  STEP 2: CONVERT TO BAM + FILTER                               │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│                                                                 │
+│  samtools view -h -b \                                         │
+│    -F 0x004   ← Remove unmapped reads                          │
+│    -q 1       ← Remove MAPQ < 1                                │
+│                                                                 │
+│  ⚠️  NO FRAGMENT SIZE FILTER (no TLEN in SE)                   │
+│                                                                 │
+└────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+    temp.bam
+         │
+         ▼
+┌────────────────────────────────────────────────────────────────┐
+│  STEP 3: SORT BY COORDINATE                                    │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│                                                                 │
+│  samtools sort                                                 │
+│                                                                 │
+└────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+    sample.filtered.bam
+         │
+         ▼
+┌────────────────────────────────────────────────────────────────┐
+│  STEP 4: INDEX BAM                                             │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│                                                                 │
+│  samtools index                                                │
+│                                                                 │
+└────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+📁 OUTPUT: sample.filtered.bam + sample.filtered.bam.bai
+         │
+         ▼
+   [Next: Picard MarkDuplicates → MACS2 Peak Calling]
+```
+
+---
+
+## 🎯 Key Differences: PE vs SE
+
+| Aspect | Paired-End (PE) | Single-End (SE) |
+|--------|----------------|----------------|
+| **Bowtie2 -X** | Fixed at 1000bp | N/A (ignored) |
+| **Fragment info** | Yes (TLEN field) | No (TLEN = 0) |
+| **Fragment filter** | ✅ Yes (AWK by TLEN) | ❌ No (not applicable) |
+| **Mate filtering** | ✅ Yes (fixmate step) | ❌ No mate info |
+| **Complexity** | 8 steps | 4 steps |
+| **Filter control** | `--insert_size` param | None (only MAPQ) |
+
+---
+
+## 🔧 Two-Stage Filtering (PE Only)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                   STAGE 1: BOWTIE2 ALIGNMENT                    │
+│                   ═══════════════════════════                   │
+│                                                                 │
+│  Parameter: -X 1000 (FIXED - never changes)                    │
+│  Purpose:   Permissive search for concordant pairs             │
+│  Result:    All valid fragments 0-1000bp aligned               │
+│                                                                 │
+│  ✅ Ensures no valid pairs are missed during alignment          │
+│  ✅ Covers biological range + potential artifacts               │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+                    Unfiltered BAM (0-1000bp)
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    STAGE 2: BAM_FILTER (AWK)                    │
+│                    ════════════════════════                     │
+│                                                                 │
+│  Parameter: params.insert_size = 500 (DEFAULT, configurable)   │
+│  Purpose:   Biological quality control filtering               │
+│  Result:    Only high-quality fragments 0-500bp retained       │
+│                                                                 │
+│  ✅ Removes chimeras and sequencing artifacts (500-1000bp)      │
+│  ✅ User can adjust based on experiment type                    │
+│  ✅ No re-alignment needed to change filtering                  │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+                    Filtered BAM (0-500bp)
+                              │
+                              ▼
+                     Ready for peak calling
+```
+
+---
+
 ## 🧬 Part 1: Bowtie2 Alignment
 
 ### What is Bowtie2?
