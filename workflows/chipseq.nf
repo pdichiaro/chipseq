@@ -5,7 +5,7 @@
 */
 
 def valid_params = [
-    aligners       : [ 'star', 'bowtie2' ]
+    aligners       : [ 'bowtie2' ]
 ]
 
 // Validate input parameters
@@ -16,7 +16,6 @@ def checkPathParamList = [
     params.input, params.multiqc_config,
     params.fasta,
     params.gtf, params.gff, params.gene_bed,
-    params.star_index,
     params.bowtie2_index,
     params.blacklist
 ]
@@ -120,7 +119,6 @@ include { HOMER_ANNOTATEPEAKS as HOMER_ANNOTATEPEAKS_CONSENSUS } from '../module
 include { FASTQ_FASTQC_UMITOOLS_TRIMGALORE } from '../subworkflows/nf-core/fastq_fastqc_umitools_trimgalore/main'
 
 include { FASTQC_TRIMGALORE      } from '../subworkflows/nf-core/fastqc_trimgalore'
-include { ALIGN_STAR             } from '../subworkflows/nf-core/align_star'
 include { FASTQ_ALIGN_BOWTIE2    } from '../subworkflows/nf-core/fastq_align_bowtie2'
 include { MARK_DUPLICATES_PICARD } from '../subworkflows/nf-core/mark_duplicates_picard'
 
@@ -187,42 +185,25 @@ workflow CHIPSEQ {
     ch_versions = ch_versions.mix(FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.versions)
 
     //
-    // SUBWORKFLOW: Alignment with STAR or Bowtie2 & BAM QC
+    // SUBWORKFLOW: Alignment with Bowtie2 & BAM QC
     //
-    if (params.aligner == 'star') {
-        ALIGN_STAR (
-            ch_filtered_reads,
-            PREPARE_GENOME.out.star_index
-        )
-        ch_genome_bam        = ALIGN_STAR.out.bam
-        ch_genome_bam_index  = ALIGN_STAR.out.bai
-        
-        ch_samtools_stats    = ALIGN_STAR.out.stats
-        ch_samtools_flagstat = ALIGN_STAR.out.flagstat
-        ch_samtools_idxstats = ALIGN_STAR.out.idxstats
-        ch_star_multiqc      = ALIGN_STAR.out.log_final
-        ch_bowtie2_multiqc   = Channel.empty()  // STAR doesn't produce Bowtie2 logs
+    FASTQ_ALIGN_BOWTIE2 (
+        ch_filtered_reads,
+        PREPARE_GENOME.out.bowtie2_index,
+        false,  // save_unaligned
+        false,  // sort_bam
+        PREPARE_GENOME.out.fasta
+    )
+    ch_genome_bam        = FASTQ_ALIGN_BOWTIE2.out.bam
+    ch_genome_bam_index  = FASTQ_ALIGN_BOWTIE2.out.csi
+    
+    ch_samtools_stats    = FASTQ_ALIGN_BOWTIE2.out.stats
+    ch_samtools_flagstat = FASTQ_ALIGN_BOWTIE2.out.flagstat
+    ch_samtools_idxstats = FASTQ_ALIGN_BOWTIE2.out.idxstats
+    ch_star_multiqc      = Channel.empty()  // Bowtie2 doesn't produce STAR-like logs
+    ch_bowtie2_multiqc   = FASTQ_ALIGN_BOWTIE2.out.log_out  // Capture Bowtie2 logs for MultiQC
 
-        ch_versions = ch_versions.mix(ALIGN_STAR.out.versions)
-    } else if (params.aligner == 'bowtie2') {
-        FASTQ_ALIGN_BOWTIE2 (
-            ch_filtered_reads,
-            PREPARE_GENOME.out.bowtie2_index,
-            false,  // save_unaligned
-            false,  // sort_bam
-            PREPARE_GENOME.out.fasta
-        )
-        ch_genome_bam        = FASTQ_ALIGN_BOWTIE2.out.bam
-        ch_genome_bam_index  = FASTQ_ALIGN_BOWTIE2.out.csi
-        
-        ch_samtools_stats    = FASTQ_ALIGN_BOWTIE2.out.stats
-        ch_samtools_flagstat = FASTQ_ALIGN_BOWTIE2.out.flagstat
-        ch_samtools_idxstats = FASTQ_ALIGN_BOWTIE2.out.idxstats
-        ch_star_multiqc      = Channel.empty()  // Bowtie2 doesn't produce STAR-like logs
-        ch_bowtie2_multiqc   = FASTQ_ALIGN_BOWTIE2.out.log_out  // Capture Bowtie2 logs for MultiQC
-
-        ch_versions = ch_versions.mix(FASTQ_ALIGN_BOWTIE2.out.versions)
-    }
+    ch_versions = ch_versions.mix(FASTQ_ALIGN_BOWTIE2.out.versions)
 
     //
     // MODULE: Merge resequenced BAM files - 
