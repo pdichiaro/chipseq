@@ -16,6 +16,9 @@ process MULTIQC {
     path ('trimgalore/fastqc/*')
     path ('trimgalore/*')
 
+    path ('alignment/star/*')
+    path ('alignment/bowtie2/*')
+
     path ('alignment/library/*')
     path ('alignment/library/*')
     path ('alignment/library/*')
