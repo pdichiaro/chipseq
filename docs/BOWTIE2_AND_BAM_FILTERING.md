@@ -18,14 +18,12 @@ This document explains the complete alignment and filtering strategy used in thi
          ▼
 ┌────────────────────────────────────────────────────────────────┐
 │  STEP 1: BOWTIE2 ALIGNMENT                                     │
-│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
-│                                                                 │
-│  bowtie2 --local --very-sensitive-local \                      │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   │
+│                                                                │
+│  bowtie2 --very-sensitive \                                    │
 │    -X 1000           ← Max fragment search (FIXED)             │
-│    --no-mixed        ← Suppress unpaired alignments            │
-│    --no-discordant   ← Suppress wrong orientation              │
 │    -x genome -1 R1.fq.gz -2 R2.fq.gz                           │
-│                                                                 │
+│                                                                │
 │  Output: Unfiltered SAM                                        │
 │  ├─ Concordant pairs (0-1000bp)                                │
 │  ├─ Both reads mapped                                          │
