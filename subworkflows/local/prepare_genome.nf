@@ -10,13 +10,15 @@ include {
     GUNZIP as GUNZIP_BLACKLIST } from '../../modules/nf-core/modules/gunzip/main'
 
 include {
-    UNTAR as UNTAR_STAR_INDEX    } from '../../modules/nf-core/modules/untar/main'
+    UNTAR as UNTAR_STAR_INDEX
+    UNTAR as UNTAR_BOWTIE2_INDEX } from '../../modules/nf-core/modules/untar/main'
 
-include { GFFREAD              } from '../../modules/nf-core/modules/gffread/main'
-include { CUSTOM_GETCHROMSIZES } from '../../modules/nf-core/modules/custom/getchromsizes/main'
-include { GTF2BED                  } from '../../modules/local/gtf2bed'
+include { GFFREAD                } from '../../modules/nf-core/modules/gffread/main'
+include { CUSTOM_GETCHROMSIZES   } from '../../modules/nf-core/modules/custom/getchromsizes/main'
+include { BOWTIE2_BUILD          } from '../../modules/nf-core/modules/bowtie2/build/main'
+include { GTF2BED                } from '../../modules/local/gtf2bed'
 include { GENOME_BLACKLIST_REGIONS } from '../../modules/local/genome_blacklist_regions'
-include { STAR_GENOMEGENERATE      } from '../../modules/local/star_genomegenerate'
+include { STAR_GENOMEGENERATE    } from '../../modules/local/star_genomegenerate'
 
 workflow PREPARE_GENOME {
     take:
@@ -142,13 +144,32 @@ workflow PREPARE_GENOME {
         }
     }
 
-    emit:
-    fasta         = ch_fasta                  //    path: genome.fasta
-    gtf           = ch_gtf                    //    path: genome.gtf
-    gene_bed      = ch_gene_bed               //    path: gene.bed
-    chrom_sizes   = ch_chrom_sizes            //    path: genome.sizes
-    filtered_bed  = ch_genome_filtered_bed    //    path: *.include_regions.bed
-    star_index    = ch_star_index             //    path: star/index/
+    //
+    // Uncompress Bowtie2 index or generate from scratch if required
+    //
+    ch_bowtie2_index = Channel.empty()
+    if (prepare_tool_index == 'bowtie2') {
+        if (params.bowtie2_index) {
+            if (params.bowtie2_index.endsWith('.tar.gz')) {
+                ch_bowtie2_index = UNTAR_BOWTIE2_INDEX ( [ [:], params.bowtie2_index ] ).untar.map{ it[1] }
+                ch_versions      = ch_versions.mix(UNTAR_BOWTIE2_INDEX.out.versions)
+            } else {
+                ch_bowtie2_index = file(params.bowtie2_index)
+            }
+        } else {
+            ch_bowtie2_index = BOWTIE2_BUILD ( [ [:], ch_fasta ] ).index
+            ch_versions      = ch_versions.mix(BOWTIE2_BUILD.out.versions)
+        }
+    }
 
-    versions    = ch_versions.ifEmpty(null) // channel: [ versions.yml ]
+    emit:
+    fasta          = ch_fasta                  //    path: genome.fasta
+    gtf            = ch_gtf                    //    path: genome.gtf
+    gene_bed       = ch_gene_bed               //    path: gene.bed
+    chrom_sizes    = ch_chrom_sizes            //    path: genome.sizes
+    filtered_bed   = ch_genome_filtered_bed    //    path: *.include_regions.bed
+    star_index     = ch_star_index             //    path: star/index/
+    bowtie2_index  = ch_bowtie2_index          //    path: bowtie2/index/
+
+    versions       = ch_versions.ifEmpty(null) // channel: [ versions.yml ]
 }
