@@ -26,41 +26,17 @@ process DESEQ2_TRANSFORM {
     def output_name = file_name.replaceAll(/\.txt$/, '_mqc.txt')
     """
     # Detect quantifier and level from filename for unique IDs and section anchors
-    # Filename patterns: kallisto.deseq2.all_genes.*, kallisto.deseq2.invariant_genes.*, etc.
+    # Filename patterns: featureCounts.deseq2.all_genes.*, featureCounts.deseq2.invariant_genes.*, etc.
     QUANTIFIER=""
     QUANTIFIER_SHORT=""
     LEVEL=""
     SECTION_NAME=""
     
-    # Extract quantifier
+    # Extract quantifier - ChIP-seq specific (featureCounts is primary quantifier)
     if [[ "${file_name}" == featureCounts.* || "${file_name}" == subread.* ]]; then
         QUANTIFIER="deseq2-featurecounts-qc"
         QUANTIFIER_SHORT="featurecounts"
         PARENT_NAME="DESeq2 FeatureCounts QC"
-    elif [[ "${file_name}" == kallisto.* ]]; then
-        QUANTIFIER="deseq2-kallisto-qc"
-        QUANTIFIER_SHORT="kallisto"
-        PARENT_NAME="DESeq2 Kallisto QC"
-    elif [[ "${file_name}" == salmon.deseq2.* ]]; then
-        QUANTIFIER="deseq2-salmon-qc"
-        QUANTIFIER_SHORT="salmon"
-        PARENT_NAME="DESeq2 Salmon QC"
-    elif [[ "${file_name}" == star.rsem.* ]]; then
-        QUANTIFIER="deseq2-star-rsem-qc"
-        QUANTIFIER_SHORT="star_rsem"
-        PARENT_NAME="DESeq2 STAR RSEM QC"
-    elif [[ "${file_name}" == star.salmon.* ]]; then
-        QUANTIFIER="deseq2-star-salmon-qc"
-        QUANTIFIER_SHORT="star_salmon"
-        PARENT_NAME="DESeq2 STAR Salmon QC"
-    elif [[ "${file_name}" == star.genome.* ]]; then
-        QUANTIFIER="deseq2-star-genome-qc"
-        QUANTIFIER_SHORT="star_genome"
-        PARENT_NAME="DESeq2 STAR Genome QC"
-    elif [[ "${file_name}" == hisat2.genome.* ]]; then
-        QUANTIFIER="deseq2-hisat2-genome-qc"
-        QUANTIFIER_SHORT="hisat2"
-        PARENT_NAME="DESeq2 HISAT2 QC"
     else
         echo "Warning: Could not determine quantifier from filename: ${file_name}"
         QUANTIFIER="deseq2-qc"

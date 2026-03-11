@@ -7,6 +7,12 @@ data_format: "yaml"
 
 export_plots: true
 
+custom_content:
+  order:
+    - deseq2_pca_header
+    - deseq2_clustering_header
+    - read_distribution_normalized_header
+
 run_modules:
   - custom_content
   - fastqc
@@ -89,20 +95,8 @@ report_section_order:
     before: nsc_coefficient
   mlib_featurecounts:
     before: rsc_coefficient
-  # DESeq2 QC parent sections (one per quantifier used in ChIP-seq)
+  # DESeq2 QC parent sections (ChIP-seq uses featureCounts)
   deseq2-featurecounts-qc:
-    order: 1007
-  deseq2-kallisto-qc:
-    order: 1006
-  deseq2-salmon-qc:
-    order: 1005
-  deseq2-star-rsem-qc:
-    order: 1004
-  deseq2-star-salmon-qc:
-    order: 1003
-  deseq2-star-genome-qc:
-    order: 1002
-  deseq2-hisat2-genome-qc:
     order: 1001
   deseq2-qc:
     order: 1000
