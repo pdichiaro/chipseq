@@ -1,6 +1,6 @@
 /*
  * Filter BAM file using standard ChIP-seq filtering approach
- * - Removes multimappers (NH:i:1 filter when keep_multi_map = false)
+ * - Removes multimappers (MAPQ >= 1 filter when keep_multi_map = false)
  * - Removes duplicates (unless keep_dups = true)
  * - Removes blacklisted regions
  * - Filters by fragment size
@@ -42,13 +42,12 @@ process BAM_FILTER {
             $blacklist_params \\
             -b $bam > ${prefix}.filter1.bam
         
-        # remove multi mappers that are not NH:i:1 i.e. multi mappers
-        # Filter those pairs that have insert size compatible with the fragment length:
-        # Default to 4 * the computed insert size:
+        # Remove multi-mappers (MAPQ < 1) and filter by fragment size
+        # -q 1: Keep only reads with MAPQ >= 1 (removes multi-mappers which have MAPQ = 0)
+        # awk: Filter pairs with insert size <= max_frag (default 4 * computed insert size)
 
-        samtools view -h ${prefix}.filter1.bam | \\
+        samtools view -q 1 -h ${prefix}.filter1.bam | \\
             awk -v var="$max_frag" '{if(substr(\$0,1,1)=="@" || ((\$9>=0?\$9:-\$9)<=var)) print \$0}' | \\
-            grep -E "(NH:i:1\\b|^@)" | \\
             samtools view -b > ${prefix}.filter2.bam
 
         cat <<-END_VERSIONS > versions.yml
