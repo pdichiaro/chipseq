@@ -718,10 +718,13 @@ workflow CHIPSEQ {
     //
     // Use consensus peaks annotation instead of gene annotation for normalization
     // Extract the first consensus peaks annotation file (e.g., pRPA.consensus_peaks.annotatePeaks.txt)
+    // Only available if peak annotation was not skipped
     //
-    def ch_consensus_annotation = HOMER_ANNOTATEPEAKS_CONSENSUS.out.txt
-        .map { meta, txt -> txt }
-        .first()
+    def ch_consensus_annotation = !params.skip_peak_annotation 
+        ? HOMER_ANNOTATEPEAKS_CONSENSUS.out.txt
+            .map { meta, txt -> txt }
+            .first()
+        : Channel.empty()
     
     //
     // MODULE: Invariant genes normalization (stable genes only)
