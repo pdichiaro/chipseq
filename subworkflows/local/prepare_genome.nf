@@ -34,7 +34,7 @@ workflow PREPARE_GENOME {
         ch_fasta    = GUNZIP_FASTA ( [ [:], params.fasta ] ).gunzip.map{ it[1] }
         ch_versions = ch_versions.mix(GUNZIP_FASTA.out.versions)
     } else {
-        ch_fasta = file(params.fasta)
+        ch_fasta = Channel.value(file(params.fasta))
     } 
 
     // // Make fasta file available if reference saved or IGV is run
