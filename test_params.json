@@ -1,0 +1,18 @@
+{
+    "input": "test_data/samplesheet_test.csv",
+    "fasta": "test_data/test_genome.fa",
+    "outdir": "test_results",
+    "read_length": 20,
+    "fragment_size": 50,
+    "seq_center": "TEST",
+    "skip_trimming": true,
+    "skip_consensus_peaks": true,
+    "skip_peak_annotation": true,
+    "skip_peak_qc": true,
+    "skip_deseq2_qc": true,
+    "skip_igv": true,
+    "skip_multiqc": true,
+    "max_cpus": 2,
+    "max_memory": "4.GB",
+    "max_time": "1.h"
+}
