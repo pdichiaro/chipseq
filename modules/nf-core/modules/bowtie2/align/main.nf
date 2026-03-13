@@ -32,12 +32,15 @@ process BOWTIE2_ALIGN {
 
     def unaligned = ""
     def reads_args = ""
+    def pe_args = ""
     if (meta.single_end) {
         unaligned = save_unaligned ? "--un-gz ${prefix}.unmapped.fastq.gz" : ""
         reads_args = "-U ${reads}"
+        pe_args = ""
     } else {
         unaligned = save_unaligned ? "--un-conc-gz ${prefix}.unmapped.fastq.gz" : ""
         reads_args = "-1 ${reads[0]} -2 ${reads[1]}"
+        pe_args = "-X 1000"  // Max fragment size for PE reads
     }
 
     def samtools_command = sort_bam ? 'sort' : 'view'
@@ -57,6 +60,7 @@ process BOWTIE2_ALIGN {
         $reads_args \\
         --threads $task.cpus \\
         $unaligned \\
+        $pe_args \\
         $args \\
         2> >(tee ${prefix}.bowtie2.log >&2) \\
         | samtools $samtools_command $args2 --threads $task.cpus ${reference} -o ${prefix}.${extension} -
