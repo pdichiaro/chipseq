@@ -1,0 +1,13 @@
+Downloading nextflow dependencies. It may require a few seconds, please wait .. [KNextflow 25.10.4 is available - Please consider updating your version to it
+
+ N E X T F L O W   ~  version 25.04.7
+
+Launching `workflows/chipseq.nf` [nice_hamilton] DSL2 - revision: 3692cc0ba7
+
+Downloading plugin nf-validation@1.1.3
+WARN: Access to undefined parameter `gff` -- Initialise it to a default value eg. `params.gff = some_value`
+WARN: Access to undefined parameter `gene_bed` -- Initialise it to a default value eg. `params.gene_bed = some_value`
+WARN: Access to undefined parameter `bowtie2_index` -- Initialise it to a default value eg. `params.bowtie2_index = some_value`
+ERROR ~ No such file or directory: /home/user/chipseq/assets/samplesheet.csv
+
+ -- Check script 'workflows/chipseq.nf' at line: 22 or see '.nextflow.log' file for more details

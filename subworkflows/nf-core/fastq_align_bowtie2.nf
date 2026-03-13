@@ -18,15 +18,16 @@ workflow FASTQ_ALIGN_BOWTIE2 {
     def ch_versions = channel.empty()
 
     //
-    // Convert index and fasta to value channels to avoid consumption
+    // Ensure index and fasta are proper value channels using collect()
+    // This prevents channel consumption issues when processing multiple samples
     //
-    def ch_index_value = ch_index.first()
-    def ch_fasta_value = ch_fasta.first()
+    def ch_index_val = ch_index.collect()
+    def ch_fasta_val = ch_fasta.collect()
 
     //
     // Map reads with Bowtie2
     //
-    BOWTIE2_ALIGN ( ch_reads, ch_index_value, ch_fasta_value, save_unaligned, sort_bam )
+    BOWTIE2_ALIGN ( ch_reads, ch_index_val, ch_fasta_val, save_unaligned, sort_bam )
     ch_versions = ch_versions.mix(BOWTIE2_ALIGN.out.versions.first())
 
     //
