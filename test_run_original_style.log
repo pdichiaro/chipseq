@@ -1,0 +1,13 @@
+Nextflow 25.10.4 is available - Please consider updating your version to it
+
+ N E X T F L O W   ~  version 25.04.7
+
+Launching `workflows/chipseq.nf` [special_kilby] DSL2 - revision: eede01e318
+
+WARN: Access to undefined parameter `gff` -- Initialise it to a default value eg. `params.gff = some_value`
+WARN: Access to undefined parameter `gene_bed` -- Initialise it to a default value eg. `params.gene_bed = some_value`
+WARN: Access to undefined parameter `bowtie2_index` -- Initialise it to a default value eg. `params.bowtie2_index = some_value`
+Downloading plugin nf-amazon@2.15.0-patch1
+ERROR ~ No such file or directory: /home/user/chipseq/workflows/assets/multiqc_config.yml
+
+ -- Check script 'workflows/chipseq.nf' at line: 41 or see '.nextflow.log' file for more details

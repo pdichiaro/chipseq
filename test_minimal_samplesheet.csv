@@ -1,0 +1,4 @@
+group,replicate,fastq_1,fastq_2,antibody,control
+WT,1,https://github.com/nf-core/test-datasets/raw/chipseq/testdata/SRR1635287_1.fastq.gz,https://github.com/nf-core/test-datasets/raw/chipseq/testdata/SRR1635287_2.fastq.gz,H3K27me3,WT_INPUT
+WT,1,https://github.com/nf-core/test-datasets/raw/chipseq/testdata/SRR1635288_1.fastq.gz,https://github.com/nf-core/test-datasets/raw/chipseq/testdata/SRR1635288_2.fastq.gz,H3K27me3,WT_INPUT
+WT_INPUT,1,https://github.com/nf-core/test-datasets/raw/chipseq/testdata/SRR1635289_1.fastq.gz,https://github.com/nf-core/test-datasets/raw/chipseq/testdata/SRR1635289_2.fastq.gz,,

@@ -8,27 +8,19 @@ include { BAM_SORT_SAMTOOLS  } from './bam_sort_samtools'
 workflow FASTQ_ALIGN_BOWTIE2 {
     take:
     ch_reads          // channel: [ val(meta), [ reads ] ]
-    ch_index          // channel: [ val(meta), path(index) ]
+    ch_index          // channel: /path/to/bowtie2/index/
     save_unaligned    // val: boolean
     sort_bam          // val: boolean
-    ch_fasta          // channel: path(fasta) - value channel with path only
+    ch_fasta          // channel: /path/to/reference.fasta
 
     main:
 
     def ch_versions = channel.empty()
 
     //
-    // Create proper fasta channel for BOWTIE2_ALIGN
-    // Use first() to ensure the value channel emits only once for all samples
-    //
-    def ch_fasta_with_meta = ch_fasta
-        .first()                      // Ensure single emission
-        .map { fasta -> [ [:], fasta ] }  // Create tuple with empty meta
-
-    //
     // Map reads with Bowtie2
     //
-    BOWTIE2_ALIGN ( ch_reads, ch_index, ch_fasta_with_meta, save_unaligned, sort_bam )
+    BOWTIE2_ALIGN ( ch_reads, ch_index, ch_fasta, save_unaligned, sort_bam )
     ch_versions = ch_versions.mix(BOWTIE2_ALIGN.out.versions.first())
 
     //

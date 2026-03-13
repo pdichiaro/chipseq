@@ -221,10 +221,10 @@ workflow CHIPSEQ {
     //
     FASTQ_ALIGN_BOWTIE2 (
         ch_filtered_reads,
-        PREPARE_GENOME.out.bowtie2_index,
+        PREPARE_GENOME.out.bowtie2_index.collect(),
         false,  // save_unaligned
         false,  // sort_bam
-        PREPARE_GENOME.out.fasta
+        PREPARE_GENOME.out.fasta.collect()
     )
     ch_genome_bam        = FASTQ_ALIGN_BOWTIE2.out.bam
     ch_genome_bam_index  = FASTQ_ALIGN_BOWTIE2.out.csi
