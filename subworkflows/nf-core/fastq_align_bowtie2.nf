@@ -18,15 +18,17 @@ workflow FASTQ_ALIGN_BOWTIE2 {
     def ch_versions = channel.empty()
 
     //
-    // Create tuple with empty meta for fasta to match BOWTIE2_ALIGN signature
-    // Using map on a value channel ensures proper replication for each read
+    // Create proper fasta channel for BOWTIE2_ALIGN
+    // Use first() to ensure the value channel emits only once for all samples
     //
-    def ch_fasta_tuple = ch_fasta.map { fasta -> [ [:], fasta ] }
+    def ch_fasta_with_meta = ch_fasta
+        .first()                      // Ensure single emission
+        .map { fasta -> [ [:], fasta ] }  // Create tuple with empty meta
 
     //
     // Map reads with Bowtie2
     //
-    BOWTIE2_ALIGN ( ch_reads, ch_index, ch_fasta_tuple, save_unaligned, sort_bam )
+    BOWTIE2_ALIGN ( ch_reads, ch_index, ch_fasta_with_meta, save_unaligned, sort_bam )
     ch_versions = ch_versions.mix(BOWTIE2_ALIGN.out.versions.first())
 
     //
