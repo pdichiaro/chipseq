@@ -47,8 +47,9 @@ process BOWTIE2_ALIGN {
     def extension_pattern = /(--output-fmt|-O)+\s+(\S+)/
     def extension_matcher =  (args2 =~ extension_pattern)
     def extension = extension_matcher.getCount() > 0 ? extension_matcher[0][2].toLowerCase() : "bam"
-    def reference = fasta && extension=="cram"  ? "--reference ${fasta}" : ""
-    if (!fasta && extension=="cram") error "Fasta reference is required for CRAM output"
+    def fasta_exists = fasta && fasta.name != 'NO_FILE'
+    def reference = fasta_exists && extension=="cram"  ? "--reference ${fasta}" : ""
+    if (!fasta_exists && extension=="cram") error "Fasta reference is required for CRAM output"
 
     """
     INDEX=`find -L ./ -name "*.rev.1.bt2" | sed "s/\\.rev.1.bt2\$//"`
