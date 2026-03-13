@@ -131,13 +131,13 @@ workflow PREPARE_GENOME {
     if (prepare_tool_index == 'bowtie2') {
         if (params.bowtie2_index) {
             if (params.bowtie2_index.endsWith('.tar.gz')) {
-                ch_bowtie2_index = UNTAR_BOWTIE2_INDEX ( [ [:], params.bowtie2_index ] ).untar.map{ it[1] }
+                ch_bowtie2_index = UNTAR_BOWTIE2_INDEX ( [ [:], params.bowtie2_index ] ).untar
                 ch_versions      = ch_versions.mix(UNTAR_BOWTIE2_INDEX.out.versions)
             } else {
-                ch_bowtie2_index = file(params.bowtie2_index)
+                ch_bowtie2_index = Channel.of( [ [:], file(params.bowtie2_index) ] )
             }
         } else {
-            ch_bowtie2_index = BOWTIE2_BUILD ( ch_fasta.map { fasta -> [ [:], fasta ] } ).index.map { meta, index -> index }
+            ch_bowtie2_index = BOWTIE2_BUILD ( ch_fasta.map { fasta -> [ [:], fasta ] } ).index
             ch_versions      = ch_versions.mix(BOWTIE2_BUILD.out.versions)
         }
     }

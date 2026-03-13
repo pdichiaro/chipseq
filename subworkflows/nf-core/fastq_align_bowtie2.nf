@@ -8,7 +8,7 @@ include { BAM_SORT_SAMTOOLS  } from './bam_sort_samtools'
 workflow FASTQ_ALIGN_BOWTIE2 {
     take:
     ch_reads          // channel: [ val(meta), [ reads ] ]
-    ch_index          // channel: /path/to/bowtie2/index/
+    ch_index          // channel: [ val(meta), path(index) ]
     save_unaligned    // val: boolean
     sort_bam          // val: boolean
     ch_fasta          // channel: /path/to/reference.fasta
@@ -19,10 +19,9 @@ workflow FASTQ_ALIGN_BOWTIE2 {
 
     //
     // Map reads with Bowtie2
-    // Note: ch_index and ch_fasta are path channels that will be automatically
-    // made available to all samples via Nextflow's input matching
+    // Extract path from tuple for BOWTIE2_ALIGN
     //
-    BOWTIE2_ALIGN ( ch_reads, ch_index.first(), ch_fasta.first(), save_unaligned, sort_bam )
+    BOWTIE2_ALIGN ( ch_reads, ch_index.map { _meta, index -> index }.first(), ch_fasta.first(), save_unaligned, sort_bam )
     ch_versions = ch_versions.mix(BOWTIE2_ALIGN.out.versions.first())
 
     //
