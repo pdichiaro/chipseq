@@ -151,6 +151,16 @@ workflow CHIPSEQ {
         params.aligner
     )
     ch_versions = ch_versions.mix(PREPARE_GENOME.out.versions)
+    
+    //
+    // Validate bowtie2 index is available (using view to avoid consuming the channel)
+    //
+    PREPARE_GENOME.out.bowtie2_index
+        .ifEmpty {
+            error "ERROR: Bowtie2 index not generated or provided. " +
+                  "Please provide --bowtie2_index or ensure --fasta is provided for index generation."
+        }
+        .view { index -> "✓ Bowtie2 index available: ${index}" }
 
 
     //
@@ -177,7 +187,7 @@ workflow CHIPSEQ {
         0,
         params.min_trimmed_reads
     )
-    ch_filtered_reads      = FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.reads
+    ch_filtered_reads_raw  = FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.reads
     ch_fastqc_raw_multiqc  = FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.fastqc_zip
     ch_fastqc_trim_multiqc = FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.trim_zip
     ch_trim_log_multiqc    = FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.trim_log
@@ -185,14 +195,36 @@ workflow CHIPSEQ {
     ch_versions = ch_versions.mix(FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.versions)
 
     //
+    // Validate and debug filtered reads channel
+    //
+    ch_filtered_reads_raw
+        .map { meta, reads ->
+            // Validate meta object has required fields
+            if (!meta) {
+                error "ERROR: meta object is null after trimming for reads: ${reads}"
+            }
+            if (!meta.containsKey('single_end')) {
+                error "ERROR: meta object missing 'single_end' field for sample ${meta.id}"
+            }
+            if (!meta.containsKey('id')) {
+                error "ERROR: meta object missing 'id' field"
+            }
+            
+            log.info "✓ Sample ${meta.id} passed filtering: single_end=${meta.single_end}, reads=${reads.size()} file(s)"
+            
+            return [meta, reads]
+        }
+        .set { ch_filtered_reads }
+
+    //
     // SUBWORKFLOW: Alignment with Bowtie2 & BAM QC
     //
     FASTQ_ALIGN_BOWTIE2 (
         ch_filtered_reads,
-        PREPARE_GENOME.out.bowtie2_index.collect(),
+        PREPARE_GENOME.out.bowtie2_index,
         false,  // save_unaligned
         false,  // sort_bam
-        PREPARE_GENOME.out.fasta.collect()
+        PREPARE_GENOME.out.fasta
     )
     ch_genome_bam        = FASTQ_ALIGN_BOWTIE2.out.bam
     ch_genome_bam_index  = FASTQ_ALIGN_BOWTIE2.out.csi
