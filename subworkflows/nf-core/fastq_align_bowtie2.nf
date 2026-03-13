@@ -18,18 +18,11 @@ workflow FASTQ_ALIGN_BOWTIE2 {
     def ch_versions = channel.empty()
 
     //
-    // Debug: Check what's in ch_reads before passing to BOWTIE2_ALIGN
-    //
-    ch_reads
-        .view { meta, reads ->
-            "DEBUG BOWTIE2 INPUT: meta=${meta}, meta.class=${meta?.getClass()}, meta.id=${meta?.id}, reads=${reads}"
-        }
-        .set { ch_reads_debug }
-
-    //
     // Map reads with Bowtie2
+    // Note: ch_index and ch_fasta are path channels that will be automatically
+    // made available to all samples via Nextflow's input matching
     //
-    BOWTIE2_ALIGN ( ch_reads_debug, ch_index, ch_fasta, save_unaligned, sort_bam )
+    BOWTIE2_ALIGN ( ch_reads, ch_index.first(), ch_fasta.first(), save_unaligned, sort_bam )
     ch_versions = ch_versions.mix(BOWTIE2_ALIGN.out.versions.first())
 
     //
