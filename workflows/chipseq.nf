@@ -151,6 +151,19 @@ workflow CHIPSEQ {
         params.aligner
     )
     ch_versions = ch_versions.mix(PREPARE_GENOME.out.versions)
+    
+    //
+    // Validate bowtie2 index is available
+    //
+    PREPARE_GENOME.out.bowtie2_index
+        .ifEmpty {
+            error "ERROR: Bowtie2 index not generated or provided. " +
+                  "Please provide --bowtie2_index or ensure --fasta is provided for index generation."
+        }
+        .first()
+        .subscribe { index ->
+            log.info "✓ Bowtie2 index available: ${index}"
+        }
 
 
     //
@@ -177,12 +190,34 @@ workflow CHIPSEQ {
         0,
         params.min_trimmed_reads
     )
-    ch_filtered_reads      = FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.reads
+    ch_filtered_reads_raw  = FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.reads
     ch_fastqc_raw_multiqc  = FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.fastqc_zip
     ch_fastqc_trim_multiqc = FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.trim_zip
     ch_trim_log_multiqc    = FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.trim_log
     ch_trim_read_count     = FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.trim_read_count
     ch_versions = ch_versions.mix(FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.versions)
+
+    //
+    // Validate and debug filtered reads channel
+    //
+    ch_filtered_reads_raw
+        .map { meta, reads ->
+            // Validate meta object has required fields
+            if (!meta) {
+                error "ERROR: meta object is null after trimming for reads: ${reads}"
+            }
+            if (!meta.containsKey('single_end')) {
+                error "ERROR: meta object missing 'single_end' field for sample ${meta.id}"
+            }
+            if (!meta.containsKey('id')) {
+                error "ERROR: meta object missing 'id' field"
+            }
+            
+            log.info "✓ Sample ${meta.id} passed filtering: single_end=${meta.single_end}, reads=${reads.size()} file(s)"
+            
+            return [meta, reads]
+        }
+        .set { ch_filtered_reads }
 
     //
     // SUBWORKFLOW: Alignment with Bowtie2 & BAM QC
