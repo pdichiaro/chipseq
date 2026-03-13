@@ -18,6 +18,18 @@ workflow FASTQ_ALIGN_BOWTIE2 {
     def ch_versions = channel.empty()
 
     //
+    // Debug: Log incoming reads channel to verify meta integrity
+    //
+    def ch_reads_validated = ch_reads
+        .map { meta, reads ->
+            log.info "[SUBWORKFLOW DEBUG] Sample: ${meta.id}, single_end: ${meta.single_end}, meta: ${meta}"
+            if (meta == null) {
+                error "FATAL: meta is null in subworkflow for reads: ${reads}"
+            }
+            return [meta, reads]
+        }
+
+    //
     // Create proper fasta channel for BOWTIE2_ALIGN
     // Use first() to ensure the value channel emits only once for all samples
     //
@@ -28,7 +40,7 @@ workflow FASTQ_ALIGN_BOWTIE2 {
     //
     // Map reads with Bowtie2
     //
-    BOWTIE2_ALIGN ( ch_reads, ch_index, ch_fasta_with_meta, save_unaligned, sort_bam )
+    BOWTIE2_ALIGN ( ch_reads_validated, ch_index, ch_fasta_with_meta, save_unaligned, sort_bam )
     ch_versions = ch_versions.mix(BOWTIE2_ALIGN.out.versions.first())
 
     //
