@@ -11,23 +11,22 @@ workflow FASTQ_ALIGN_BOWTIE2 {
     ch_index          // channel: [ val(meta), path(index) ]
     save_unaligned    // val: boolean
     sort_bam          // val: boolean
-    ch_fasta          // channel: [ val(meta), path(fasta) ]
+    ch_fasta          // channel: path(fasta) - value channel with path only
 
     main:
 
     def ch_versions = channel.empty()
 
     //
-    // Ensure index and fasta are proper value channels using collect()
-    // This prevents channel consumption issues when processing multiple samples
+    // Create tuple with empty meta for fasta to match BOWTIE2_ALIGN signature
+    // Using map on a value channel ensures proper replication for each read
     //
-    def ch_index_val = ch_index.collect()
-    def ch_fasta_val = ch_fasta.collect()
+    def ch_fasta_tuple = ch_fasta.map { fasta -> [ [:], fasta ] }
 
     //
     // Map reads with Bowtie2
     //
-    BOWTIE2_ALIGN ( ch_reads, ch_index_val, ch_fasta_val, save_unaligned, sort_bam )
+    BOWTIE2_ALIGN ( ch_reads, ch_index, ch_fasta_tuple, save_unaligned, sort_bam )
     ch_versions = ch_versions.mix(BOWTIE2_ALIGN.out.versions.first())
 
     //
