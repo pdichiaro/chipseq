@@ -225,6 +225,9 @@ workflow CHIPSEQ {
         false,  // save_unaligned
         false,  // sort_bam
         PREPARE_GENOME.out.fasta
+            .map {
+                [ [:], it ]
+            }
     )
     ch_genome_bam        = FASTQ_ALIGN_BOWTIE2.out.bam
     ch_genome_bam_index  = FASTQ_ALIGN_BOWTIE2.out.csi

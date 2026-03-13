@@ -11,7 +11,7 @@ workflow FASTQ_ALIGN_BOWTIE2 {
     ch_index          // channel: [ val(meta), path(index) ]
     save_unaligned    // val: boolean
     sort_bam          // val: boolean
-    ch_fasta          // channel: /path/to/reference.fasta
+    ch_fasta          // channel: [ val(meta), path(fasta) ]
 
     main:
 
@@ -19,9 +19,8 @@ workflow FASTQ_ALIGN_BOWTIE2 {
 
     //
     // Map reads with Bowtie2
-    // Extract path from tuple for BOWTIE2_ALIGN
     //
-    BOWTIE2_ALIGN ( ch_reads, ch_index.map { _meta, index -> index }.first(), ch_fasta.first(), save_unaligned, sort_bam )
+    BOWTIE2_ALIGN ( ch_reads, ch_index, ch_fasta, save_unaligned, sort_bam )
     ch_versions = ch_versions.mix(BOWTIE2_ALIGN.out.versions.first())
 
     //

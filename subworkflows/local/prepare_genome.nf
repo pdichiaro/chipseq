@@ -143,12 +143,12 @@ workflow PREPARE_GENOME {
     }
 
     emit:
-    fasta          = ch_fasta                  //    path: genome.fasta
-    gtf            = ch_gtf                    //    path: genome.gtf
-    gene_bed       = ch_gene_bed               //    path: gene.bed
-    chrom_sizes    = ch_chrom_sizes            //    path: genome.sizes
-    filtered_bed   = ch_genome_filtered_bed    //    path: *.include_regions.bed
-    bowtie2_index  = ch_bowtie2_index          //    path: bowtie2/index/
+    fasta          = ch_fasta                             //    path: genome.fasta
+    gtf            = ch_gtf                               //    path: genome.gtf
+    gene_bed       = ch_gene_bed                          //    path: gene.bed
+    chrom_sizes    = ch_chrom_sizes                       //    path: genome.sizes
+    filtered_bed   = ch_genome_filtered_bed               //    path: *.include_regions.bed
+    bowtie2_index  = ch_bowtie2_index                     // channel: [ val(meta), path(index) ]
 
     versions       = ch_versions.ifEmpty(null) // channel: [ versions.yml ]
 }
