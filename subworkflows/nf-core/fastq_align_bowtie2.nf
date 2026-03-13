@@ -18,9 +18,24 @@ workflow FASTQ_ALIGN_BOWTIE2 {
     def ch_versions = channel.empty()
 
     //
+    // Debug: Check channel contents before BOWTIE2_ALIGN
+    //
+    ch_reads
+        .view { meta, reads -> "DEBUG ch_reads: meta=${meta}, reads=${reads}" }
+        .set { ch_reads_debug }
+    
+    ch_index
+        .view { meta, path -> "DEBUG ch_index: meta=${meta}, path=${path}" }
+        .set { ch_index_debug }
+    
+    ch_fasta
+        .view { meta, path -> "DEBUG ch_fasta: meta=${meta}, path=${path}" }
+        .set { ch_fasta_debug }
+
+    //
     // Map reads with Bowtie2
     //
-    BOWTIE2_ALIGN ( ch_reads, ch_index, ch_fasta, save_unaligned, sort_bam )
+    BOWTIE2_ALIGN ( ch_reads_debug, ch_index_debug, ch_fasta_debug, save_unaligned, sort_bam )
     ch_versions = ch_versions.mix(BOWTIE2_ALIGN.out.versions.first())
 
     //
