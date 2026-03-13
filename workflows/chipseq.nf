@@ -153,17 +153,14 @@ workflow CHIPSEQ {
     ch_versions = ch_versions.mix(PREPARE_GENOME.out.versions)
     
     //
-    // Validate bowtie2 index is available
+    // Validate bowtie2 index is available (using view to avoid consuming the channel)
     //
     PREPARE_GENOME.out.bowtie2_index
         .ifEmpty {
             error "ERROR: Bowtie2 index not generated or provided. " +
                   "Please provide --bowtie2_index or ensure --fasta is provided for index generation."
         }
-        .first()
-        .subscribe { index ->
-            log.info "✓ Bowtie2 index available: ${index}"
-        }
+        .view { index -> "✓ Bowtie2 index available: ${index}" }
 
 
     //
