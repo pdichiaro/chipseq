@@ -131,13 +131,13 @@ workflow PREPARE_GENOME {
     if (prepare_tool_index == 'bowtie2') {
         if (params.bowtie2_index) {
             if (params.bowtie2_index.endsWith('.tar.gz')) {
-                ch_bowtie2_index = UNTAR_BOWTIE2_INDEX ( [ [:], params.bowtie2_index ] ).untar
+                ch_bowtie2_index = UNTAR_BOWTIE2_INDEX ( [ [:], params.bowtie2_index ] ).untar.map { meta, index -> index }
                 ch_versions      = ch_versions.mix(UNTAR_BOWTIE2_INDEX.out.versions)
             } else {
-                ch_bowtie2_index = Channel.of( [ [:], file(params.bowtie2_index) ] )
+                ch_bowtie2_index = Channel.value(file(params.bowtie2_index))
             }
         } else {
-            ch_bowtie2_index = BOWTIE2_BUILD ( ch_fasta.map { fasta -> [ [:], fasta ] } ).index
+            ch_bowtie2_index = BOWTIE2_BUILD ( ch_fasta.map { fasta -> [ [:], fasta ] } ).index.map { meta, index -> index }
             ch_versions      = ch_versions.mix(BOWTIE2_BUILD.out.versions)
         }
     }
@@ -148,7 +148,7 @@ workflow PREPARE_GENOME {
     gene_bed       = ch_gene_bed                          //    path: gene.bed
     chrom_sizes    = ch_chrom_sizes                       //    path: genome.sizes
     filtered_bed   = ch_genome_filtered_bed               //    path: *.include_regions.bed
-    bowtie2_index  = ch_bowtie2_index                     // channel: [ val(meta), path(index) ]
+    bowtie2_index  = ch_bowtie2_index                     //    path: bowtie2/index/
 
     versions       = ch_versions.ifEmpty(null) // channel: [ versions.yml ]
 }

@@ -219,15 +219,12 @@ workflow CHIPSEQ {
     //
     // SUBWORKFLOW: Alignment with Bowtie2 & BAM QC
     //
-    // Create a placeholder channel for fasta (not needed for BAM output)
-    ch_fasta_placeholder = Channel.value(file('NO_FILE'))
-    
     FASTQ_ALIGN_BOWTIE2 (
         ch_filtered_reads,
-        PREPARE_GENOME.out.bowtie2_index.collect(),
+        PREPARE_GENOME.out.bowtie2_index,  // Now emits path directly, not [meta, path]
         false,  // save_unaligned
         false,  // sort_bam
-        ch_fasta_placeholder
+        []      // fasta not needed for BAM output
     )
     ch_genome_bam        = FASTQ_ALIGN_BOWTIE2.out.bam
     ch_genome_bam_index  = FASTQ_ALIGN_BOWTIE2.out.csi
