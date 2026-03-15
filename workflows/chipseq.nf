@@ -224,7 +224,7 @@ workflow CHIPSEQ {
         PREPARE_GENOME.out.bowtie2_index,  // Now emits path directly, not [meta, path]
         false,  // save_unaligned
         false,  // sort_bam
-        []      // fasta not needed for BAM output
+        file('NO_FILE')  // Placeholder file when fasta not needed for BAM output
     )
     ch_genome_bam        = FASTQ_ALIGN_BOWTIE2.out.bam
     ch_genome_bam_index  = FASTQ_ALIGN_BOWTIE2.out.csi
