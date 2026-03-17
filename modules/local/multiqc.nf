@@ -47,7 +47,7 @@ process MULTIQC {
 
     path ('deseq2/*')
     path ('deseq2/*')
-    path ('deseq2/*')
+    path ('*')  // Section header in root directory for MultiQC to find it
 
     output:
     path "*multiqc_report.html", emit: report
