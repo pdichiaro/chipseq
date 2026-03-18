@@ -226,7 +226,7 @@ The `--normalization_method` parameter controls DESeq2 normalization:
 | `--macs_pvalue` | `null` | MACS2 p-value threshold |
 | `--min_reps_consensus` | `1` | Min replicates for consensus peaks |
 | `--save_macs_pileup` | `false` | Save MACS2 pileup tracks |
-| `--macs_model` | `true` | Build MACS2 shifting model |
+| `--macs_model` | `true` | Build MACS2 shifting model. When `false`, automatically applies `--nomodel --extsize 300 --nolambda --call-summits` |
 
 #### DESeq2 Normalization Options
 

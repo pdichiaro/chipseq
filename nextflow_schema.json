@@ -115,10 +115,10 @@
                 },
                 "macs_model": {
                     "type": "boolean",
-                    "description": "Controls the nomodel from MACS2",
-                    "help_text": "nomodel whether or not to build the shifting model. If True, MACS will not build model. By default it means shifting size = 100.",
+                    "description": "Build the shifting model for MACS2. If set to false, automatically applies a cascade of parameters.",
+                    "help_text": "By default, MACS2 builds a shifting model to estimate fragment size. Setting this to false will automatically apply: --nomodel --extsize 300 --nolambda --call-summits. This cascade is useful for ATAC-seq or when fragment size estimation fails.",
                     "default": true,
-                    "fa_icon": "fas fa-arrows-alt-h"
+                    "fa_icon": "fas fa-chart-line"
                 },
                 "with_inputs": {
                     "type": "boolean",
@@ -323,30 +323,9 @@
                 "macs_model": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Build the shifting model for MACS2. If set to false, MACS2 will run with --nomodel flag.",
-                    "help_text": "By default, MACS2 builds a shifting model to estimate fragment size. Setting this to false will use --nomodel and rely on the --extsize parameter instead. This can be useful for ATAC-seq or when fragment size estimation fails.",
+                    "description": "Build the shifting model for MACS2. If set to false, automatically applies a cascade of parameters.",
+                    "help_text": "By default, MACS2 builds a shifting model to estimate fragment size. Setting this to false will automatically apply: --nomodel --extsize 300 --nolambda --call-summits. This cascade is useful for ATAC-seq or when fragment size estimation fails.",
                     "fa_icon": "fas fa-chart-line"
-                },
-                "macs_extsize": {
-                    "type": "integer",
-                    "default": 300,
-                    "description": "Extension size for MACS2 when using --nomodel. Only used when macs_model is false.",
-                    "help_text": "While --nomodel is set, MACS2 will use this parameter to extend reads in 5'->3' direction to fix-sized fragments. Important if you want to compare different libraries. Typical binding region size is 300bp.",
-                    "fa_icon": "fas fa-arrows-alt-h"
-                },
-                "macs_nolambda": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Use fixed background lambda instead of local lambda for MACS2.",
-                    "help_text": "MACS2 will use fixed sample background lambda instead of dynamic local lambda. Important when you have no control and very broad peaks, helps to call more peaks over the score thresholds.",
-                    "fa_icon": "fas fa-layer-group"
-                },
-                "macs_call_summits": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Call summits for MACS2 peak calling to deconvolve subpeaks.",
-                    "help_text": "MACS2 will reanalyze the shape of signal profile to deconvolve subpeaks within each called peak. Important to detect adjacent binding events in transcription factor ChIP-seq.",
-                    "fa_icon": "fas fa-mountain"
                 },
                 "save_macs_pileup": {
                     "type": "boolean",
