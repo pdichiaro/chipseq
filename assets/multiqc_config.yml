@@ -96,10 +96,9 @@ report_section_order:
   mlib_featurecounts:
     before: rsc_coefficient
   # DESeq2 QC parent sections (ChIP-seq uses featureCounts)
+  # Positioned after featureCounts for logical flow
   deseq2-featurecounts-qc:
-    order: 1001
-  deseq2-qc:
-    order: 1000
+    after: mlib_featurecounts
   software_versions:
     order: -3600
   nf-core-chipseq-summary:
