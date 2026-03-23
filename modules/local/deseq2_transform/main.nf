@@ -34,7 +34,8 @@ process DESEQ2_TRANSFORM {
     
     # Extract quantifier - ChIP-seq specific (featureCounts is primary quantifier)
     # Use case-insensitive matching for featurecounts/featureCounts
-    if [[ "${file_name}" =~ ^[Ff]eature[Cc]ounts\\..*$ || "${file_name}" == subread.* ]]; then
+    shopt -s nocasematch
+    if [[ "${file_name}" == featurecounts.* || "${file_name}" == featureCounts.* || "${file_name}" == subread.* ]]; then
         QUANTIFIER="deseq2-featurecounts-qc"
         QUANTIFIER_SHORT="featurecounts"
         PARENT_NAME="DESeq2 FeatureCounts QC"
@@ -44,6 +45,7 @@ process DESEQ2_TRANSFORM {
         QUANTIFIER_SHORT="unknown"
         PARENT_NAME="DESeq2 QC"
     fi
+    shopt -u nocasematch
     
     # Extract level (all_genes or invariant_genes)
     if [[ "${file_name}" == *.all_genes.* ]]; then
