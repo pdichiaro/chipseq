@@ -591,7 +591,7 @@ colnames(boxplot_data_norm_wide) <- sample_cols
 # Write boxplot data for MultiQC (wide format)
 read_dist_norm_file <- paste0(file_prefix, ".read.distribution.normalized.txt")
 write.table(boxplot_data_norm_wide, file = read_dist_norm_file, 
-           sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+           sep = "\t", row.names = TRUE, col.names = NA, quote = FALSE)
 cat("Read distribution boxplot data (normalized) for interactive MultiQC saved:", read_dist_norm_file, "\n")
 
 cat("Invariant gene normalized read distribution plots saved in:", ReadDistDir, "\n")
