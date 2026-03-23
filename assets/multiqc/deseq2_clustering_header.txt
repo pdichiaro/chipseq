@@ -1,6 +1,6 @@
 #id: 'deseq2_sample_distance'
 #section_name: 'Sample Distance'
-#section_anchor: 'deseq2-kallisto-qc'
+#section_anchor: 'deseq2-featurecounts-qc'
 #description: "Sample-to-sample distance heatmap based on Euclidean distances.
 #              Values are calculated using <a href='https://bioconductor.org/packages/release/bioc/html/DESeq2.html' target='_blank'>DESeq2</a>
 #              variance-stabilizing transformation."

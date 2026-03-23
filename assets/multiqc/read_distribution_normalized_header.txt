@@ -1,6 +1,6 @@
 #id: 'read_distribution_normalized'
 #section_name: 'Read Distribution (Normalized)'
-#section_anchor: 'deseq2-kallisto-qc'
+#section_anchor: 'deseq2-featurecounts-qc'
 #description: "Distribution of normalized read counts across all genes for each sample.
 #              Values are variance-stabilized transformation (VST) normalized using 
 #              <a href='https://bioconductor.org/packages/release/bioc/html/DESeq2.html' target='_blank'>DESeq2</a>.
