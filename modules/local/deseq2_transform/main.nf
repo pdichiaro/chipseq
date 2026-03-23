@@ -33,7 +33,8 @@ process DESEQ2_TRANSFORM {
     SECTION_NAME=""
     
     # Extract quantifier - ChIP-seq specific (featureCounts is primary quantifier)
-    if [[ "${file_name}" == featureCounts.* || "${file_name}" == subread.* ]]; then
+    # Use case-insensitive matching for featurecounts/featureCounts
+    if [[ "${file_name}" =~ ^[Ff]eature[Cc]ounts\\..*$ || "${file_name}" == subread.* ]]; then
         QUANTIFIER="deseq2-featurecounts-qc"
         QUANTIFIER_SHORT="featurecounts"
         PARENT_NAME="DESeq2 FeatureCounts QC"
