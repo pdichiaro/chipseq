@@ -56,6 +56,23 @@ process BOWTIE2_ALIGN {
     [ -z "\$INDEX" ] && INDEX=`find -L ./ -name "*.rev.1.bt2l" | sed "s/\\.rev.1.bt2l\$//"`
     [ -z "\$INDEX" ] && echo "Bowtie2 index files not found" 1>&2 && exit 1
 
+    # Log the bowtie2 command for reproducibility
+    echo "# Bowtie2 alignment command" > ${prefix}.bowtie2.log
+    echo "# Date: \$(date)" >> ${prefix}.bowtie2.log
+    echo "# Working directory: \$(pwd)" >> ${prefix}.bowtie2.log
+    echo "" >> ${prefix}.bowtie2.log
+    echo "bowtie2 \\\\" >> ${prefix}.bowtie2.log
+    echo "    -x \$INDEX \\\\" >> ${prefix}.bowtie2.log
+    echo "    $reads_args \\\\" >> ${prefix}.bowtie2.log
+    echo "    --threads $task.cpus \\\\" >> ${prefix}.bowtie2.log
+    echo "    $unaligned \\\\" >> ${prefix}.bowtie2.log
+    echo "    $pe_args \\\\" >> ${prefix}.bowtie2.log
+    echo "    $args \\\\" >> ${prefix}.bowtie2.log
+    echo "    | samtools $samtools_command $args2 --threads $task.cpus ${reference} -o ${prefix}.${extension} -" >> ${prefix}.bowtie2.log
+    echo "" >> ${prefix}.bowtie2.log
+    echo "# Bowtie2 alignment statistics:" >> ${prefix}.bowtie2.log
+    echo "" >> ${prefix}.bowtie2.log
+
     bowtie2 \\
         -x \$INDEX \\
         $reads_args \\
@@ -63,7 +80,7 @@ process BOWTIE2_ALIGN {
         $unaligned \\
         $pe_args \\
         $args \\
-        2> >(tee ${prefix}.bowtie2.log >&2) \\
+        2> >(tee -a ${prefix}.bowtie2.log >&2) \\
         | samtools $samtools_command $args2 --threads $task.cpus ${reference} -o ${prefix}.${extension} -
 
     if [ -f ${prefix}.unmapped.fastq.1.gz ]; then
