@@ -1,0 +1,28 @@
+#id: 'deseq2_invariant_genes_sample_dist'
+#section_name: 'INVARIANT GENES: 2. Sample Distance'
+#section_anchor: 'deseq2-invariant-genes-qc'
+#description: 'Sample-to-sample distance heatmap based on Euclidean distances. Values are calculated using DESeq2 variance-stabilizing transformation. Normalization method: invariant genes.'
+#plot_type: 'heatmap'
+#pconfig:
+#    title: 'DESeq2 Invariant Genes: Sample-to-Sample Distances'
+#    square: true
+Sample_1:
+  Sample_1: 0
+  Sample_2: 23.8
+  Sample_3: 27.2
+  Sample_4: 43.5
+Sample_2:
+  Sample_1: 23.8
+  Sample_2: 0
+  Sample_3: 28.9
+  Sample_4: 41.2
+Sample_3:
+  Sample_1: 27.2
+  Sample_2: 28.9
+  Sample_3: 0
+  Sample_4: 46.8
+Sample_4:
+  Sample_1: 43.5
+  Sample_2: 41.2
+  Sample_3: 46.8
+  Sample_4: 0

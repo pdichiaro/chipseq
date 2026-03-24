@@ -1,0 +1,11 @@
+#id: 'deseq2_all_genes_pca_top'
+#section_name: 'ALL GENES: 4. PCA Plot (Top Genes)'
+#section_anchor: 'deseq2-all-genes-qc'
+#description: "Principal component analysis (PCA) plot using top variable genes.
+#              Values are calculated using <a href='https://bioconductor.org/packages/release/bioc/html/DESeq2.html' target='_blank'>DESeq2</a>
+#              variance-stabilizing transformation. Normalization method: all genes."
+#plot_type: 'scatter'
+#pconfig:
+#    title: 'DESeq2 All Genes: PCA (Top Variable Genes)'
+#    xlab: 'PC1'
+#    ylab: 'PC2'

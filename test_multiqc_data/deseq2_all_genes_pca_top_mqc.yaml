@@ -1,0 +1,21 @@
+#id: 'deseq2_all_genes_pca_top'
+#section_name: 'ALL GENES: 4. PCA Plot (Top Genes)'
+#section_anchor: 'deseq2-all-genes-qc'
+#description: 'Principal component analysis (PCA) plot using top variable genes. Values are calculated using DESeq2 variance-stabilizing transformation. Normalization method: all genes.'
+#plot_type: 'scatter'
+#pconfig:
+#    title: 'DESeq2 All Genes: PCA (Top Variable Genes)'
+#    xlab: 'PC1'
+#    ylab: 'PC2'
+Sample_1:
+  x: -15.2
+  y: 10.1
+Sample_2:
+  x: -13.5
+  y: 8.9
+Sample_3:
+  x: 14.7
+  y: -7.3
+Sample_4:
+  x: 16.3
+  y: -9.8
