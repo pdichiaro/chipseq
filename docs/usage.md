@@ -1,5 +1,19 @@
 # pdichiaro/chipseq: Usage
 
+## Pipeline Overview
+
+This ChIP-seq pipeline uses **Bowtie2** for alignment and **MACS2** for peak calling:
+
+- **Bowtie2 Alignment**: 
+  - Local alignment mode (`--local --very-sensitive-local`) for adapter soft-clipping
+  - Two-stage fragment filtering for paired-end data (see [BOWTIE2_AND_BAM_FILTERING.md](BOWTIE2_AND_BAM_FILTERING.md))
+  - Configurable fragment size filtering with `--insert_size` (default: 500bp)
+  
+- **MACS2 Peak Calling**:
+  - Default: `--nomodel` mode (no model building, fixed extension)
+  - Optional: Model building enabled with `--macs_gsize` parameter
+  - For PE data: Uses actual fragment sizes from BAM files
+
 ## Quick Start
 
 ### Standard ChIP-seq Analysis with Input Controls
@@ -203,20 +217,23 @@ The `--normalization_method` parameter controls DESeq2 normalization:
 | `--min_trimmed_reads` | `10000` | Min reads after trimming |
 | `--extra_trimgalore_args` | `null` | Additional TrimGalore arguments |
 
-#### Alignment Options
+#### Alignment Options (Bowtie2)
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `--outfiltermultimapnmax` | `1` | STAR: Max multimapping alignments |
-| `--outsammultnmax` | `1` | STAR: Max SAM multimapping output |
-| `--winanchormultimapnmax` | `1` | STAR: Max window anchor multimap |
+| `--aligner` | `bowtie2` | Alignment tool (fixed to bowtie2) |
+| `--bowtie2_mode` | `--local` | Bowtie2 alignment mode (local vs end-to-end) |
+| `--bowtie2_sensitivity` | `--very-sensitive-local` | Bowtie2 sensitivity preset |
+| `--insert_size` | `500` | **Max fragment size for BAM filtering (PE only)** |
 | `--keep_dups` | `false` | Keep duplicate reads |
 | `--keep_multi_map` | `false` | Keep multimapping reads |
 | `--keep_blacklist` | `false` | Keep blacklist regions (false = remove) |
 | `--save_align_intermeds` | `false` | Save intermediate BAM files |
 | `--save_unaligned` | `false` | Save unaligned reads |
 
-#### Peak Calling Options
+**Note:** For Paired-End data, Bowtie2 uses a fixed `-X 1000` during alignment to search for fragments up to 1000bp. Post-alignment filtering with `--insert_size` (default 500bp) removes artifacts while keeping biologically relevant fragments. See [BOWTIE2_AND_BAM_FILTERING.md](BOWTIE2_AND_BAM_FILTERING.md) for details.
+
+#### Peak Calling Options (MACS2)
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
@@ -224,9 +241,24 @@ The `--normalization_method` parameter controls DESeq2 normalization:
 | `--broad_cutoff` | `0.1` | Broad peak FDR cutoff |
 | `--macs_fdr` | `null` | MACS2 FDR threshold (q-value) |
 | `--macs_pvalue` | `null` | MACS2 p-value threshold |
+| `--macs_gsize` | `null` | **Effective genome size for MACS2 model building** |
 | `--min_reps_consensus` | `1` | Min replicates for consensus peaks |
 | `--save_macs_pileup` | `false` | Save MACS2 pileup tracks |
-| `--macs_model` | `true` | Build MACS2 shifting model. When `false`, automatically applies `--nomodel --extsize 300 --nolambda --call-summits` |
+
+**MACS2 Fragment Length Strategy:**
+- **Default behavior** (`--macs_gsize` not set):
+  - Uses `--nomodel` (no model building)
+  - Fixed extension size (200bp default)
+  - Faster and more consistent
+  - Recommended for most experiments
+  
+- **With `--macs_gsize` provided** (e.g., `--macs_gsize 2.7e9` for human):
+  - MACS2 builds predictive model from data
+  - Estimates fragment length automatically
+  - Generates model plots (`*_model.r`)
+  - Recommended for narrow peaks (transcription factors)
+  
+- **For Paired-End data**: Actual fragment sizes are used from BAM (TLEN field)
 
 #### DESeq2 Normalization Options
 

@@ -10,23 +10,22 @@ results/
 ├── fastqc/                           # FastQC quality reports
 │   ├── <SAMPLE>_fastqc.html
 │   └── <SAMPLE>_fastqc.zip
-├── trimgalore/                       # TrimGalore outputs
+├── trimgalore/                       # TrimGalore outputs (if --trim_reads)
 │   ├── <SAMPLE>_val_*.fq.gz         # Trimmed reads
 │   ├── logs/
 │   └── fastqc/                       # Post-trim FastQC
-├── star/                             # STAR alignment outputs
-│   ├── <SAMPLE>.Aligned.sortedByCoord.out.bam
-│   ├── <SAMPLE>.Log.final.out
+├── bowtie2/                          # Bowtie2 alignment outputs
+│   ├── <SAMPLE>.sorted.bam          # Initial aligned BAM (before filtering)
+│   ├── <SAMPLE>.bowtie2.log         # Alignment statistics
 │   └── log/
-├── samtools/                         # Samtools statistics
+├── samtools/                         # Samtools statistics (pre-filtering)
 │   ├── stats/
 │   ├── flagstat/
 │   └── idxstats/
 └── genome/                           # Reference files (if --save_reference)
     ├── *.fa
-    ├── *.gtf
     └── index/
-        └── star/
+        └── bowtie2/                  # Bowtie2 index files
 ```
 
 ## Merged and Filtered BAMs
@@ -72,9 +71,13 @@ macs2/
 │   ├── <SAMPLE>_peaks.narrowPeak    # ENCODE format peaks
 │   ├── <SAMPLE>_peaks.xls           # Detailed peak table
 │   ├── <SAMPLE>_summits.bed         # Peak summits
-│   └── <SAMPLE>_model.r             # MACS2 model script
+│   ├── <SAMPLE>_model.r             # MACS2 model script (if --macs_gsize provided)
+│   └── <SAMPLE>_treat_pileup.bdg    # Treatment pileup signal
 └── merged_peaks/                     # Peaks called on merged antibody BAMs
     └── <ANTIBODY>_peaks.narrowPeak
+    
+Note: MACS2 runs with --nomodel by default (no fragment length estimation).
+      Provide --macs_gsize to enable model building for narrow peak types.
 
 consensus_peaks/                      # Consensus peaks per antibody
 ├── <ANTIBODY>.consensus_peaks.bed   # Final consensus peaks
@@ -191,4 +194,30 @@ pipeline_info/
 - If `--skip_peak_annotation`: HOMER annotation directories not created
 - If `--skip_deeptools_norm true`: No DESeq2 normalization or normalized BigWigs generated
 - If `--skip_plot_profile`: deepTools profile/heatmap outputs not created
+- If `--trim_reads false`: No trimgalore outputs generated
+
+### Alignment and Filtering
+- **Aligner**: Bowtie2 (replaces STAR from original nf-core pipeline)
+  - Mode: `--local --very-sensitive-local` for soft-clipping adapters
+  - Max fragment size: 1000bp (fixed during alignment with `-X 1000`)
+  - PE-specific: `--no-mixed --no-discordant` for proper pairs only
+  
+- **Fragment Size Filtering** (PE only):
+  - Applied post-alignment via `BAM_FILTER` module
+  - Default: Keep fragments ≤ 500bp (configurable with `--insert_size`)
+  - Removes chimeric reads and sequencing artifacts
+  - See [BOWTIE2_AND_BAM_FILTERING.md](BOWTIE2_AND_BAM_FILTERING.md) for details
+
+### MACS2 Peak Calling Strategy
+- **Default mode**: `--nomodel` (no fragment length estimation)
+  - Uses fixed extension size (200bp default)
+  - Faster and more consistent across samples
+  - Recommended for most ChIP-seq experiments
+  
+- **Model building**: Enabled when `--macs_gsize` is provided
+  - MACS2 estimates fragment length from data
+  - Generates `_model.r` script for visualization
+  - Recommended for narrow peaks (transcription factors)
+  
+- **Fragment size**: For PE data, actual fragment sizes are used from BAM TLEN field
 
