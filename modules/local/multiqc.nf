@@ -61,6 +61,7 @@ process MULTIQC {
     
     // Handle DESeq2 files - copy them to appropriate locations
     // Check if lists are not empty before processing
+    // All DESeq2 files go into multiqc_data/ for MultiQC to find them
     def copy_deseq2_pca = (deseq2_pca_files && deseq2_pca_files.size() > 0) ? 
         deseq2_pca_files.collect { "cp ${it} multiqc_data/" }.join('\n    ') : 
         ''
@@ -68,7 +69,7 @@ process MULTIQC {
         deseq2_clustering_files.collect { "cp ${it} multiqc_data/" }.join('\n    ') : 
         ''
     def copy_deseq2_header = (deseq2_header_file && deseq2_header_file.size() > 0) ? 
-        "cp ${deseq2_header_file[0]} ." : 
+        "cp ${deseq2_header_file[0]} multiqc_data/" : 
         ''
     
     """
