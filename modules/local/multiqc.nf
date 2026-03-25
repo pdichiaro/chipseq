@@ -45,9 +45,9 @@ process MULTIQC {
     path ('macs2/annotation/*')
     path ('macs2/featurecounts/*')
 
-    val deseq2_pca_files       // DESeq2 PCA plots - passed as list of files
-    val deseq2_clustering_files // DESeq2 clustering/distance plots - passed as list of files  
-    val deseq2_header_file      // DESeq2 section header - passed as single file
+    path ('multiqc_data/*')  // DESeq2 PCA plots
+    path ('multiqc_data/*')  // DESeq2 clustering/distance plots
+    path ('multiqc_data/*')  // DESeq2 section header
 
     output:
     path "*multiqc_report.html", emit: report
@@ -59,28 +59,7 @@ process MULTIQC {
     def args          = task.ext.args ?: ''
     def custom_config = params.multiqc_config ? "--config $mqc_custom_config" : ''
     
-    // Handle DESeq2 files - copy them to appropriate locations
-    // Check if lists are not empty before processing
-    // All DESeq2 files go into multiqc_data/ for MultiQC to find them
-    def copy_deseq2_pca = (deseq2_pca_files && deseq2_pca_files.size() > 0) ? 
-        deseq2_pca_files.collect { "cp ${it} multiqc_data/" }.join('\n    ') : 
-        ''
-    def copy_deseq2_clustering = (deseq2_clustering_files && deseq2_clustering_files.size() > 0) ? 
-        deseq2_clustering_files.collect { "cp ${it} multiqc_data/" }.join('\n    ') : 
-        ''
-    def copy_deseq2_header = (deseq2_header_file && deseq2_header_file.size() > 0) ? 
-        "cp ${deseq2_header_file[0]} multiqc_data/" : 
-        ''
-    
     """
-    # Create multiqc_data directory for DESeq2 files
-    mkdir -p multiqc_data
-    
-    # Copy DESeq2 files to appropriate locations
-    ${copy_deseq2_pca}
-    ${copy_deseq2_clustering}
-    ${copy_deseq2_header}
-    
     multiqc \\
         -f \\
         $args \\

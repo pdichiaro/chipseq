@@ -1049,9 +1049,9 @@ workflow CHIPSEQ {
             ch_plothomerannotatepeaks_multiqc.collect().ifEmpty([]),
             ch_subreadfeaturecounts_multiqc.collect{it[1]}.ifEmpty([]),
 
-            ch_deseq2_pca_multiqc.toList(),
-            ch_deseq2_clustering_multiqc.toList(),
-            DESEQ2_SECTION_HEADER.out.section_header.toList()
+            ch_deseq2_pca_multiqc.collect().ifEmpty([]),
+            ch_deseq2_clustering_multiqc.collect().ifEmpty([]),
+            DESEQ2_SECTION_HEADER.out.section_header.collect().ifEmpty([])
         )
         multiqc_report = MULTIQC.out.report.toList()
     }
