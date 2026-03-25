@@ -60,14 +60,15 @@ process MULTIQC {
     def custom_config = params.multiqc_config ? "--config $mqc_custom_config" : ''
     
     // Handle DESeq2 files - copy them to appropriate locations
-    def copy_deseq2_pca = deseq2_pca_files ? 
+    // Check if lists are not empty before processing
+    def copy_deseq2_pca = (deseq2_pca_files && deseq2_pca_files.size() > 0) ? 
         deseq2_pca_files.collect { "cp ${it} multiqc_data/" }.join('\n    ') : 
         ''
-    def copy_deseq2_clustering = deseq2_clustering_files ? 
+    def copy_deseq2_clustering = (deseq2_clustering_files && deseq2_clustering_files.size() > 0) ? 
         deseq2_clustering_files.collect { "cp ${it} multiqc_data/" }.join('\n    ') : 
         ''
-    def copy_deseq2_header = deseq2_header_file ? 
-        "cp ${deseq2_header_file} ." : 
+    def copy_deseq2_header = (deseq2_header_file && deseq2_header_file.size() > 0) ? 
+        "cp ${deseq2_header_file[0]} ." : 
         ''
     
     """
