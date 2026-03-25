@@ -1,5 +1,0 @@
-	Sample_1	Sample_2	Sample_3	Sample_4
-Sample_1	0	25.3	28.7	45.2
-Sample_2	25.3	0	30.1	42.8
-Sample_3	28.7	30.1	0	48.5
-Sample_4	45.2	42.8	48.5	0
