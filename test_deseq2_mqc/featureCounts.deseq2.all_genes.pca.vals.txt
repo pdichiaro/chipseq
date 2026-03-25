@@ -1,0 +1,5 @@
+	PC1	PC2
+Sample_1	-12.5	8.3
+Sample_2	-10.2	6.7
+Sample_3	11.8	-5.2
+Sample_4	13.1	-7.4

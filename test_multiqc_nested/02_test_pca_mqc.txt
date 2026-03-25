@@ -1,0 +1,13 @@
+#parent_id: 'deseq2-featurecounts-qc'
+#parent_name: 'DESeq2 FeatureCounts QC'
+#id: '02_deseq2_pca_featurecounts_all_genes'
+#section_name: '02. PCA (All Genes)'
+#plot_type: 'scatter'
+#pconfig:
+#    title: 'PCA (All Genes)'
+#    xlab: 'PC1'
+#    ylab: 'PC2'
+	PC1	PC2
+Sample_1	-12.5	8.3
+Sample_2	-10.2	6.7
+Sample_3	11.8	-5.2
