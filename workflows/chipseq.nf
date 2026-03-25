@@ -859,15 +859,15 @@ workflow CHIPSEQ {
     ch_deseq2_pca_multiqc = ch_deseq2_pca_multiqc.mix(
         DESEQ2_TRANSFORM.out.multiqc_files
             .flatten()
-            .filter { file -> file.name.contains('.pca.') }
+            .filter { file -> file.name =~ /.*\.pca\..*_mqc\.txt$/ }
     )
 
     ch_deseq2_clustering_multiqc = ch_deseq2_clustering_multiqc.mix(
         DESEQ2_TRANSFORM.out.multiqc_files
             .flatten()
             .filter { file -> 
-                file.name.contains('.sample.dists.') || 
-                file.name.contains('.read.distribution.')
+                file.name =~ /.*\.sample\.dists\..*_mqc\.txt$/ || 
+                file.name =~ /.*\.read\.distribution\..*_mqc\.txt$/
             }
     )
 
