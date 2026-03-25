@@ -48,9 +48,10 @@ ch_spp_correlation_header   = file("$projectDir/assets/multiqc/spp_correlation_h
 ch_peak_count_header        = file("$projectDir/assets/multiqc/peak_count_header.txt", checkIfExists: true)
 ch_frip_score_header        = file("$projectDir/assets/multiqc/frip_score_header.txt", checkIfExists: true)
 ch_peak_annotation_header   = file("$projectDir/assets/multiqc/peak_annotation_header.txt", checkIfExists: true)
-ch_deseq2_pca_header        = file("$projectDir/assets/multiqc/deseq2_pca_header.txt", checkIfExists: true)
-ch_deseq2_clustering_header = file("$projectDir/assets/multiqc/deseq2_clustering_header.txt", checkIfExists: true)
-ch_deseq2_read_dist_header  = file("$projectDir/assets/multiqc/read_distribution_normalized_header.txt", checkIfExists: true)
+// Collect all DESeq2 header files
+ch_deseq2_headers = channel.fromPath("$projectDir/assets/multiqc/deseq2_*_header.txt")
+    .mix(channel.fromPath("$projectDir/assets/multiqc/read_distribution_normalized_header.txt"))
+    .collect()
 
 ch_with_inputs = params.with_inputs ? params.with_inputs.toBoolean() : false
 
@@ -849,9 +850,7 @@ workflow CHIPSEQ {
     //
     DESEQ2_TRANSFORM (
         ch_deseq2_raw_files.flatten(),
-        ch_deseq2_pca_header,
-        ch_deseq2_clustering_header,
-        ch_deseq2_read_dist_header
+        ch_deseq2_headers
     )
     ch_versions = ch_versions.mix(DESEQ2_TRANSFORM.out.versions.first())
     

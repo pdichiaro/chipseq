@@ -9,12 +9,10 @@ process DESEQ2_TRANSFORM {
 
     input:
     path deseq2_file
-    path pca_header
-    path clustering_header
-    path read_dist_header
+    path 'headers/*'  // All header files in a directory
 
     output:
-    path "*_mqc.txt", optional: true, emit: multiqc_files
+    path "*_mqc.tsv", optional: true, emit: multiqc_files
     path "versions.yml"          , emit: versions
 
     when:
@@ -22,112 +20,51 @@ process DESEQ2_TRANSFORM {
 
     script:
     def file_name = deseq2_file.getName()
-    // Create output name with _mqc.txt suffix (replace .txt with _mqc.txt)
-    def output_name = file_name.replaceAll(/\.txt$/, '_mqc.txt')
+    def base_name = file_name.replaceAll(/\.txt$/, '')
+    def output_name = "${base_name}_mqc.tsv"
     """
-    # Detect quantifier and level from filename for unique IDs and section anchors
-    # Filename patterns: featureCounts.deseq2.all_genes.*, featureCounts.deseq2.invariant_genes.*, etc.
-    QUANTIFIER=""
-    QUANTIFIER_SHORT=""
-    LEVEL=""
-    SECTION_NAME=""
+    # Detect plot type and gene set from filename
+    # Patterns: featureCounts.deseq2.<geneset>.<plottype>.txt
+    GENE_SET=""
+    HEADER_FILE=""
     
-    # Extract quantifier - ChIP-seq specific (featureCounts is primary quantifier)
-    # Use case-insensitive matching for featurecounts/featureCounts
-    shopt -s nocasematch
-    if [[ "${file_name}" == featurecounts.* || "${file_name}" == featureCounts.* || "${file_name}" == subread.* ]]; then
-        QUANTIFIER="deseq2-featurecounts-qc"
-        QUANTIFIER_SHORT="featurecounts"
-        PARENT_NAME="DESeq2 FeatureCounts QC"
-    else
-        echo "Warning: Could not determine quantifier from filename: ${file_name}"
-        QUANTIFIER="deseq2-qc"
-        QUANTIFIER_SHORT="unknown"
-        PARENT_NAME="DESeq2 QC"
-    fi
-    shopt -u nocasematch
-    
-    # Extract level (all_genes or invariant_genes)
+    # Determine gene set
     if [[ "${file_name}" == *.all_genes.* ]]; then
-        LEVEL="all_genes"
-        SECTION_NAME="All Genes"
+        GENE_SET="all_genes"
     elif [[ "${file_name}" == *.invariant_genes.* ]]; then
-        LEVEL="invariant_genes"
-        SECTION_NAME="Invariant Genes"
-    else
-        LEVEL="unknown"
-        SECTION_NAME="Unknown Level"
+        GENE_SET="invariant_genes"
     fi
     
-    echo "Detected quantifier: \${QUANTIFIER_SHORT}, level: \${LEVEL}, section: \${QUANTIFIER}"
-    echo "Output file will be: ${output_name}"
-
-    # Determine number prefix based on gene set (01-04 for all_genes, 05-08 for invariant_genes)
-    OFFSET=0
-    if [[ "\${LEVEL}" == "invariant_genes" ]]; then
-        OFFSET=4
-    fi
-    
-    # Add appropriate header to each file type for MultiQC custom content module
-    # Each plot gets nested under parent section with unique ID
-    # Numbers added to SECTION_NAME for visible ordering (MultiQC sorts by section_name in nested sections)
-    # Number ranges: 01-04 for All Genes, 05-08 for Invariant Genes
-    # Plot titles remain clean without numbers
-    # IMPORTANT: Check .pca.top*.vals.txt BEFORE .pca.vals.txt to avoid false matches
+    # Determine plot type and select appropriate header from headers/ directory
+    # Check top PCA first (more specific pattern)
     if [[ "${file_name}" == *".pca.top"*".vals.txt" ]]; then
-        # PCA top variable genes (pattern: *.pca.top500.vals.txt) - ORDER: 4 or 8
-        PLOT_NUM=\$((4 + OFFSET))
-        PLOT_ID="\$(printf '%02d' \$PLOT_NUM)_deseq2_pca_top500_\${QUANTIFIER_SHORT}_\${LEVEL}"
-        SECTION_TITLE="\$(printf '%02d' \$PLOT_NUM). PCA Top 500 (\${SECTION_NAME})"
-        PLOT_TITLE="PCA Top 500 (\${SECTION_NAME})"
-        numbered_output="\$(printf '%02d' \$PLOT_NUM)_${output_name}"
-        sed "s|#section_anchor:.*|#parent_id: '\${QUANTIFIER}'\\n#parent_name: '\${PARENT_NAME}'|; s|#section_name:.*|#section_name: '\${SECTION_TITLE}'|; s|#id:.*|#id: '\${PLOT_ID}'|; s|title:.*|title: '\${PLOT_TITLE}'|" ${pca_header} > temp_header.txt
-        cat temp_header.txt ${deseq2_file} > temp_output.txt
-        mv temp_output.txt "\${numbered_output}"
-        echo "Created \${numbered_output} with PCA-500 header (ID: \${PLOT_ID}, parent: \${QUANTIFIER})"
+        HEADER_FILE="headers/deseq2_\${GENE_SET}_pca_top_header.txt"
     elif [[ "${file_name}" == *".pca.vals.txt" ]]; then
-        # PCA all genes (pattern: *.pca.vals.txt) - ORDER: 3 or 7
-        PLOT_NUM=\$((3 + OFFSET))
-        PLOT_ID="\$(printf '%02d' \$PLOT_NUM)_deseq2_pca_\${QUANTIFIER_SHORT}_\${LEVEL}"
-        SECTION_TITLE="\$(printf '%02d' \$PLOT_NUM). PCA (\${SECTION_NAME})"
-        PLOT_TITLE="PCA (\${SECTION_NAME})"
-        numbered_output="\$(printf '%02d' \$PLOT_NUM)_${output_name}"
-        sed "s|#section_anchor:.*|#parent_id: '\${QUANTIFIER}'\\n#parent_name: '\${PARENT_NAME}'|; s|#section_name:.*|#section_name: '\${SECTION_TITLE}'|; s|#id:.*|#id: '\${PLOT_ID}'|; s|title:.*|title: '\${PLOT_TITLE}'|" ${pca_header} > temp_header.txt
-        cat temp_header.txt ${deseq2_file} > temp_output.txt
-        mv temp_output.txt "\${numbered_output}"
-        echo "Created \${numbered_output} with PCA header (ID: \${PLOT_ID}, parent: \${QUANTIFIER})"
+        HEADER_FILE="headers/deseq2_\${GENE_SET}_pca_all_header.txt"
     elif [[ "${file_name}" == *".sample.dists."* ]]; then
-        # Sample distance - ORDER: 2 or 6
-        PLOT_NUM=\$((2 + OFFSET))
-        PLOT_ID="\$(printf '%02d' \$PLOT_NUM)_deseq2_sample_distance_\${QUANTIFIER_SHORT}_\${LEVEL}"
-        SECTION_TITLE="\$(printf '%02d' \$PLOT_NUM). Sample Distances (\${SECTION_NAME})"
-        PLOT_TITLE="Sample Distances (\${SECTION_NAME})"
-        numbered_output="\$(printf '%02d' \$PLOT_NUM)_${output_name}"
-        sed "s|#section_anchor:.*|#parent_id: '\${QUANTIFIER}'\\n#parent_name: '\${PARENT_NAME}'|; s|#section_name:.*|#section_name: '\${SECTION_TITLE}'|; s|#id:.*|#id: '\${PLOT_ID}'|; s|title:.*|title: '\${PLOT_TITLE}'|" ${clustering_header} > temp_header.txt
-        cat temp_header.txt ${deseq2_file} > temp_output.txt
-        mv temp_output.txt "\${numbered_output}"
-        echo "Created \${numbered_output} with sample distance header (ID: \${PLOT_ID}, parent: \${QUANTIFIER})"
+        HEADER_FILE="headers/deseq2_\${GENE_SET}_sample_dist_header.txt"
     elif [[ "${file_name}" == *".read.distribution.normalized."* ]]; then
-        # Read distribution - ORDER: 1 or 5
-        PLOT_NUM=\$((1 + OFFSET))
-        PLOT_ID="\$(printf '%02d' \$PLOT_NUM)_deseq2_read_distribution_\${QUANTIFIER_SHORT}_\${LEVEL}"
-        SECTION_TITLE="\$(printf '%02d' \$PLOT_NUM). Read Distribution (\${SECTION_NAME})"
-        PLOT_TITLE="Read Distribution (\${SECTION_NAME})"
-        numbered_output="\$(printf '%02d' \$PLOT_NUM)_${output_name}"
-        sed "s|#section_anchor:.*|#parent_id: '\${QUANTIFIER}'\\n#parent_name: '\${PARENT_NAME}'|; s|#section_name:.*|#section_name: '\${SECTION_TITLE}'|; s|#id:.*|#id: '\${PLOT_ID}'|; s|title:.*|title: '\${PLOT_TITLE}'|" ${read_dist_header} > temp_header.txt
-        cat temp_header.txt ${deseq2_file} > temp_output.txt
-        mv temp_output.txt "\${numbered_output}"
-        echo "Created \${numbered_output} with read distribution header (ID: \${PLOT_ID}, parent: \${QUANTIFIER})"
+        HEADER_FILE="headers/deseq2_\${GENE_SET}_read_dist_header.txt"
+    fi
+    
+    # Create output file with header
+    if [[ -n "\${HEADER_FILE}" && -f "\${HEADER_FILE}" ]]; then
+        echo "Processing ${file_name}"
+        echo "Using header: \${HEADER_FILE}"
+        echo "Creating: ${output_name}"
+        cat "\${HEADER_FILE}" ${deseq2_file} > "${output_name}"
     else
-        # Unknown file type - copy as-is with _mqc.txt suffix
+        echo "Warning: No specific header found for ${file_name}"
+        echo "Available headers:"
+        ls -la headers/
+        echo "Copying data without header to ${output_name}"
         cp ${deseq2_file} "${output_name}"
-        echo "Copied ${output_name} without header (unknown type)"
     fi
 
-    cat <<END_VERSIONS > versions.yml
-"${task.process}":
-    bash: \$(bash --version | head -n1 | awk '{print \$4}')
-END_VERSIONS
+    cat <<-END_VERSIONS > versions.yml
+\t"${task.process}":
+\t    bash: \$(bash --version | head -n1 | awk '{print \$4}')
+\tEND_VERSIONS
     """
 
     stub:

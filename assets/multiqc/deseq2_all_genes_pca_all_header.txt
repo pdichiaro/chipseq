@@ -1,6 +1,7 @@
 #id: 'deseq2_all_genes_pca_all'
+#parent_id: 'deseq2-featurecounts-qc'
+#parent_name: 'DESeq2 featureCounts QC'
 #section_name: 'ALL GENES: 3. PCA Plot (All Genes)'
-#section_anchor: 'deseq2-all-genes-qc'
 #description: "Principal component analysis (PCA) plot using all genes.
 #              Values are calculated using <a href='https://bioconductor.org/packages/release/bioc/html/DESeq2.html' target='_blank'>DESeq2</a>
 #              variance-stabilizing transformation. Normalization method: all genes."

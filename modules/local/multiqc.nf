@@ -45,9 +45,9 @@ process MULTIQC {
     path ('macs2/annotation/*')
     path ('macs2/featurecounts/*')
 
-    path ('multiqc_data/*')  // DESeq2 PCA plots
-    path ('multiqc_data/*')  // DESeq2 clustering/distance plots
-    path ('multiqc_data/*')  // DESeq2 section header
+    path ('deseq2/*')  // DESeq2 PCA plots
+    path ('deseq2/*')  // DESeq2 clustering/distance plots
+    path ('deseq2/*')  // DESeq2 section header
 
     output:
     path "*multiqc_report.html", emit: report
