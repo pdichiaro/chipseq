@@ -844,6 +844,11 @@ workflow CHIPSEQ {
     )
     ch_versions = ch_versions.mix(DESEQ2_SECTION_HEADER.out.versions)
     
+    // Add section header to MultiQC channel FIRST (must come before the plots)
+    ch_deseq2_pca_multiqc = ch_deseq2_pca_multiqc.mix(
+        DESEQ2_SECTION_HEADER.out.section_header
+    )
+    
     //
     // MODULE: Transform DESeq2 files for MultiQC with proper headers
     //
@@ -1050,8 +1055,7 @@ workflow CHIPSEQ {
             ch_subreadfeaturecounts_multiqc.collect{it[1]}.ifEmpty([]),
 
             ch_deseq2_pca_multiqc.collect().ifEmpty([]),
-            ch_deseq2_clustering_multiqc.collect().ifEmpty([]),
-            DESEQ2_SECTION_HEADER.out.section_header.collect().ifEmpty([])
+            ch_deseq2_clustering_multiqc.collect().ifEmpty([])
         )
         multiqc_report = MULTIQC.out.report.toList()
     }
