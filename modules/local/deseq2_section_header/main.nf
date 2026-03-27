@@ -18,8 +18,8 @@ process DESEQ2_SECTION_HEADER {
     task.ext.when == null || task.ext.when
 
     script:
-    // Convert quantifier to section anchor format
-    def section_anchor = "deseq2-${quantifier.replaceAll('_', '-')}-qc"
+    // Convert quantifier to section anchor format (lowercase for consistency)
+    def section_anchor = "deseq2-${quantifier.toLowerCase().replaceAll('_', '-')}-qc"
     def section_title = quantifier.replaceAll('_', ' ').split().collect { it.capitalize() }.join(' ')
     """
     cat > ${quantifier}_deseq2_section_header_mqc.txt <<HEADER_EOF
