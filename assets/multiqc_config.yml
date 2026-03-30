@@ -10,14 +10,14 @@ export_plots: true
 custom_content:
   order:
     # DESeq2 plots ordered by number prefix (01-08)
-    - '01_deseq2_read_distribution_*'
-    - '02_deseq2_sample_distance_*'
-    - '03_deseq2_pca_*'
-    - '04_deseq2_pca_top500_*'
-    - '05_deseq2_read_distribution_*'
-    - '06_deseq2_sample_distance_*'
-    - '07_deseq2_pca_*'
-    - '08_deseq2_pca_top500_*'
+    - '01_featurecounts.deseq2.all_genes.read.distribution_*'
+    - '02_featurecounts.deseq2.all_genes.sample.dists_*'
+    - '03_featurecounts.deseq2.all_genes.pca*'
+    - '04_featurecounts.deseq2.all_genes.pca.top500*'
+    - '05_featurecounts.deseq2.invariant_genes.read.distribution_*'
+    - '06_featurecounts.deseq2.invariant_genes.sample.dists_*'
+    - '07_featurecounts.deseq2.invariant_genes.pca*'
+    - '08_featurecounts.deseq2.invariant_genes.pca.top500*'
 
 run_modules:
   - custom_content
@@ -85,12 +85,6 @@ module_order:
       info: "This section of the report shows featureCounts results for the number of reads assigned to merged library consensus peaks."
       path_filters:
         - "./macs2/featurecounts/*.summary"
-  - custom_content:
-      name: "MERGED LIB: DESeq2 QC (featureCounts)"
-      anchor: "deseq2-featurecounts-qc"
-      info: "This section shows DESeq2 QC plots for consensus peaks quantified by featureCounts."
-      path_filters:
-        - "./macs2/deseq2_qc/*"
 
 report_section_order:
   peak_count:
@@ -111,23 +105,6 @@ report_section_order:
   # Positioned after featureCounts for logical flow
   deseq2-featurecounts-qc:
     after: mlib_featurecounts
-  # DESeq2 individual plots ordered within parent section
-  01_deseq2_read_distribution:
-    after: deseq2-featurecounts-qc
-  02_deseq2_sample_distance:
-    after: 01_deseq2_read_distribution
-  03_deseq2_pca:
-    after: 02_deseq2_sample_distance
-  04_deseq2_pca_top500:
-    after: 03_deseq2_pca
-  05_deseq2_read_distribution:
-    after: 04_deseq2_pca_top500
-  06_deseq2_sample_distance:
-    after: 05_deseq2_read_distribution
-  07_deseq2_pca:
-    after: 06_deseq2_sample_distance
-  08_deseq2_pca_top500:
-    after: 07_deseq2_pca
   # ChIP-seq workflow and software summaries - positioned at the end of report
   chipseq-summary:
     order: 9999
