@@ -102,7 +102,7 @@ report_section_order:
   # Uses negative order value (nf-core style) to position before final summary
   # Plot ordering within section handled automatically via numeric prefixes in section names
   deseq2-featurecounts-qc:
-    order: -1000
+    order: -900
   # ChIP-seq workflow summary - positioned at the end of report
   nf-core-chipseq-summary:
     order: -3700
