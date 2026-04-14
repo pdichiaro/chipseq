@@ -120,28 +120,6 @@ This document provides a synthetic overview of the complete BAM filtering pipeli
     ├─ No secondary/supplementary alignments
     ├─ No duplicates (if params.keep_dups=false)
     └─ No blacklist regions
-         │
-         ▼
-┌───────────────────────────────────────────────────────────────────┐
-│  STEP 5: GENERATE FILTERING LOG                                   │
-│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   │
-│                                                                   │
-│  Creates: sample.filtering.log                                    │
-│                                                                   │
-│  Counts separately:                                               │
-│  • Blacklist overlaps (samtools view -c -L blacklist.bed)         │
-│  • Duplicates (samtools view -c -f 0x0400)                        │
-│  • Other filters (calculated: total - dup - blacklist)            │
-│                                                                   │
-│  See: FILTERING_LOG_IMPROVEMENTS.md for details                   │
-└───────────────────────────────────────────────────────────────────┘
-         │
-         ▼
-    sample.filtering.log
-         │
-         ▼
-    📊 Ready for MACS2 peak calling!
-```
 
 ---
 
@@ -169,13 +147,6 @@ samtools view -b -h \
     sample.mkD.bam > sample.filter2.bam
 ```
 
-**Why use include regions instead of excluding blacklist?**
-- SAMtools `-L` (include) is faster and more reliable than `-U` (exclude)
-- `bedtools complement` inverts the blacklist → creates "allowed" regions
-- Result: Only reads in allowed regions are kept
-
----
-
 ## 📋 SAM Flags Reference
 
 | Flag | Hex | Meaning | Action in Pipeline |
@@ -192,42 +163,7 @@ samtools view -b -h \
 
 ---
 
-## 📊 Filtering Log Categories
 
-The filtering log separates reads into categories:
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ BAM FILTERING LOG - Sample: ENCFF123ABC                         │
-│                                                                 │
-│ Total reads (input):                      10,000,000           │
-│                                                                 │
-│ Reads overlapping blacklist regions:       1,500,000 (15.00%) │
-│ Duplicate reads (marked by Picard):        3,000,000 (30.00%) │
-│ Reads removed by other filters*:           1,575,000 (15.75%) │
-│   (*MAPQ < 1, secondary/supplementary alignments)              │
-│ ─────────────────────────────────────────────────────           │
-│ Total reads REMOVED (all filters):         6,075,000 (60.75%) │
-│ Total reads RETAINED:                      3,925,000 (39.25%) │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### How Each Category is Counted
-
-| Category | Command | What it counts |
-|----------|---------|----------------|
-| **Total reads** | `samtools view -c sample.mkD.bam` | All reads in input BAM |
-| **Blacklist** | `samtools view -c -L blacklist.bed sample.mkD.bam` | Reads overlapping blacklist regions |
-| **Duplicates** | `samtools view -c -f 0x0400 sample.mkD.bam` | Reads marked as duplicates by Picard |
-| **Other filters** | Calculated: `(TOTAL - RETAINED) - BLACKLIST - DUPLICATES` | MAPQ < 1, secondary, supplementary |
-| **Retained** | `samtools view -c sample.filter2.bam` | Reads in final BAM |
-
-**Important notes:**
-- ⚠️ Categories can **overlap** (e.g., a duplicate in a blacklist region)
-- ⚠️ Percentages may **sum > 100%** due to overlap
-- ✅ "Other filters" is calculated to ensure categories sum exactly to total removed
-
----
 
 ## ⚙️ Configuration Parameters
 
@@ -238,23 +174,7 @@ The filtering log separates reads into categories:
 | `params.mapq` | 1 | Min MAPQ threshold | STEP 2 and STEP 4 |
 | `params.blacklist` | auto | Blacklist BED file | STEP 4 (final filter) |
 
-**How to change:**
 
-```bash
-# Keep duplicates for analysis
-nextflow run pdichiaro/chipseq --keep_dups true
-
-# More permissive fragment size
-nextflow run pdichiaro/chipseq --insert_size 600
-
-# Stricter MAPQ threshold
-nextflow run pdichiaro/chipseq --mapq 10
-
-# Custom blacklist
-nextflow run pdichiaro/chipseq --blacklist /path/to/custom.bed
-```
-
----
 
 ## 📁 File Naming Convention
 
@@ -313,80 +233,3 @@ samtools view -b -h \
     -L include_regions.bed # Keep only NON-blacklist
     sample.mkD.bam > sample.filter2.bam
 ```
-
----
-
-## 🧪 Verification Commands
-
-### Verify each filter step manually:
-
-```bash
-# 1. Count total reads
-samtools view -c sample.mkD.bam
-# Example output: 10,000,000
-
-# 2. Count blacklist overlaps
-samtools view -c -L blacklist.bed sample.mkD.bam
-# Example output: 1,500,000 (15%)
-
-# 3. Count duplicates
-samtools view -c -f 0x0400 sample.mkD.bam
-# Example output: 3,000,000 (30%)
-
-# 4. Count retained reads
-samtools view -c sample.filter2.bam
-# Example output: 3,925,000 (39.25%)
-
-# 5. Verify calculations
-# Total removed = Total - Retained
-#               = 10,000,000 - 3,925,000 = 6,075,000 (60.75%)
-#
-# Other filters = Total removed - Blacklist - Duplicates
-#               = 6,075,000 - 1,500,000 - 3,000,000 = 1,575,000 (15.75%)
-```
-
-### Check for filter overlap:
-
-```bash
-# Reads that are BOTH duplicates AND in blacklist
-samtools view -c -f 0x0400 -L blacklist.bed sample.mkD.bam
-# Example output: 450,000
-# These reads contribute to both "Blacklist" and "Duplicates" categories
-```
-
-This is why **percentages can sum > 100%** — overlapping categories.
-
----
-
-## 🎯 Next Steps After Filtering
-
-The final `sample.filter2.bam` is used for:
-
-### 1. Peak Calling (MACS2)
-```bash
-macs2 callpeak -t sample.filter2.bam -n sample -g hs
-```
-
-### 2. BigWig Generation (deepTools)
-```bash
-bamCoverage -b sample.filter2.bam -o sample.bw --normalizeUsing CPM
-```
-
-### 3. Read Coverage Analysis (bedtools)
-```bash
-bedtools coverage -a peaks.bed -b sample.filter2.bam
-```
-
----
-
-## 📚 Related Documentation
-
-- **[BOWTIE2_AND_BAM_FILTERING.md](BOWTIE2_AND_BAM_FILTERING.md)**: Complete detailed documentation of Bowtie2 alignment and initial BAM filtering
-- **[FILTERING_LOG_IMPROVEMENTS.md](FILTERING_LOG_IMPROVEMENTS.md)**: Detailed explanation of the filtering log generation and category calculations
-
----
-
-**Document Version:** 1.0  
-**Last Updated:** 2026-04-14  
-**Pipeline:** pdichiaro/chipseq  
-**Compatible with:** Nextflow 25.04+, Bowtie2 2.3+, SAMtools 1.9+, Picard 2.27+
