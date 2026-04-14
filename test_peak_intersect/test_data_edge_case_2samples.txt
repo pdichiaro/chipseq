@@ -1,3 +1,0 @@
-Treatment	500
-Control	450
-Treatment&Control	120

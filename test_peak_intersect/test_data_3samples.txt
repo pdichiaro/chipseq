@@ -1,7 +1,0 @@
-Sample_A	1250
-Sample_B	980
-Sample_C	1100
-Sample_A&Sample_B	450
-Sample_A&Sample_C	380
-Sample_B&Sample_C	290
-Sample_A&Sample_B&Sample_C	150
