@@ -187,29 +187,6 @@ sample.filtering.log       # Filtering statistics report
 
 ---
 
-## 📈 Expected Filtering Rates
-
-For typical high-quality ChIP-seq data:
-
-| Filter Category | Expected % | Concern if > |
-|----------------|-----------|-------------|
-| **Blacklist** | 5-15% | 20% |
-| **Duplicates** | 20-40% | 60% |
-| **Other filters** | 5-15% | 25% |
-| **Total removed** | 30-60% | 75% |
-| **Retained** | 40-70% | < 25% |
-
-**Interpreting high removal rates:**
-
-| High Category | Likely Cause | Recommended Action |
-|---------------|-------------|-------------------|
-| **Blacklist > 20%** | Non-specific antibody, wrong blacklist file | Check antibody specificity; verify genome |
-| **Duplicates > 60%** | Over-amplification, low input material | Reduce PCR cycles, increase starting material |
-| **Other > 25%** | Quality issues, multi-mappers | Check FastQC reports, verify alignment settings |
-| **Retained < 25%** | Multiple issues | Review entire library prep protocol |
-
----
-
 ## 🔍 Single-End vs Paired-End Differences
 
 | Aspect | Paired-End | Single-End |
@@ -233,3 +210,27 @@ samtools view -b -h \
     -L include_regions.bed # Keep only NON-blacklist
     sample.mkD.bam > sample.filter2.bam
 ```
+
+
+## 📈 Expected Filtering Rates
+
+For typical high-quality ChIP-seq data:
+
+| Filter Category | Expected % | Concern if > |
+|----------------|-----------|-------------|
+| **Blacklist** | 5-15% | 20% |
+| **Duplicates** | 20-40% | 60% |
+| **Other filters** | 5-15% | 25% |
+| **Total removed** | 30-60% | 75% |
+| **Retained** | 40-70% | < 25% |
+
+**Interpreting high removal rates:**
+
+| High Category | Likely Cause | Recommended Action |
+|---------------|-------------|-------------------|
+| **Blacklist > 20%** | Non-specific antibody, wrong blacklist file | Check antibody specificity; verify genome |
+| **Duplicates > 60%** | Over-amplification, low input material | Reduce PCR cycles, increase starting material |
+| **Other > 25%** | Quality issues, multi-mappers | Check FastQC reports, verify alignment settings |
+| **Retained < 25%** | Multiple issues | Review entire library prep protocol |
+
+---
