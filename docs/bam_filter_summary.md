@@ -125,29 +125,6 @@ This document provides a synthetic overview of the complete BAM filtering pipeli
 │  • sample.filter2.sorted.bam.flagstat (samtools flagstat)         │
 │  • sample.filter2.sorted.bam.idxstats (samtools idxstats)         │
 └───────────────────────────────────────────────────────────────────┘
-         │
-         ▼
-┌───────────────────────────────────────────────────────────────────┐
-│  STEP 5: GENERATE FILTERING LOG                                   │
-│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   │
-│                                                                   │
-│  Creates: sample.filtering.log                                    │
-│                                                                   │
-│  Counts separately (from sample.mkD.bam):                         │
-│  • Total reads: samtools view -c                                  │
-│  • Blacklist overlaps: samtools view -c -L blacklist.bed          │
-│  • Duplicates: samtools view -c -f 0x0400                         │
-│  • Retained reads: samtools view -c sample.filter2.bam            │
-│  • Other filters: calculated (total - retained - blacklist - dup) │
-│                                                                   │
-│  See: FILTERING_LOG_IMPROVEMENTS.md for details                   │
-└───────────────────────────────────────────────────────────────────┘
-         │
-         ▼
-    sample.filtering.log
-         │
-         ▼
-    📊 Ready for MACS2 peak calling!
 ```
 
 ---
@@ -221,103 +198,6 @@ samtools view -q 1 -h sample.filter1.bam | \
 
 ---
 
-## 📊 Filtering Log Categories
-
-The filtering log separates reads into categories:
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ BAM FILTERING LOG - Sample: ENCFF123ABC                         │
-│                                                                 │
-│ Total reads (input):                      10,000,000           │
-│                                                                 │
-│ Reads overlapping blacklist regions:       1,500,000 (15.00%) │
-│ Duplicate reads (marked by Picard):        3,000,000 (30.00%) │
-│ Reads removed by other filters*:           1,575,000 (15.75%) │
-│   (*MAPQ < 1, secondary/supplementary alignments)              │
-│ ─────────────────────────────────────────────────────           │
-│ Total reads REMOVED (all filters):         6,075,000 (60.75%) │
-│ Total reads RETAINED:                      3,925,000 (39.25%) │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### How Each Category is Counted
-
-| Category | Command | What it counts |
-|----------|---------|----------------|
-| **Total reads** | `samtools view -c sample.mkD.bam` | All reads in input BAM |
-| **Blacklist** | `samtools view -c -L blacklist.bed sample.mkD.bam` | Reads overlapping blacklist regions |
-| **Duplicates** | `samtools view -c -f 0x0400 sample.mkD.bam` | Reads marked as duplicates by Picard |
-| **Other filters** | Calculated: `(TOTAL - RETAINED) - BLACKLIST - DUPLICATES` | MAPQ < 1, secondary, supplementary |
-| **Retained** | `samtools view -c sample.filter2.bam` | Reads in final BAM |
-
-**Important notes:**
-- ⚠️ Categories can **overlap** (e.g., a duplicate in a blacklist region)
-- ⚠️ Percentages may **sum > 100%** due to overlap
-- ✅ "Other filters" is calculated to ensure categories sum exactly to total removed
-
----
-
-## ⚙️ Configuration Parameters
-
-| Parameter | Default | Description | Applied in |
-|-----------|---------|-------------|-----------|
-| `params.insert_size` | 500 | Max fragment size (bp) | STEP 2 (BAM_FILTER) |
-| `params.keep_dups` | false | Keep duplicate reads? | STEP 4 (final filter) |
-| `params.mapq` | 1 | Min MAPQ threshold | STEP 2 and STEP 4 |
-| `params.blacklist` | auto | Blacklist BED file | STEP 4 (final filter) |
-
-**How to change:**
-
-```bash
-# Keep duplicates for analysis
-nextflow run pdichiaro/chipseq --keep_dups true
-
-# More permissive fragment size
-nextflow run pdichiaro/chipseq --insert_size 600
-
-# Stricter MAPQ threshold
-nextflow run pdichiaro/chipseq --mapq 10
-
-# Custom blacklist
-nextflow run pdichiaro/chipseq --blacklist /path/to/custom.bed
-```
-
----
-
-## 📁 File Naming Convention
-
-```
-sample.filter1.bam         # After BAM_FILTER (fragment size filter)
-sample.mkD.bam             # After MarkDuplicates (duplicates marked)
-sample.filter2.bam         # After final filter (analysis-ready)
-sample.filtering.log       # Filtering statistics report
-```
-
----
-
-## 📈 Expected Filtering Rates
-
-For typical high-quality ChIP-seq data:
-
-| Filter Category | Expected % | Concern if > |
-|----------------|-----------|-------------|
-| **Blacklist** | 5-15% | 20% |
-| **Duplicates** | 20-40% | 60% |
-| **Other filters** | 5-15% | 25% |
-| **Total removed** | 30-60% | 75% |
-| **Retained** | 40-70% | < 25% |
-
-**Interpreting high removal rates:**
-
-| High Category | Likely Cause | Recommended Action |
-|---------------|-------------|-------------------|
-| **Blacklist > 20%** | Non-specific antibody, wrong blacklist file | Check antibody specificity; verify genome |
-| **Duplicates > 60%** | Over-amplification, low input material | Reduce PCR cycles, increase starting material |
-| **Other > 25%** | Quality issues, multi-mappers | Check FastQC reports, verify alignment settings |
-| **Retained < 25%** | Multiple issues | Review entire library prep protocol |
-
----
 
 ## 🔍 Single-End vs Paired-End Differences
 
@@ -345,73 +225,26 @@ samtools view -b -h \
 
 ---
 
-## 🧪 Verification Commands
+## 📈 Expected Filtering Rates
 
-### Verify each filter step manually:
+For typical high-quality ChIP-seq data:
 
-```bash
-# 1. Count total reads
-samtools view -c sample.mkD.bam
-# Example output: 10,000,000
+| Filter Category | Expected % | Concern if > |
+|----------------|-----------|-------------|
+| **Blacklist** | 5-15% | 20% |
+| **Duplicates** | 20-40% | 60% |
+| **Other filters** | 5-15% | 25% |
+| **Total removed** | 30-60% | 75% |
+| **Retained** | 40-70% | < 25% |
 
-# 2. Count blacklist overlaps
-samtools view -c -L blacklist.bed sample.mkD.bam
-# Example output: 1,500,000 (15%)
+**Interpreting high removal rates:**
 
-# 3. Count duplicates
-samtools view -c -f 0x0400 sample.mkD.bam
-# Example output: 3,000,000 (30%)
-
-# 4. Count retained reads
-samtools view -c sample.filter2.bam
-# Example output: 3,925,000 (39.25%)
-
-# 5. Verify calculations
-# Total removed = Total - Retained
-#               = 10,000,000 - 3,925,000 = 6,075,000 (60.75%)
-#
-# Other filters = Total removed - Blacklist - Duplicates
-#               = 6,075,000 - 1,500,000 - 3,000,000 = 1,575,000 (15.75%)
-```
-
-### Check for filter overlap:
-
-```bash
-# Reads that are BOTH duplicates AND in blacklist
-samtools view -c -f 0x0400 -L blacklist.bed sample.mkD.bam
-# Example output: 450,000
-# These reads contribute to both "Blacklist" and "Duplicates" categories
-```
-
-This is why **percentages can sum > 100%** — overlapping categories.
-
----
-
-## 🎯 Next Steps After Filtering
-
-The final `sample.filter2.bam` is used for:
-
-### 1. Peak Calling (MACS2)
-```bash
-macs2 callpeak -t sample.filter2.bam -n sample -g hs
-```
-
-### 2. BigWig Generation (deepTools)
-```bash
-bamCoverage -b sample.filter2.bam -o sample.bw --normalizeUsing CPM
-```
-
-### 3. Read Coverage Analysis (bedtools)
-```bash
-bedtools coverage -a peaks.bed -b sample.filter2.bam
-```
-
----
-
-## 📚 Related Documentation
-
-- **[BOWTIE2_AND_BAM_FILTERING.md](BOWTIE2_AND_BAM_FILTERING.md)**: Complete detailed documentation of Bowtie2 alignment and initial BAM filtering
-- **[FILTERING_LOG_IMPROVEMENTS.md](FILTERING_LOG_IMPROVEMENTS.md)**: Detailed explanation of the filtering log generation and category calculations
+| High Category | Likely Cause | Recommended Action |
+|---------------|-------------|-------------------|
+| **Blacklist > 20%** | Non-specific antibody, wrong blacklist file | Check antibody specificity; verify genome |
+| **Duplicates > 60%** | Over-amplification, low input material | Reduce PCR cycles, increase starting material |
+| **Other > 25%** | Quality issues, multi-mappers | Check FastQC reports, verify alignment settings |
+| **Retained < 25%** | Multiple issues | Review entire library prep protocol |
 
 ---
 
