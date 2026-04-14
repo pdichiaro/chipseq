@@ -117,13 +117,7 @@ This document provides a synthetic overview of the complete BAM filtering pipeli
 │                                                                   │
 │  samtools sort sample.filter2.bam > sample.filter2.sorted.bam    │
 │  samtools index sample.filter2.sorted.bam                         │
-│                                                                   │
-│  Generates:                                                       │
-│  • sample.filter2.sorted.bam (sorted BAM)                         │
-│  • sample.filter2.sorted.bam.bai (index)                          │
-│  • sample.filter2.sorted.bam.stats (samtools stats)               │
-│  • sample.filter2.sorted.bam.flagstat (samtools flagstat)         │
-│  • sample.filter2.sorted.bam.idxstats (samtools idxstats)         │
+│                                                                   │        │
 └───────────────────────────────────────────────────────────────────┘
 ```
 
@@ -248,7 +242,3 @@ For typical high-quality ChIP-seq data:
 
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** 2026-04-14  
-**Pipeline:** pdichiaro/chipseq  
-**Compatible with:** Nextflow 25.04+, Bowtie2 2.3+, SAMtools 1.9+, Picard 2.27+
