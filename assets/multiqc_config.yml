@@ -179,8 +179,8 @@ table_columns_visible:
   # FastQC - show only essential metrics
   FastQC:
     total_sequences: True
-    percent_duplicates: False  # Hidden - use Picard duplication instead
-    percent_gc: False  # Hidden per user request
+    percent_duplicates: False
+    percent_gc: False
     avg_sequence_length: False
     percent_fails: False
     total_sequences_unit: False
@@ -192,20 +192,20 @@ table_columns_visible:
   # All columns here apply to ALL SAMTools modules (LIB, unfiltered, filtered)
   Samtools:
     # Show only filtered library metrics (these are the most important)
-    reads_mapped: True  # Visible only for filtered library
-    reads_mapped_percent: True  # Visible only for filtered library
-    error_rate: True  # Visible only for filtered library
+    reads_mapped: True
+    reads_mapped_percent: True
+    error_rate: True
     # Hide all other SAMTools metrics per user request
-    reads_duplicated: False  # Use Picard duplication instead
-    reads_MQ0_percent: False  # Hidden per user request
-    raw_total_sequences: False  # Hidden per user request
-    flagstat_total: False  # Hidden per user request (LIB and unfiltered)
-    non_primary_alignments: False  # Hidden per user request
-    reads_properly_paired_percent: False  # Hidden per user request
+    reads_duplicated: False
+    reads_MQ0_percent: False
+    raw_total_sequences: False
+    flagstat_total: False
+    non_primary_alignments: False
+    reads_properly_paired_percent: False
     reads_unmapped: False
     reads_unmapped_percent: False
-    mapped_passed: False  # Hidden per user request (flagstat reads mapped)
-    mapped_passed_pct: False  # Hidden per user request (flagstat % reads mapped)
+    mapped_passed: False
+    mapped_passed_pct: False
   # Picard - show duplication metrics
   Picard:
     PERCENT_DUPLICATION: True
@@ -233,10 +233,10 @@ table_columns_visible:
     Unassigned_MultiMapping: False
   # Phantom Peak Qual Tools - hide all metrics per user request
   phantompeakqualtools:
-    NSC: False  # Hidden per user request
-    RSC: False  # Hidden per user request
-    phantompeakqualtools_fragment_length: False  # Hidden (Estimated Fragment Length)
-    Estimated_Fragment_Length_bp: False  # Alternative name for fragment length
+    NSC: False
+    RSC: False
+    phantompeakqualtools_fragment_length: False
+    Estimated_Fragment_Length_bp: False
 
 # Color thresholds for key ChIP-seq quality metrics
 # Helps quickly identify problematic samples in General Statistics table
