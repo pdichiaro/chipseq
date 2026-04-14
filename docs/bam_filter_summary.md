@@ -10,7 +10,7 @@ This document provides a synthetic overview of the complete BAM filtering pipeli
 
 ```
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃         COMPLETE FILTERING PIPELINE (PAIRED-END)                  ┃
+┃         COMPLETE FILTERING PIPELINE (PAIRED-END)                ┃
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 📁 INPUT: sample_R1.fq.gz + sample_R2.fq.gz
@@ -18,7 +18,7 @@ This document provides a synthetic overview of the complete BAM filtering pipeli
          ▼
 ┌───────────────────────────────────────────────────────────────────┐
 │  STEP 1: BOWTIE2 ALIGNMENT                                        │
-│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━     │
 │                                                                   │
 │  bowtie2 --very-sensitive -X 1000 -x genome                       │
 │                                                                   │
@@ -31,10 +31,10 @@ This document provides a synthetic overview of the complete BAM filtering pipeli
          ▼
 ┌───────────────────────────────────────────────────────────────────┐
 │  STEP 2: PICARD MARK DUPLICATES                                   │
-│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━     │
 │                                                                   │
 │  picard MarkDuplicates \                                          │
-│    REMOVE_DUPLICATES=false \  ← Only MARKS, doesn't remove       │
+│    REMOVE_DUPLICATES=false \  ← Only MARKS, doesn't remove        │
 │    ASSUME_SORT_ORDER=coordinate                                   │
 │                                                                   │
 │  Sets FLAG 0x0400 for duplicate reads                             │
@@ -51,28 +51,28 @@ This document provides a synthetic overview of the complete BAM filtering pipeli
          ▼
 ┌───────────────────────────────────────────────────────────────────┐
 │  STEP 3: BAM_FILTER (2-PASS FILTERING)                            │
-│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━     │
 │                                                                   │
-│  ┌─────────────────────────────────────────────────────────────┐ │
-│  │ PASS 1: Apply Most Filters                                  │ │
-│  │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │ │
+│  ┌─────────────────────────────────────────────────────────────┐  │
+│  │ PASS 1: Apply Most Filters                                  │  │
+│  │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━    │  │
 │  │                                                              │ │
 │  │ samtools view -b -h \                                        │ │
-│  │   -F 0x0100          ← Remove secondary alignments          │ │
-│  │   -F 0x0800          ← Remove supplementary alignments      │ │
-│  │   -F 0x0004          ← Remove unmapped reads                │ │
-│  │   -F 0x0008          ← Remove reads with unmapped mate      │ │
-│  │   -f 0x0001          ← Keep only paired reads               │ │
-│  │   -f 0x0002          ← Keep only proper pairs               │ │
-│  │   -F 0x0400          ← Remove duplicates (if !keep_dups)    │ │
-│  │   -L include_regions.bed  ← Keep only NON-blacklist reads   │ │
+│  │   -F 0x0100          ← Remove secondary alignments           │ │
+│  │   -F 0x0800          ← Remove supplementary alignments       │ │
+│  │   -F 0x0004          ← Remove unmapped reads                 │ │
+│  │   -F 0x0008          ← Remove reads with unmapped mate       │ │
+│  │   -f 0x0001          ← Keep only paired reads                │ │
+│  │   -f 0x0002          ← Keep only proper pairs                │ │
+│  │   -F 0x0400          ← Remove duplicates (if !keep_dups)     │ │
+│  │   -L include_regions.bed  ← Keep only NON-blacklist reads    │ │
 │  │   sample.mkD.bam > sample.filter1.bam                        │ │
 │  │                                                              │ │
 │  │ Where include_regions.bed is created by:                     │ │
 │  │   bedtools complement -i blacklist.bed -g genome.sizes       │ │
 │  │                                                              │ │
 │  │ Output: sample.filter1.bam                                   │ │
-│  └─────────────────────────────────────────────────────────────┘ │
+│  └─────────────────────────────────────────────────────────────┘  │
 │                                                                   │
 │         │                                                         │
 │         ▼                                                         │
@@ -84,9 +84,9 @@ This document provides a synthetic overview of the complete BAM filtering pipeli
 │    └─ No duplicates (if keep_dups=false)                          │
 │         │                                                         │
 │         ▼                                                         │
-│  ┌─────────────────────────────────────────────────────────────┐ │
-│  │ PASS 2: MAPQ + Fragment Size Filtering                      │ │
-│  │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │ │
+│  ┌─────────────────────────────────────────────────────────────┐  │
+│  │ PASS 2: MAPQ + Fragment Size Filtering                      │  │
+│  │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━     │ │
 │  │                                                              │ │
 │  │ samtools view -q 1 -h sample.filter1.bam | \                 │ │
 │  │   awk -v max="500" \                                         │ │
@@ -98,7 +98,7 @@ This document provides a synthetic overview of the complete BAM filtering pipeli
 │  │   • awk: Keep fragments ≤ 500bp (params.insert_size)         │ │
 │  │                                                              │ │
 │  │ Output: sample.filter2.bam (FINAL)                           │ │
-│  └─────────────────────────────────────────────────────────────┘ │
+│  └─────────────────────────────────────────────────────────────┘  │
 └───────────────────────────────────────────────────────────────────┘
          │
          ▼
@@ -113,11 +113,11 @@ This document provides a synthetic overview of the complete BAM filtering pipeli
          ▼
 ┌───────────────────────────────────────────────────────────────────┐
 │  STEP 4: BAM_SORT_SAMTOOLS                                        │
-│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━     │
 │                                                                   │
-│  samtools sort sample.filter2.bam > sample.filter2.sorted.bam    │
+│  samtools sort sample.filter2.bam > sample.filter2.sorted.bam     │
 │  samtools index sample.filter2.sorted.bam                         │
-│                                                                   │        │
+│                                                                   │       
 └───────────────────────────────────────────────────────────────────┘
 ```
 
