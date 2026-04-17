@@ -185,7 +185,7 @@ table_columns_visible:
     percent_fails: False
     total_sequences_unit: False
   "LIB: FastQC (trimmed)":
-    total_sequences: False  # Already shown in raw
+    total_sequences: True
     percent_duplicates: False
     percent_gc: False
     avg_sequence_length: False
@@ -211,8 +211,8 @@ table_columns_visible:
     mapped_passed: False
     mapped_passed_pct: False
   "MERGED LIB: SAMTools (unfiltered)":
-    reads_mapped: False
-    reads_mapped_percent: False
+    reads_mapped: True
+    reads_mapped_percent: True
     error_rate: False
     reads_duplicated: False
     reads_MQ0_percent: False
@@ -225,11 +225,10 @@ table_columns_visible:
     mapped_passed: False
     mapped_passed_pct: False
   "MERGED LIB: SAMTools (filtered)":
-    # Show only filtered library metrics (these are the most important)
     reads_mapped: True
     reads_mapped_percent: True
-    error_rate: True
     # Hide all other SAMTools metrics
+    error_rate: False
     reads_duplicated: False
     reads_MQ0_percent: False
     raw_total_sequences: False
@@ -266,6 +265,10 @@ table_columns_visible:
     peak_count: True
   FRiP:
     frip_score: True
+  # Picard 
+  "MERGED LIB: Picard (filtered): InsertSizeMetrics":
+    Insert Size: False	
+    Mean Insert: False
   # featureCounts - show assignment metrics
   "MERGED LIB: featureCounts":
     percent_assigned: True
