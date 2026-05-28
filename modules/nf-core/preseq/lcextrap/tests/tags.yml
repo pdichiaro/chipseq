@@ -1,0 +1,3 @@
+preseq/lcextrap:
+  - "modules/nf-core/preseq/lcextrap/**"
+  - "tests/modules/nf-core/preseq/lcextrap/**"
