@@ -5,8 +5,8 @@
 This ChIP-seq pipeline uses **Bowtie2** for alignment and **MACS2** for peak calling:
 
 - **Bowtie2 Alignment**: 
-  - Local alignment mode (`--local --very-sensitive-local`) for adapter soft-clipping
-  - Two-stage fragment filtering for paired-end data (see [BOWTIE2_AND_BAM_FILTERING.md](BOWTIE2_AND_BAM_FILTERING.md))
+  - End-to-end alignment mode using Bowtie2 `--very-sensitive`.
+  - Two-stage fragment filtering for paired-end data (see [BAM_FILTER_summary.md](BAM_FILTER_summary.md))
   - Configurable fragment size filtering with `--insert_size` (default: 500bp)
   
 - **MACS2 Peak Calling**:
@@ -148,13 +148,13 @@ In this example:
 | Category | Parameter | Default | Description |
 |----------|-----------|---------|-------------|
 | **ChIP-seq** | `--with_inputs` | `true` | Use input control samples |
-| | `--aligner` | `star` | Alignment method (star only) |
+| | `--aligner` | `bowtie2` | Alignment method (bowtie2 only) |
 | | `--read_length` | `50` | Read length for MACS2 gsize |
 | | `--fragment_size` | `200` | Estimated fragment size (SE) |
 | **Peak Calling** | `--macs_gsize` | `null` | MACS2 genome size (auto-calculated) |
 | | `--blacklist` | `null` | Regions to exclude from analysis |
 | **Normalization** | `--skip_deeptools_norm` | `false` | Skip DESeq2 normalization |
-| | `--normalization_method` | `invariant_genes` | Normalization method |
+| | `--normalization_method` | `all_genes` | Normalization method |
 | **Quality** | `--skip_trimming` | `false` | Skip read trimming |
 | | `--skip_fastqc` | `false` | Skip FastQC reports |
 | | `--skip_qc` | `false` | Skip all QC steps |
@@ -186,8 +186,8 @@ The `--normalization_method` parameter controls DESeq2 normalization:
 - `--skip_picard_metrics` - Skip Picard QC metrics
 - `--skip_plot_fingerprint` - Skip deepTools fingerprint plot
 - `--skip_plot_profile` - Skip deepTools profile plots
-- `--skip_peak_annotation` - Skip HOMER peak annotation
-- `--skip_peak_qc` - Skip peak QC plots
+- `--skip_spp` - Skip Phantompeakqualtools (strand cross-correlation)
+- `--skip_preseq` - Skip Preseq library complexity analysis
 - `--skip_multiqc` - Skip MultiQC report
 
 ### Reference Genome Options
@@ -198,7 +198,7 @@ The `--normalization_method` parameter controls DESeq2 normalization:
 | `--gtf` | path | Gene annotation GTF file |
 | `--gff` | path | Gene annotation GFF file (alternative to GTF) |
 | `--gene_bed` | path | Gene BED file (auto-generated if not provided) |
-| `--star_index` | path | Pre-built STAR index |
+| `--bowtie2_index` | path | Pre-built Bowtie2 index |
 | `--blacklist` | path | Blacklist regions BED file |
 | `--save_reference` | boolean | Save generated indices (default: false) |
 
@@ -221,9 +221,8 @@ The `--normalization_method` parameter controls DESeq2 normalization:
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `--aligner` | `bowtie2` | Alignment tool (fixed to bowtie2) |
-| `--bowtie2_mode` | `--local` | Bowtie2 alignment mode (local vs end-to-end) |
-| `--bowtie2_sensitivity` | `--very-sensitive-local` | Bowtie2 sensitivity preset |
+| `--aligner` | `bowtie2` | Alignment tool |
+| | | *Bowtie2 runs in `--very-sensitive --end-to-end` mode (hardcoded in modules.config)* |
 | `--insert_size` | `500` | **Max fragment size for BAM filtering (PE only)** |
 | `--keep_dups` | `false` | Keep duplicate reads |
 | `--keep_multi_map` | `false` | Keep multimapping reads |
@@ -231,7 +230,7 @@ The `--normalization_method` parameter controls DESeq2 normalization:
 | `--save_align_intermeds` | `false` | Save intermediate BAM files |
 | `--save_unaligned` | `false` | Save unaligned reads |
 
-**Note:** For Paired-End data, Bowtie2 uses a fixed `-X 1000` during alignment to search for fragments up to 1000bp. Post-alignment filtering with `--insert_size` (default 500bp) removes artifacts while keeping biologically relevant fragments. See [BOWTIE2_AND_BAM_FILTERING.md](BOWTIE2_AND_BAM_FILTERING.md) for details.
+**Note:** For Paired-End data, Bowtie2 uses a fixed `-X 1000` during alignment to search for fragments up to 1000bp. Post-alignment filtering with `--insert_size` (default 500bp) removes artifacts while keeping biologically relevant fragments. See [BAM_FILTER_summary.md](BAM_FILTER_summary.md) for details.
 
 #### Peak Calling Options (MACS2)
 
@@ -268,14 +267,6 @@ The `--normalization_method` parameter controls DESeq2 normalization:
 | `--n_pop` | `1` | Min samples for DESeq2 analysis |
 | `--deseq2_vst` | `true` | Use VST transformation |
 | `--skip_deseq2_qc` | `false` | Skip DESeq2 QC plots |
-
-#### Quality Control Options
-
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `--fingerprint_bins` | `500000` | Bins for deepTools fingerprint |
-| `--skip_preseq` | `false` | Skip library complexity analysis |
-| `--skip_spp` | `false` | Skip strand cross-correlation QC |
 
 #### Other Advanced Options
 
