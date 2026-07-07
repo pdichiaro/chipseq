@@ -175,8 +175,8 @@ By default, the pipeline generates **two types of BigWig coverage tracks**:
    - To skip: `--skip_deeptools_norm true`
 
 The `--normalization_method` parameter controls DESeq2 normalization:
-- `invariant_genes` - Normalization using stable genes (default)
-- `all_genes` - Standard DESeq2 normalization
+- `invariant_genes` - Normalization using stable genes (OmniNorm: https://github.com/fgualdr/OmniNorm)
+- `all_genes` - Standard DESeq2 normalization (default)
 - `all_genes,invariant_genes` - Run both methods
 
 ### Skip Options (All default to false)
